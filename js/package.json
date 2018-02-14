@@ -43,7 +43,7 @@
     "css-element-queries": "^1.0.1",
     "css-loader": "^0.28.7",
     "itk": "^7.1.0",
-    "itk-vtk-image-viewer": "https://github.com/Kitware/itk-vtk-image-viewer.git#4626b316e300",
+    "itk-vtk-image-viewer": "https://github.com/Kitware/itk-vtk-image-viewer.git#bfcc13e55d4f374f",
     "lodash": "^4.17.4",
     "postcss-loader": "^2.0.8",
     "shader-loader": "^1.3.1",
