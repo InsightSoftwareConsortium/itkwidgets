@@ -1,0 +1,19 @@
+*.egg-info/
+.ipynb_checkpoints/
+dist/
+build/
+*.py[cod]
+node_modules/
+.cache/
+Untitled.ipynb
+
+# Compiled javascript
+itkwidgets/static/
+
+js/package-lock.json
+
+# OS X
+.DS_Store
+
+005_32months_T2_RegT1_Reg2Atlas_ManualBrainMask_Stripped.nrrd
+examples/005_32months_T2_RegT1_Reg2Atlas_ManualBrainMask_Stripped.nrrd

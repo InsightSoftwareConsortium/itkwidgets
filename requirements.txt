@@ -1,0 +1,3 @@
+itk-core
+ipywidgets>=7.0.0
+numpy
