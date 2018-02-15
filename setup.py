@@ -22,7 +22,10 @@ log.set_verbosity(log.DEBUG)
 log.info('setup.py entered')
 log.info('$PATH=%s' % os.environ['PATH'])
 
-LONG_DESCRIPTION = 'Jupyter widgets to visualize images and meshes in 2D and 3D'
+from CommonMark import commonmark
+def readme():
+    with open('README.md') as fp:
+        return commonmark(fp.read())
 
 def js_prerelease(command, strict=False):
     """decorator for building minified js/css prior to another command"""
@@ -127,8 +130,8 @@ with open(os.path.join(here, 'itkwidgets', '_version.py')) as f:
 setup_args = {
     'name': 'itkwidgets',
     'version': version_ns['__version__'],
-    'description': 'Jupyter widgets to visualize images and meshes in 2D and 3D',
-    'long_description': LONG_DESCRIPTION,
+    'description': 'Jupyter widgets to visualize images in 2D and 3D',
+    'long_description': readme(),
     'include_package_data': True,
     'data_files': [
         ('share/jupyter/nbextensions/itk-jupyter-widgets', [
@@ -142,6 +145,9 @@ setup_args = {
         'ipywidgets>=7.0.0',
         'numpy',
     ],
+    'setup_requires': [
+        'commonmark'
+    ],
     'packages': find_packages(),
     'zip_safe': False,
     'cmdclass': {
@@ -151,7 +157,7 @@ setup_args = {
         'jsdeps': NPM,
     },
 
-    'author': 'Matt McCormick',
+    'author': 'Matthew McCormick',
     'author_email': 'matt.mccormick@kitware.com',
     'url': 'https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets',
     'keywords': [

@@ -23,20 +23,20 @@ Installation
 To install, use pip:
 
 ```sh
-  pip install itkwidgets
-  jupyter nbextension enable --py --sys-prefix itkwidgets
+pip install itkwidgets
+jupyter nbextension enable --py --sys-prefix itkwidgets
 ```
 
 
 For a development installation (requires [Node.js](https://nodejs.org/en/download/)),
 
 ```sh
-  git clone https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets.git
-  cd itk-jupyter-widgets
-  python -m pip install -r requirements-dev.txt -r requirements.txt
-  python -m pip install -e .
-  jupyter nbextension install --py --symlink --sys-prefix itkwidgets
-  jupyter nbextension enable --py --sys-prefix itkwidgets
-  jupyter nbextension enable --py --sys-prefix widgetsnbextension
-  python -m pytest
+git clone https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets.git
+cd itk-jupyter-widgets
+python -m pip install -r requirements-dev.txt -r requirements.txt
+python -m pip install -e .
+jupyter nbextension install --py --symlink --sys-prefix itkwidgets
+jupyter nbextension enable --py --sys-prefix itkwidgets
+jupyter nbextension enable --py --sys-prefix widgetsnbextension
+python -m pytest
 ```
