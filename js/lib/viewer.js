@@ -71,8 +71,8 @@ var ViewerModel = widgets.DOMWidgetModel.extend({
       _view_name: 'ViewerView',
       _model_module: 'itk-jupyter-widgets',
       _view_module: 'itk-jupyter-widgets',
-      _model_module_version: '0.1.0',
-      _view_module_version: '0.1.0',
+      _model_module_version: '0.2.0',
+      _view_module_version: '0.2.0',
       image: null
     })
   }}, {
