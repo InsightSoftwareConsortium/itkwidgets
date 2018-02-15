@@ -11,7 +11,7 @@ These widgets are designed to support image analysis with the [Insight Toolkit
 (ITK)](https://itk.org/), but they also work with other spatial analysis tools
 in the scientific Python ecosystem.
 
-These widgets art built on
+These widgets are built on
 [itk.js](https://github.com/InsightSoftwareConsortium/itk-js) and
 [vtk.js](https://github.com/Kitware/vtk-js).
 
