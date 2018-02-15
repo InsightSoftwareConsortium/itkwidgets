@@ -1,6 +1,10 @@
 itk-jupyter-widgets
 ===============================
 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/itkwidgets.svg)](https://pypi.python.org/pypi/itkwidgets)
+[![Build Status](https://circleci.com/gh/InsightSoftwareConsortium/itk-jupyter-widgets.svg?style=shield)](https://circleci.com/gh/InsightSoftwareConsortium/itk-jupyter-widgets)
+
 Interactive [Jupyter](https://jupyter.org/) widgets to visualize images in 2D and 3D.
 
 These widgets are designed to support image analysis with the [Insight Toolkit
