@@ -1,0 +1,35 @@
+version: 2
+jobs:
+  build-test-package:
+    working_directory: /home/jovyan/itk-jupyter-widgets
+    docker:
+      - image: jupyter/base-notebook:latest
+    steps:
+      - checkout:
+          path: /home/jovyan/itk-jupyter-widgets
+      - run:
+          name: Build and Test
+          no_output_timeout: 0.5h
+          command: |
+            conda install -y git
+            python -m pip install --upgrade setuptools
+            python -m pip install -r requirements-dev.txt -r requirements.txt
+            python -m pip install -e .
+            jupyter nbextension install --py --symlink --sys-prefix itkwidgets
+            jupyter nbextension enable --py --sys-prefix itkwidgets
+            jupyter nbextension enable --py --sys-prefix widgetsnbextension
+            python -m pytest --tb=long --verbose
+
+      - run:
+          name: Package
+          no_output_timeout: 0.5h
+          command: |
+            python setup.py sdist
+            python setup.py bdist_wheel
+            python -m pip install dist/*.whl
+
+workflows:
+    version: 2
+    build-test-package:
+      jobs:
+        - build-test-package
