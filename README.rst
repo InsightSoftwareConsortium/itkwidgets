@@ -36,9 +36,7 @@ To install, use pip::
   jupyter nbextension enable --py --sys-prefix itkwidgets
 
 
-For a development installation (requires `Node.js <https://nodejs.org/en/download/>`_
-
-::
+For a development installation (requires `Node.js <https://nodejs.org/en/download/>`_)::
 
   git clone https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets.git
   cd itk-jupyter-widgets

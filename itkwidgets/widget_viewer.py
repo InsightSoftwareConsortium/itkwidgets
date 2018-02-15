@@ -15,8 +15,8 @@ class Viewer(widgets.DOMWidget):
     _model_name = Unicode('ViewerModel').tag(sync=True)
     _view_module = Unicode('itk-jupyter-widgets').tag(sync=True)
     _model_module = Unicode('itk-jupyter-widgets').tag(sync=True)
-    _view_module_version = Unicode('^0.2.0').tag(sync=True)
-    _model_module_version = Unicode('^0.2.0').tag(sync=True)
+    _view_module_version = Unicode('^0.2.1').tag(sync=True)
+    _model_module_version = Unicode('^0.2.1').tag(sync=True)
     image = ITKImage(default_value=None, allow_none=True).tag(sync=True, **itkimage_serialization)
 
 def view(image):

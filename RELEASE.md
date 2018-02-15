@@ -4,9 +4,9 @@
 export old_version=X.X.X
 export version=X.X.Y
 
-# Update _version.py (set release version, remove 'dev')
+# Update itkwidgets/_version.py (set release version, remove 'dev')
 git grep -z --full-name -l '.' | xargs -0 sed -i -e "s/$old_version/$version/g"
-git add -- itkwidgets/_version.py
+git add -- itkwidgets/ js/
 git commit -m "ENH: Bump itk-jupyter-widgets to $version"
 python setup.py sdist
 python setup.py bdist_wheel
