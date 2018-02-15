@@ -1,2 +1,2 @@
 recursive-include itkwidgets/static *.*
-README.md
+README.rst

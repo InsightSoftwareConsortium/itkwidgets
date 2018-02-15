@@ -22,10 +22,9 @@ log.set_verbosity(log.DEBUG)
 log.info('setup.py entered')
 log.info('$PATH=%s' % os.environ['PATH'])
 
-from CommonMark import commonmark
 def readme():
-    with open('README.md') as fp:
-        return commonmark(fp.read())
+    with open('README.rst') as fp:
+        return fp.read()
 
 def js_prerelease(command, strict=False):
     """decorator for building minified js/css prior to another command"""
@@ -144,9 +143,6 @@ setup_args = {
         'itk-core',
         'ipywidgets>=7.0.0',
         'numpy',
-    ],
-    'setup_requires': [
-        'commonmark'
     ],
     'packages': find_packages(),
     'zip_safe': False,
