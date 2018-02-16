@@ -46,3 +46,8 @@ For a development installation (requires `Node.js <https://nodejs.org/en/downloa
   jupyter nbextension enable --py --sys-prefix itkwidgets
   jupyter nbextension enable --py --sys-prefix widgetsnbextension
   python -m pytest
+
+.. warning::
+
+  This project is under active development. Its API and behavior may change at
+  any time. We mean it.
