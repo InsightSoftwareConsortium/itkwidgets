@@ -27,6 +27,11 @@ These widgets are built on
 `itk.js <https://github.com/InsightSoftwareConsortium/itk-js>`_ and
 `vtk.js <https://github.com/Kitware/vtk-js>`_.
 
+.. image:: https://thumbs.gfycat.com/ShyFelineBeetle-size_restricted.gif
+    :width: 640px
+    :alt: itk-jupyter-widgets demo
+    :align: center
+
 Installation
 ------------
 
