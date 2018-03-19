@@ -46,7 +46,7 @@ module.exports = [
             path.resolve(__dirname, 'node_modules'),
           ],
           alias: {
-            './itkConfig.js': path.resolve(__dirname, 'lib', 'itkConfigJupyter.js'),
+            './itkConfig$': path.resolve(__dirname, 'lib', 'itkConfigJupyter.js'),
           },
         },
     },
@@ -74,7 +74,7 @@ module.exports = [
             path.resolve(__dirname, 'node_modules'),
           ],
           alias: {
-            './itkConfig.js': path.resolve(__dirname, 'lib', 'itkConfigJupyter.js'),
+            './itkConfig$': path.resolve(__dirname, 'lib', 'itkConfigJupyter.js'),
           },
         },
       externals: ['@jupyter-widgets/base', {config: '{}'}]
@@ -112,7 +112,7 @@ module.exports = [
             path.resolve(__dirname, 'node_modules'),
           ],
           alias: {
-            './itkConfig.js': path.resolve(__dirname, 'lib', 'itkConfigJupyter.js'),
+            './itkConfig$': path.resolve(__dirname, 'lib', 'itkConfigJupyter.js'),
           },
         },
         externals: ['@jupyter-widgets/base', {config: '{}'}]
