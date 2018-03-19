@@ -141,7 +141,7 @@ setup_args = {
     ],
     'install_requires': [
         'itk-core',
-        'ipywidgets>=7.0.0',
+        'ipywidgets>=7.1.2',
         'numpy',
     ],
     'packages': find_packages(),
