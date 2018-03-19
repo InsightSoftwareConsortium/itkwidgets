@@ -1,7 +1,7 @@
 import 'babel-polyfill'
 import widgets from '@jupyter-widgets/base';
 import _ from 'lodash';
-import  base64js from 'base64-js';
+import base64js from 'base64-js';
 import vtkITKHelper from 'vtk.js/Sources/Common/DataModel/ITKHelper';
 import createViewer from 'itk-vtk-image-viewer/src/createViewer';
 import IntTypes from 'itk/IntTypes'

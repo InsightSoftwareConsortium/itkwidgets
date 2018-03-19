@@ -1,6 +1,5 @@
 const itkConfig = {
-  webWorkersPath: '/static/itk/WebWorkers',
-  imageIOsPath: '/static/itk/ImageIOs'
+  itkModulesPath: '/static/itk'
 }
 
 module.exports = itkConfig
