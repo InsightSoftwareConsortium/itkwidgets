@@ -50,8 +50,8 @@
     "base64-js": "^1.2.3",
     "css-element-queries": "^1.0.2",
     "itk": "^8.0.2",
-    "itk-vtk-image-viewer": "^4.3.0",
+    "itk-vtk-image-viewer": "^4.4.0",
     "lodash": "^4.17.5",
-    "vtk.js": "6.4.0"
+    "vtk.js": "6.4.1"
   }
 }
