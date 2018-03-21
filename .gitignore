@@ -18,3 +18,6 @@ js/package-lock.json
 005_32months_T2_RegT1_Reg2Atlas_ManualBrainMask_Stripped.nrrd
 examples/005_32months_T2_RegT1_Reg2Atlas_ManualBrainMask_Stripped.nrrd
 examples/cthead1.png
+
+.pytest_cache/
+
