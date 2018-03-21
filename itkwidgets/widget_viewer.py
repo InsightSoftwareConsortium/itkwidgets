@@ -7,6 +7,8 @@ In the future, will add optional segmentation mesh overlay.
 
 import ipywidgets as widgets
 from traitlets import Unicode
+import numpy as np
+import itk
 from .trait_types import ITKImage, itkimage_serialization
 
 @widgets.register
@@ -21,5 +23,9 @@ class Viewer(widgets.DOMWidget):
 
 def view(image):
     viewer = Viewer()
-    viewer.image = image
+    if isinstance(image, np.ndarray):
+        image_from_array = itk.GetImageViewFromArray(image)
+        viewer.image = image_from_array
+    else:
+        viewer.image = image
     return viewer
