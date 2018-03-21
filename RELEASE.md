@@ -16,8 +16,8 @@ git tag -a v$version -m "itk-jupyter-widgets $version"
 # Update _version.py (replace 'final' with 'dev' and increment minor)
 git add -- itkwidgets/_version.py
 git commit -m "ENH: Bump itk-jupyter-widgets version for development"
-git push
-git push --tags
+git push upstream master
+git push upstream v$version
 ```
 
 - To release a new version of itk-jupyter-widgets on NPM:
