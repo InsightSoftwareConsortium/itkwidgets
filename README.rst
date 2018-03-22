@@ -38,6 +38,7 @@ Installation
 To install, use pip::
 
   pip install itkwidgets
+  jupyter nbextension install --py --sys-prefix itkwidgets
   jupyter nbextension enable --py --sys-prefix itkwidgets
 
 
