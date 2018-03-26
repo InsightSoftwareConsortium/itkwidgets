@@ -13,6 +13,7 @@
     "widgets",
     "ipython",
     "ipywidgets",
+    "jupyterlab-extension",
     "itk",
     "imaging",
     "visualization"
@@ -53,5 +54,8 @@
     "itk-vtk-image-viewer": "^4.4.3",
     "lodash": "^4.17.5",
     "vtk.js": "6.4.5"
+  },
+  "jupyterlab": {
+    "extension": "lib/extension-jupyterlab"
   }
 }
