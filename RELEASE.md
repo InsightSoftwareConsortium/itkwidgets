@@ -12,7 +12,7 @@ python setup.py sdist
 python setup.py bdist_wheel
 pip install twine
 twine upload dist/*
-git tag -a v$version -m "itk-jupyter-widgets $version"
+git tag -a -s v$version -m "itk-jupyter-widgets $version"
 # Update _version.py (replace 'final' with 'dev' and increment minor)
 git add -- itkwidgets/_version.py
 git commit -m "ENH: Bump itk-jupyter-widgets version for development"
