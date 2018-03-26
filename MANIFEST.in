@@ -1,2 +1,3 @@
 recursive-include itkwidgets/static *.*
 README.rst
+include itk-jupyter-widgets.json

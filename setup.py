@@ -137,7 +137,8 @@ setup_args = {
             'itkwidgets/static/extension.js',
             'itkwidgets/static/index.js',
             'itkwidgets/static/index.js.map',
-        ]),
+        ],),
+        ('etc/jupyter/nbconfig/notebook.d/' , ['itk-jupyter-widgets.json'])
     ],
     'install_requires': [
         'itk-core',
