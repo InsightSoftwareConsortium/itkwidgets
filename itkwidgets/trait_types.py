@@ -90,7 +90,7 @@ def itkimage_to_json(itkimage, manager=None):
         directionList = []
         dimension = itkimage.GetImageDimension()
         pixelArr = itk.GetArrayViewFromImage(itkimage)
-        compressor = zstd.ZstdCompressor(level=2)
+        compressor = zstd.ZstdCompressor(level=3)
         pixelArrCompressed = compressor.compress(pixelArr.data)
         pixelDataBase64 = base64.b64encode(pixelArrCompressed).decode('ascii')
         for col in range(dimension):
@@ -111,7 +111,7 @@ def itkimage_to_json(itkimage, manager=None):
             direction={'data': directionList,
                 'rows': dimension,
                 'columns': dimension},
-            data=pixelDataBase64
+            compressedBase64Data=pixelDataBase64
         )
 
 
@@ -179,7 +179,7 @@ def itkimage_from_json(js, manager=None):
     else:
         ImageType, dtype = _type_to_image(js['imageType'])
         decompressor = zstd.ZstdDecompressor()
-        pixelBufferArrayCompressed = np.frombuffer(base64.b64decode(js['data']), dtype=dtype)
+        pixelBufferArrayCompressed = np.frombuffer(base64.b64decode(js['compressedBase64Data']), dtype=dtype)
         pixelCount = reduce(lambda x, y: x*y, js['size'], 1)
         numberOfBytes = pixelCount * js['imageType']['components'] * np.dtype(dtype).itemsize
         pixelBufferArray = \

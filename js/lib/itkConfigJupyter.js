@@ -1,5 +1,5 @@
 const itkConfig = {
-  itkModulesPath: '/static/itk'
+  itkModulesPath: __webpack_public_path__ + 'itk'
 }
 
 module.exports = itkConfig

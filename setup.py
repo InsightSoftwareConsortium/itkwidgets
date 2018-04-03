@@ -136,14 +136,23 @@ setup_args = {
         ('share/jupyter/nbextensions/itk-jupyter-widgets', [
             'itkwidgets/static/extension.js',
             'itkwidgets/static/index.js',
-            'itkwidgets/static/index.js.map',
+            'itkwidgets/static/index.js.map'
         ],),
-        ('etc/jupyter/nbconfig/notebook.d/' , ['itk-jupyter-widgets.json'])
+        ('etc/jupyter/nbconfig/notebook.d/' , ['itk-jupyter-widgets.json']),
+        ('share/jupyter/nbextensions/itk-jupyter-widgets/itk/Pipelines', [
+	    'itkwidgets/static/itk/Pipelines/ZstdDecompressWasm.js',
+            'itkwidgets/static/itk/Pipelines/ZstdDecompress.js',
+	    'itkwidgets/static/itk/Pipelines/ZstdDecompressWasm.wasm'
+        ]),
+        ('share/jupyter/nbextensions/itk-jupyter-widgets/itk/WebWorkers', [
+	    'itkwidgets/static/itk/WebWorkers/Pipeline.worker.js'
+        ]),
     ],
     'install_requires': [
         'itk-core',
         'ipywidgets>=7.1.2',
         'numpy',
+	'zstandard',
     ],
     'packages': find_packages(),
     'zip_safe': False,
