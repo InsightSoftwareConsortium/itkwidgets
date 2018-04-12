@@ -86,7 +86,7 @@ def itkimage_to_json(itkimage, manager=None):
         directionList = []
         dimension = itkimage.GetImageDimension()
         pixelArr = itk.GetArrayViewFromImage(itkimage)
-        pixelDataBase64 = base64.b64encode(pixelArr.data)
+        pixelDataBase64 = base64.b64encode(pixelArr.data).decode('ascii')
         for col in range(dimension):
             for row in range(dimension):
                 directionList.append(directionMatrix.get(row, col))

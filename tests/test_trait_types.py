@@ -38,7 +38,7 @@ def test_itkimage_to_json():
     assert(asjson['direction']['data'] == [1.0, 0.0, 0.0, 1.0])
     assert(asjson['direction']['rows'] == 2)
     assert(asjson['direction']['columns'] == 2)
-    assert(asjson['data'] == b'BAAAAABCAAAAAAAAAAAAAAAAAAAAFgBXAAAAAAAAAAAAAAAA')
+    assert(asjson['data'] == 'BAAAAABCAAAAAAAAAAAAAAAAAAAAFgBXAAAAAAAAAAAAAAAA')
 
 def test_itkimage_from_json():
     itkimage_to_json = trait_types.itkimage_to_json
