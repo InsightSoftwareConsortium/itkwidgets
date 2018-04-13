@@ -10,12 +10,7 @@ from traitlets import Unicode
 import numpy as np
 import itk
 from .trait_types import ITKImage, itkimage_serialization
-HAVE_VTK = False
-try:
-    import vtk
-    HAVE_VTK = True
-except ImportError:
-    pass
+
 
 @widgets.register
 class Viewer(widgets.DOMWidget):
@@ -28,11 +23,23 @@ class Viewer(widgets.DOMWidget):
     image = ITKImage(default_value=None, allow_none=True).tag(sync=True, **itkimage_serialization)
 
 def view(image):
+    have_imglyb = False
+    try:
+        import imglyb
+        have_imglyb = True
+    except ImportError:
+        pass
+    have_vtk = False
+    try:
+        import vtk
+        have_vtk = True
+    except ImportError:
+        pass
     viewer = Viewer()
     if isinstance(image, np.ndarray):
         image_from_array = itk.GetImageViewFromArray(image)
         viewer.image = image_from_array
-    elif HAVE_VTK and isinstance(image, vtk.vtkImageData):
+    elif have_vtk and isinstance(image, vtk.vtkImageData):
         from vtk.util import numpy_support as vtk_numpy_support
         array = vtk_numpy_support.vtk_to_numpy(image.GetPointData().GetScalars())
         array.shape = tuple(image.GetDimensions())[::-1]
@@ -40,6 +47,13 @@ def view(image):
         image_from_array.SetSpacing(image.GetSpacing())
         image_from_array.SetOrigin(image.GetOrigin())
         viewer.image = image_from_array
+    elif have_imglyb and isinstance(image,
+            imglyb.util.ReferenceGuardingRandomAccessibleInterval):
+        image_array = imglyb.to_numpy(image)
+        print(image_array)
+        image_from_array = itk.GetImageViewFromArray(image_array)
+
     else:
+        # an itk.Image
         viewer.image = image
     return viewer
