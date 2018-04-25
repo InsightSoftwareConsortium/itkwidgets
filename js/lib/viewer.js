@@ -141,7 +141,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         console.log(`compression amount: ${compressionAmount}`)
         const domWidgetView = this
         const t0 = performance.now()
-        runPipelineBrowser(pipelinePath, args, desiredOutputs, inputs)
+        runPipelineBrowser(null, pipelinePath, args, desiredOutputs, inputs)
           .then(function ({stdout, stderr, outputs}) {
             const t1 = performance.now();
             const duration = Number(t1 - t0).toFixed(1).toString()
