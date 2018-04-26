@@ -7,6 +7,10 @@ try:
     import zstandard as zstd
 except ImportError:
     import zstd
+try:
+    from functools import reduce
+except ImportError:
+    pass
 
 class ITKImage(traitlets.TraitType):
     """A trait type holding an itk.Image object"""
