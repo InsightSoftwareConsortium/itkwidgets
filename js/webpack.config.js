@@ -1,6 +1,8 @@
 var path = require('path')
 var version = require('./package.json').version
 
+const CopyPlugin = require('copy-webpack-plugin')
+
 const vtkRules = require('vtk.js/Utilities/config/rules-vtk.js');
 const commonRules = require('vtk.js/Utilities/config/rules-examples.js');
 
@@ -77,6 +79,26 @@ module.exports = [
             './itkConfig$': path.resolve(__dirname, 'lib', 'itkConfigJupyter.js'),
           },
         },
+        plugins: [
+          new CopyPlugin([
+            {
+              from: path.join(__dirname, 'node_modules', 'itk', 'WebWorkers', 'Pipeline.worker.js'),
+              to: path.join(__dirname, '..', 'itkwidgets', 'static', 'itk', 'WebWorkers', 'Pipeline.worker.js')
+            },
+            {
+              from: path.join(__dirname, 'lib', 'ZstdDecompress', 'web-build', 'ZstdDecompress.js'),
+              to: path.join(__dirname, '..', 'itkwidgets', 'static', 'itk', 'Pipelines', 'ZstdDecompress.js')
+            },
+            {
+              from: path.join(__dirname, 'lib', 'ZstdDecompress', 'web-build', 'ZstdDecompressWasm.js'),
+              to: path.join(__dirname, '..', 'itkwidgets', 'static', 'itk', 'Pipelines', 'ZstdDecompressWasm.js')
+            },
+            {
+              from: path.join(__dirname, 'lib', 'ZstdDecompress', 'web-build', 'ZstdDecompressWasm.wasm'),
+              to: path.join(__dirname, '..', 'itkwidgets', 'static', 'itk', 'Pipelines', 'ZstdDecompressWasm.wasm')
+            },
+          ]),
+        ],
       externals: ['@jupyter-widgets/base', {config: '{}'}]
     },
     {// Embeddable itk-jupyter-widgets bundle
@@ -115,6 +137,26 @@ module.exports = [
             './itkConfig$': path.resolve(__dirname, 'lib', 'itkConfigJupyter.js'),
           },
         },
+        plugins: [
+          new CopyPlugin([
+            {
+              from: path.join(__dirname, 'node_modules', 'itk', 'WebWorkers', 'Pipeline.worker.js'),
+              to: path.join(__dirname, 'dist', 'itk', 'WebWorkers', 'Pipeline.worker.js')
+            },
+            {
+              from: path.join(__dirname, 'lib', 'ZstdDecompress', 'web-build', 'ZstdDecompress.js'),
+              to: path.join(__dirname, 'dist', 'itk', 'Pipelines', 'ZstdDecompress.js')
+            },
+            {
+              from: path.join(__dirname, 'lib', 'ZstdDecompress', 'web-build', 'ZstdDecompressWasm.js'),
+              to: path.join(__dirname, 'dist', 'itk', 'Pipelines', 'ZstdDecompressWasm.js')
+            },
+            {
+              from: path.join(__dirname, 'lib', 'ZstdDecompress', 'web-build', 'ZstdDecompressWasm.wasm'),
+              to: path.join(__dirname, 'dist', 'itk', 'Pipelines', 'ZstdDecompressWasm.wasm')
+            },
+          ]),
+        ],
         externals: ['@jupyter-widgets/base', {config: '{}'}]
     }
 ];

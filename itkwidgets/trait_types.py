@@ -3,6 +3,14 @@ import os
 import traitlets
 import itk
 import numpy as np
+try:
+    import zstandard as zstd
+except ImportError:
+    import zstd
+try:
+    from functools import reduce
+except ImportError:
+    pass
 
 class ITKImage(traitlets.TraitType):
     """A trait type holding an itk.Image object"""
@@ -86,7 +94,9 @@ def itkimage_to_json(itkimage, manager=None):
         directionList = []
         dimension = itkimage.GetImageDimension()
         pixelArr = itk.GetArrayViewFromImage(itkimage)
-        pixelDataBase64 = base64.b64encode(pixelArr.data).decode('ascii')
+        compressor = zstd.ZstdCompressor(level=3)
+        pixelArrCompressed = compressor.compress(pixelArr.data)
+        pixelDataBase64 = base64.b64encode(pixelArrCompressed).decode('ascii')
         for col in range(dimension):
             for row in range(dimension):
                 directionList.append(directionMatrix.get(row, col))
@@ -105,7 +115,7 @@ def itkimage_to_json(itkimage, manager=None):
             direction={'data': directionList,
                 'rows': dimension,
                 'columns': dimension},
-            data=pixelDataBase64
+            compressedBase64Data=pixelDataBase64
         )
 
 
@@ -172,7 +182,14 @@ def itkimage_from_json(js, manager=None):
         return None
     else:
         ImageType, dtype = _type_to_image(js['imageType'])
-        pixelBufferArray = np.frombuffer(base64.b64decode(js['data']), dtype=dtype)
+        decompressor = zstd.ZstdDecompressor()
+        pixelBufferArrayCompressed = np.frombuffer(base64.b64decode(js['compressedBase64Data']), dtype=dtype)
+        pixelCount = reduce(lambda x, y: x*y, js['size'], 1)
+        numberOfBytes = pixelCount * js['imageType']['components'] * np.dtype(dtype).itemsize
+        pixelBufferArray = \
+            np.frombuffer(decompressor.decompress(pixelBufferArrayCompressed,
+                numberOfBytes),
+                    dtype=dtype)
         pixelBufferArray.shape = js['size'][::-1]
         image = itk.PyBuffer[ImageType].GetImageFromArray(pixelBufferArray)
         Dimension = image.GetImageDimension()

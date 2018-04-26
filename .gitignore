@@ -19,5 +19,5 @@ js/package-lock.json
 examples/005_32months_T2_RegT1_Reg2Atlas_ManualBrainMask_Stripped.nrrd
 examples/cthead1.png
 
+js/lib/ZstdDecompress/web-build/
 .pytest_cache/
-

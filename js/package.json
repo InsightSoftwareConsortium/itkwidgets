@@ -49,9 +49,10 @@
     "autoprefixer": "^8.1.0",
     "babel-polyfill": "^6.26.0",
     "base64-js": "^1.2.3",
+    "copy-webpack-plugin": "^4.5.1",
     "css-element-queries": "^1.0.2",
-    "itk": "^8.0.2",
-    "itk-vtk-image-viewer": "^4.4.3",
+    "itk": "^9.0.0",
+    "itk-vtk-image-viewer": "^4.4.4",
     "lodash": "^4.17.5",
     "vtk.js": "6.4.5"
   },
