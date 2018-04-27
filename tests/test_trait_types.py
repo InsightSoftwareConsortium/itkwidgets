@@ -1,5 +1,6 @@
 import itk
 import itkwidgets.trait_types as trait_types
+import numpy as np
 
 def test_ITKImage():
     info_text = trait_types.ITKImage.info_text
@@ -38,7 +39,10 @@ def test_itkimage_to_json():
     assert(asjson['direction']['data'] == [1.0, 0.0, 0.0, 1.0])
     assert(asjson['direction']['rows'] == 2)
     assert(asjson['direction']['columns'] == 2)
-    assert(asjson['compressedBase64Data'] == str('KLUv/SAknQAAWAQAAAAAQgAWAFcAAgDAIDIwAg=='))
+    baseline = np.array([40,181,47,253,32,36,157,0,0,88,4,0,0,0,
+        0,66,0,22,0,87,0,2,0,192,32,50,48,2], dtype=np.uint8)
+    print(np.array(asjson['compressedData'], dtype=np.uint8))
+    assert((np.array(asjson['compressedData'], dtype=np.uint8) == baseline).all())
 
 def test_itkimage_from_json():
     itkimage_to_json = trait_types.itkimage_to_json
