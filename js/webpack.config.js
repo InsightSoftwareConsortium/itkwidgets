@@ -24,6 +24,8 @@ var rules = [
   }
 ].concat(vtkRules, commonRules)
 
+const maxAssetSize = 2000000
+
 
 module.exports = [
     {// Notebook extension
@@ -50,6 +52,10 @@ module.exports = [
           alias: {
             './itkConfig$': path.resolve(__dirname, 'lib', 'itkConfigJupyter.js'),
           },
+        },
+        performance: {
+          maxAssetSize: maxAssetSize,
+          maxEntrypointSize: maxAssetSize
         },
     },
     {// Bundle for the notebook containing the custom widget views and models
@@ -99,7 +105,11 @@ module.exports = [
             },
           ]),
         ],
-      externals: ['@jupyter-widgets/base', {config: '{}'}]
+      externals: ['@jupyter-widgets/base', {config: '{}'}],
+      performance: {
+        maxAssetSize: maxAssetSize,
+        maxEntrypointSize: maxAssetSize
+      },
     },
     {// Embeddable itk-jupyter-widgets bundle
      //
@@ -157,6 +167,10 @@ module.exports = [
             },
           ]),
         ],
-        externals: ['@jupyter-widgets/base', {config: '{}'}]
+        externals: ['@jupyter-widgets/base', {config: '{}'}],
+        performance: {
+          maxAssetSize: maxAssetSize,
+          maxEntrypointSize: maxAssetSize
+        },
     }
 ];
