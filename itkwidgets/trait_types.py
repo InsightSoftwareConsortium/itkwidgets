@@ -1,4 +1,6 @@
 import os
+import six
+
 import traitlets
 import itk
 import numpy as np
@@ -182,7 +184,11 @@ def itkimage_from_json(js, manager=None):
     else:
         ImageType, dtype = _type_to_image(js['imageType'])
         decompressor = zstd.ZstdDecompressor()
-        pixelBufferArrayCompressed = np.array(js['compressedData'], dtype=dtype)
+        if six.PY2:
+            asBytes = js['compressedData'].tobytes()
+            pixelBufferArrayCompressed = np.frombuffer(asBytes, dtype=dtype)
+        else:
+            pixelBufferArrayCompressed = np.frombuffer(js['compressedData'], dtype=dtype)
         pixelCount = reduce(lambda x, y: x*y, js['size'], 1)
         numberOfBytes = pixelCount * js['imageType']['components'] * np.dtype(dtype).itemsize
         pixelBufferArray = \
