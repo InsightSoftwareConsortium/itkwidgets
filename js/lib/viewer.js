@@ -1,7 +1,6 @@
 import 'babel-polyfill'
 import widgets from '@jupyter-widgets/base';
 import _ from 'lodash';
-import base64js from 'base64-js';
 import vtkITKHelper from 'vtk.js/Sources/Common/DataModel/ITKHelper';
 import createViewer from 'itk-vtk-image-viewer/src/createViewer';
 import IntTypes from 'itk/IntTypes'
@@ -13,9 +12,6 @@ const serialize_itkimage = (itkimage) => {
   if (itkimage === null) {
     return null
   } else {
-    //const byteArray = itkimage.data
-    //const base64Buffer = base64js.fromByteArray(Uint8Array(byteArray.buffer))
-    //itkimage.data = base64Buffer
     itkimage.data = null
     return itkimage
   }
@@ -86,8 +82,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
     const image = this.model.get('image')
     if(image) {
       if (!image.data) {
-        const base64Buffer = image.compressedBase64Data
-        let byteArray = base64js.toByteArray(base64Buffer)
+        const byteArray = new Uint8Array(image.compressedData.buffer)
         const reducer = (accumulator, currentValue) => accumulator * currentValue
         const pixelCount = image.size.reduce(reducer, 1)
         let componentSize = null

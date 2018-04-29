@@ -152,6 +152,7 @@ setup_args = {
         'itk-core',
         'ipywidgets>=7.1.2',
         'numpy',
+        'six',
 	'zstandard',
     ],
     'packages': find_packages(),
