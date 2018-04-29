@@ -142,7 +142,8 @@ const ViewerView = widgets.DOMWidgetView.extend({
         const domWidgetView = this
         const t0 = performance.now()
         runPipelineBrowser(null, pipelinePath, args, desiredOutputs, inputs)
-          .then(function ({stdout, stderr, outputs}) {
+          .then(function ({stdout, stderr, outputs, webWorker}) {
+            webWorker.terminate()
             const t1 = performance.now();
             const duration = Number(t1 - t0).toFixed(1).toString()
             console.log("decompression took " + duration + " milliseconds.")
