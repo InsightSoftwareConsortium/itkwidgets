@@ -50,8 +50,8 @@
     "babel-polyfill": "^6.26.0",
     "copy-webpack-plugin": "^4.5.1",
     "css-element-queries": "^1.0.2",
-    "itk": "^9.0.0",
-    "itk-vtk-image-viewer": "^4.4.4",
+    "itk": "^9.1.0",
+    "itk-vtk-image-viewer": "^4.4.5",
     "lodash": "^4.17.5",
     "vtk.js": "6.4.5"
   },
