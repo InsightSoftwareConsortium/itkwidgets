@@ -142,7 +142,6 @@ setup_args = {
         ('share/jupyter/nbextensions/itk-jupyter-widgets/itk/Pipelines', [
 	    'itkwidgets/static/itk/Pipelines/ZstdDecompressWasm.js',
             'itkwidgets/static/itk/Pipelines/ZstdDecompress.js',
-	    'itkwidgets/static/itk/Pipelines/ZstdDecompressWasm.wasm'
         ]),
         ('share/jupyter/nbextensions/itk-jupyter-widgets/itk/WebWorkers', [
 	    'itkwidgets/static/itk/WebWorkers/Pipeline.worker.js'

@@ -99,10 +99,6 @@ module.exports = [
               from: path.join(__dirname, 'lib', 'ZstdDecompress', 'web-build', 'ZstdDecompressWasm.js'),
               to: path.join(__dirname, '..', 'itkwidgets', 'static', 'itk', 'Pipelines', 'ZstdDecompressWasm.js')
             },
-            {
-              from: path.join(__dirname, 'lib', 'ZstdDecompress', 'web-build', 'ZstdDecompressWasm.wasm'),
-              to: path.join(__dirname, '..', 'itkwidgets', 'static', 'itk', 'Pipelines', 'ZstdDecompressWasm.wasm')
-            },
           ]),
         ],
       externals: ['@jupyter-widgets/base', {config: '{}'}],
@@ -160,10 +156,6 @@ module.exports = [
             {
               from: path.join(__dirname, 'lib', 'ZstdDecompress', 'web-build', 'ZstdDecompressWasm.js'),
               to: path.join(__dirname, 'dist', 'itk', 'Pipelines', 'ZstdDecompressWasm.js')
-            },
-            {
-              from: path.join(__dirname, 'lib', 'ZstdDecompress', 'web-build', 'ZstdDecompressWasm.wasm'),
-              to: path.join(__dirname, 'dist', 'itk', 'Pipelines', 'ZstdDecompressWasm.wasm')
             },
           ]),
         ],
