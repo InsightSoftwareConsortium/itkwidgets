@@ -10,6 +10,12 @@ from traitlets import Unicode
 import numpy as np
 import itk
 from .trait_types import ITKImage, itkimage_serialization
+HAVE_VTK = False
+try:
+    import vtk
+    HAVE_VTK = True
+except ImportError:
+    pass
 
 @widgets.register
 class Viewer(widgets.DOMWidget):
@@ -25,6 +31,14 @@ def view(image):
     viewer = Viewer()
     if isinstance(image, np.ndarray):
         image_from_array = itk.GetImageViewFromArray(image)
+        viewer.image = image_from_array
+    elif HAVE_VTK and isinstance(image, vtk.vtkImageData):
+        from vtk.util import numpy_support as vtk_numpy_support
+        array = vtk_numpy_support.vtk_to_numpy(image.GetPointData().GetScalars())
+        array.shape = tuple(image.GetDimensions())[::-1]
+        image_from_array = itk.GetImageViewFromArray(array)
+        image_from_array.SetSpacing(image.GetSpacing())
+        image_from_array.SetOrigin(image.GetOrigin())
         viewer.image = image_from_array
     else:
         viewer.image = image
