@@ -1,0 +1,8 @@
+# fix iopub issues
+mkdir $HOME/.jupyter
+echo "c.NotebookApp.iopub_data_rate_limit=1e22" >> $HOME/.jupyter/jupyter_notebook_config.py
+# install the package
+pip install .
+# add itkwidgets
+jupyter nbextension install --py --sys-prefix itkwidgets
+jupyter nbextension enable --py --sys-prefix itkwidgets

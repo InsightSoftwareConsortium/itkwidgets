@@ -1,0 +1,13 @@
+name: itkwidgets
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.6
+  - numpy
+  - itk
+  - pip:
+    - ipywidgets>=7.1.2
+    - numpy
+    - six
+    - zstandard
