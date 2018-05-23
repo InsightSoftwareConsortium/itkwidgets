@@ -13,6 +13,9 @@ itk-jupyter-widgets
     :target: https://circleci.com/gh/InsightSoftwareConsortium/itk-jupyter-widgets
     :alt: Build status
 
+.. image:: https://mybinder.org/badge.svg
+    :target: https://mybinder.org/v2/gh/4QuantOSS/itk-jupyter-widgets/master
+
 Interactive `Jupyter <https://jupyter.org/>`_ widgets to visualize images in 2D and 3D.
 
 .. image:: https://i.imgur.com/ERK5JtT.png
@@ -51,6 +54,11 @@ After installation, try the following examples that demonstrate how to visualize
 - `ImageJ ImgLib2 images <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/ImageJImgLib2.ipynb>`_ (requires `conda <https://conda.io/>`_ and a local `Fiji <https://fiji.sc/>`_ installation)
 - `NumPy array images <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/NumPyArray.ipynb>`_ (processed with SciPy)
 - `VTK vtkImageData <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/vtkImageData.ipynb>`_
+
+Examples on Binder
+--------
+
+-  `3D ITK Images <https://mybinder.org/v2/gh/4QuantOSS/itk-jupyter-widgets/master?filepath=examples%2F3DImage.ipynb>`_
 
 Hacking
 -------
