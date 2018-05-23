@@ -14,7 +14,7 @@ itk-jupyter-widgets
     :alt: Build status
 
 .. image:: https://mybinder.org/badge.svg
-    :target: https://mybinder.org/v2/gh/4QuantOSS/itk-jupyter-widgets/master
+    :target: https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master
 
 Interactive `Jupyter <https://jupyter.org/>`_ widgets to visualize images in 2D and 3D.
 
@@ -58,7 +58,7 @@ After installation, try the following examples that demonstrate how to visualize
 Examples on Binder
 --------
 
--  `3D ITK Images <https://mybinder.org/v2/gh/4QuantOSS/itk-jupyter-widgets/master?filepath=examples%2F3DImage.ipynb>`_
+-  `3D ITK Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples%2F3DImage.ipynb>`_
 
 Hacking
 -------
