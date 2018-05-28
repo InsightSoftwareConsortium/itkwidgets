@@ -14,7 +14,7 @@ itk-jupyter-widgets
     :alt: Build status
 
 .. image:: https://mybinder.org/badge.svg
-    :target: https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master
+    :target: https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples%2F3DImage.ipynb
 
 Interactive `Jupyter <https://jupyter.org/>`_ widgets to visualize images in 2D and 3D.
 
@@ -59,6 +59,21 @@ Examples on Binder
 --------
 
 -  `3D ITK Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples%2F3DImage.ipynb>`_
+
+Troubleshooting
+---------------
+
+If you experience the notebook warning::
+
+  IOPub data rate exceeded.
+  The notebook server will temporarily stop sending output
+  to the client in order to avoid crashing it.
+  To change this limit, set the config variable
+  `--NotebookApp.iopub_data_rate_limit`.
+
+Set the notebook configuration value::
+
+  jupyter notebook --NotebookApp.iopub_data_rate_limit=1e12
 
 Hacking
 -------
