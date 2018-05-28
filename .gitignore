@@ -22,3 +22,6 @@ examples/vase.vti
 
 js/lib/ZstdDecompress/web-build/
 .pytest_cache/
+
+Pipfile
+Pipfile.lock
