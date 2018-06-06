@@ -15,9 +15,9 @@ js/package-lock.json
 # OS X
 .DS_Store
 
-005_32months_T2_RegT1_Reg2Atlas_ManualBrainMask_Stripped.nrrd
 examples/005_32months_T2_RegT1_Reg2Atlas_ManualBrainMask_Stripped.nrrd
 examples/General_EduRes_Heart_BloodVessels_0.jpg
+examples/TCIA-Head-Neck-PET-CT-HN-HGJ-010-PET.nrrd
 examples/cthead1.png
 examples/vase.vti
 
