@@ -55,5 +55,5 @@ def view(image):
 
     else:
         # an itk.Image
-        viewer.image = image
+        viewer.image = itk.output(image)
     return viewer
