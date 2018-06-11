@@ -52,6 +52,7 @@ After installation, try the following examples that demonstrate how to visualize
 - `Dask Array images <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/DaskArray.ipynb>`_
 - `ImageJ ImgLib2 images <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/ImageJImgLib2.ipynb>`_ (requires `conda <https://conda.io/>`_ and a local `Fiji <https://fiji.sc/>`_ installation)
 - `NumPy array images <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/NumPyArray.ipynb>`_ (processed with SciPy)
+- `NumPy array images <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/scikit-image.ipynb>`_ (processed with scikit-image)
 - `VTK vtkImageData <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/vtkImageData.ipynb>`_
 
 Examples on Binder
@@ -61,6 +62,7 @@ Examples on Binder
 - `3D ITK Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples%2F3DImage.ipynb>`_
 - `Dask Array images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/DaskArray.ipynb>`_
 - `NumPy array images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/NumPyArray.ipynb>`_ (processed with SciPy)
+- `NumPy array images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/scikit-image.ipynb>`_ (processed with scikit-image)
 
 Troubleshooting
 ---------------
