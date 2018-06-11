@@ -12,6 +12,12 @@ import itk
 from .trait_types import ITKImage, itkimage_serialization
 
 
+def is_arraylike(arr):
+    return hasattr(arr, 'shape') and \
+        hasattr(arr, 'dtype') and \
+        hasattr(arr, '__array__') and \
+        hasattr(arr, 'ndim')
+
 @widgets.register
 class Viewer(widgets.DOMWidget):
     _view_name = Unicode('ViewerView').tag(sync=True)
@@ -36,8 +42,9 @@ def view(image):
     except ImportError:
         pass
     viewer = Viewer()
-    if isinstance(image, np.ndarray):
-        image_from_array = itk.GetImageViewFromArray(image)
+    if is_arraylike(image):
+        arr = np.asarray(image)
+        image_from_array = itk.GetImageViewFromArray(arr)
         viewer.image = image_from_array
     elif have_vtk and isinstance(image, vtk.vtkImageData):
         from vtk.util import numpy_support as vtk_numpy_support
@@ -50,7 +57,6 @@ def view(image):
     elif have_imglyb and isinstance(image,
             imglyb.util.ReferenceGuardingRandomAccessibleInterval):
         image_array = imglyb.to_numpy(image)
-        print(image_array)
         image_from_array = itk.GetImageViewFromArray(image_array)
 
     else:
