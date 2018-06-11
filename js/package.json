@@ -42,7 +42,7 @@
     "url-loader": "^1.0.1",
     "webpack": "^4.1.1",
     "webpack-cli": "^2.0.12",
-    "worker-loader": "^1.1.1"
+    "worker-loader": "^2.0.0"
   },
   "dependencies": {
     "@jupyter-widgets/base": "^1.1.8",
@@ -51,9 +51,9 @@
     "copy-webpack-plugin": "^4.5.1",
     "css-element-queries": "^1.0.2",
     "itk": "^9.1.0",
-    "itk-vtk-image-viewer": "^4.4.5",
+    "itk-vtk-image-viewer": "^4.5.0",
     "lodash": "^4.17.5",
-    "vtk.js": "6.4.5"
+    "vtk.js": "6.6.1"
   },
   "jupyterlab": {
     "extension": "lib/extension-jupyterlab"
