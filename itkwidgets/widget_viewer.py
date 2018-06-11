@@ -12,6 +12,12 @@ import itk
 from .trait_types import ITKImage, itkimage_serialization
 
 
+def is_arraylike(arr):
+    return hasattr(arr, 'shape') and \
+        hasattr(arr, 'dtype') and \
+        hasattr(arr, '__array__') and \
+        hasattr(arr, 'ndim')
+
 @widgets.register
 class Viewer(widgets.DOMWidget):
     _view_name = Unicode('ViewerView').tag(sync=True)
@@ -23,12 +29,6 @@ class Viewer(widgets.DOMWidget):
     image = ITKImage(default_value=None, allow_none=True).tag(sync=True, **itkimage_serialization)
 
 def view(image):
-    have_dask = False
-    try:
-        import dask.array
-        have_dask = True
-    except ImportError:
-        pass
     have_imglyb = False
     try:
         import imglyb
@@ -42,12 +42,9 @@ def view(image):
     except ImportError:
         pass
     viewer = Viewer()
-    if isinstance(image, np.ndarray):
-        image_from_array = itk.GetImageViewFromArray(image)
-        viewer.image = image_from_array
-    elif have_dask and isinstance(image, dask.array.core.Array):
-        array = np.array(image)
-        image_from_array = itk.GetImageViewFromArray(array)
+    if is_arraylike(image):
+        arr = np.asarray(image)
+        image_from_array = itk.GetImageViewFromArray(arr)
         viewer.image = image_from_array
     elif have_vtk and isinstance(image, vtk.vtkImageData):
         from vtk.util import numpy_support as vtk_numpy_support
