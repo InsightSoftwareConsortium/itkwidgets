@@ -1,8 +1,8 @@
 import 'babel-polyfill'
-import widgets from '@jupyter-widgets/base';
-import _ from 'lodash';
-import vtkITKHelper from 'vtk.js/Sources/Common/DataModel/ITKHelper';
-import createViewer from 'itk-vtk-image-viewer/src/createViewer';
+const widgets = require('@jupyter-widgets/base')
+const  _ = require('lodash')
+import vtkITKHelper from 'vtk.js/Sources/Common/DataModel/ITKHelper'
+import createViewer from 'itk-vtk-image-viewer/src/createViewer'
 import IntTypes from 'itk/IntTypes'
 import FloatTypes from 'itk/FloatTypes'
 import IOTypes from 'itk/IOTypes'
