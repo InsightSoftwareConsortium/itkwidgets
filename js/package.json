@@ -20,12 +20,12 @@
   ],
   "files": [
     "lib/**/*.js",
-    "dist/*.js"
+    "dist/*.js",
+    "dist/itk/**"
   ],
   "scripts": {
     "clean": "rimraf dist/",
     "build": "webpack -p",
-    "prepublish": "npm run clean && npm run build",
     "test": "echo \"Error: no test specified\" && exit 1",
     "watch": "webpack --watch --progress --colors"
   },

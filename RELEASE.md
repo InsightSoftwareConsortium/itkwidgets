@@ -27,6 +27,7 @@ git push upstream v$version
 git clean -fdx
 cd js
 npm install
+npm run build
 npm publish
 cd ..
 ```
