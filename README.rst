@@ -93,6 +93,12 @@ For a development installation (requires `Node.js <https://nodejs.org/en/downloa
   jupyter nbextension enable --py --sys-prefix widgetsnbextension
   python -m pytest
 
+The above commands will setup your system for development with the Jupyter
+Notebook. To develop for Jupyter Lab, additionally run::
+
+  jupyter labextension install @jupyter-widgets/jupyterlab-manager
+  jupyter labextension install ./js
+
 .. warning::
 
   This project is under active development. Its API and behavior may change at

@@ -69,7 +69,8 @@ class NPM(Command):
 
     targets = [
         os.path.join(here, 'itkwidgets', 'static', 'extension.js'),
-        os.path.join(here, 'itkwidgets', 'static', 'index.js')
+        os.path.join(here, 'itkwidgets', 'static', 'index.js'),
+        os.path.join(here, 'js', 'dist', 'labextension.js')
     ]
 
     def initialize_options(self):
@@ -170,7 +171,12 @@ setup_args = {
     'keywords': [
         'ipython',
         'jupyter',
+        'jupyterlab-extension',
         'widgets',
+        'itk',
+        'imaging',
+        'visualization',
+        'webgl',
     ],
     'classifiers': [
         'Development Status :: 4 - Beta',

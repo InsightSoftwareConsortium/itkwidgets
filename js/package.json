@@ -13,10 +13,12 @@
     "widgets",
     "ipython",
     "ipywidgets",
-    "jupyterlab-extension",
     "itk",
     "imaging",
-    "visualization"
+    "visualization",
+    "webgl",
+    "jupyterlab",
+    "jupyterlab-extension"
   ],
   "files": [
     "lib/**/*.js",
@@ -42,6 +44,7 @@
     "url-loader": "^1.0.1",
     "webpack": "^4.1.1",
     "webpack-cli": "^2.0.12",
+    "webpack-node-externals": "^1.7.2",
     "worker-loader": "^2.0.0"
   },
   "dependencies": {
@@ -56,6 +59,6 @@
     "vtk.js": "6.6.1"
   },
   "jupyterlab": {
-    "extension": "lib/extension-jupyterlab"
+    "extension": "dist/labextension"
   }
 }
