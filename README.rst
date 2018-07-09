@@ -38,9 +38,13 @@ These widgets are built on
 Installation
 ------------
 
-To install, use pip::
+To install the widgets for the Jupyter Notebook::
 
   pip install itkwidgets
+
+For Jupyter Lab, additionally run::
+
+  jupyter labextension install @jupyter-widgets/jupyterlab-manager itk-jupyter-widgets
 
 Examples
 --------
