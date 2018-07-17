@@ -18,9 +18,9 @@ itk-jupyter-widgets
 
 Interactive `Jupyter <https://jupyter.org/>`_ widgets to visualize images in 2D and 3D.
 
-.. image:: https://i.imgur.com/ERK5JtT.png
+.. image:: https://i.imgur.com/d8aXycW.png
     :width: 800px
-    :alt: Monkey brain volume rendering
+    :alt: itk-jupyter-widgets chest CT in JupyterLab
 
 These widgets are designed to support image analysis with the `Insight Toolkit
 (ITK) <https://itk.org/>`_, but they also work with other spatial analysis tools
