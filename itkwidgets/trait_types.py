@@ -13,11 +13,70 @@ try:
 except ImportError:
     pass
 
+def is_arraylike(arr):
+    return hasattr(arr, 'shape') and \
+        hasattr(arr, 'dtype') and \
+        hasattr(arr, '__array__') and \
+        hasattr(arr, 'ndim')
+
+have_imglyb = False
+try:
+    import imglyb
+    have_imglyb = True
+except ImportError:
+    pass
+have_vtk = False
+try:
+    import vtk
+    have_vtk = True
+except ImportError:
+    pass
+
 class ITKImage(traitlets.TraitType):
     """A trait type holding an itk.Image object"""
 
     info_text = 'An N-dimensional, potentially multi-component, scientific ' + \
     'image with origin, spacing, and direction metadata'
+
+    # Hold a reference to the source object to use with shallow views
+    _source_object = None
+
+    def validate(self, obj, value):
+        if is_arraylike(value):
+            array = np.asarray(value)
+            self._source_object = array
+            image_from_array = itk.GetImageViewFromArray(array)
+            return image_from_array
+        elif have_vtk and isinstance(value, vtk.vtkImageData):
+            from vtk.util import numpy_support as vtk_numpy_support
+            array = vtk_numpy_support.vtk_to_numpy(value.GetPointData().GetScalars())
+            array.shape = tuple(value.GetDimensions())[::-1]
+            self._source_object = array
+            image_from_array = itk.GetImageViewFromArray(array)
+            image_from_array.SetSpacing(value.GetSpacing())
+            image_from_array.SetOrigin(value.GetOrigin())
+            return image_from_array
+        elif have_imglyb and isinstance(value,
+                imglyb.util.ReferenceGuardingRandomAccessibleInterval):
+            array = imglyb.to_numpy(value)
+            self._source_object = array
+            image_from_array = itk.GetImageViewFromArray(array)
+            return image_from_array
+
+        try:
+            # an itk.Image or a filter that produces an Image
+            # return itk.output(value)
+            # Working around traitlets / ipywidgets update mechanism to
+            # force an update. While the result of __eq__ can indicate it is
+            # the same object, the actual contents may have changed, as
+            # indicated by image.GetMTime()
+            value = itk.output(value)
+            self._source_object = value
+            grafted = value.__New_orig__()
+            grafted.Graft(value)
+            return grafted
+        except:
+            self.error(obj, value)
 
 def _image_to_type(itkimage):
     component_str = repr(itkimage).split('itkImagePython.')[1].split(';')[0][8:]

@@ -34,16 +34,16 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       _view_module: 'itk-jupyter-widgets',
       _model_module_version: '0.10.2',
       _view_module_version: '0.10.2',
-      image: null
+      rendered_image: null
     })
   }}, {
   serializers: _.extend({
-    image: { serialize: serialize_itkimage, deserialize: deserialize_itkimage }
+    rendered_image: { serialize: serialize_itkimage, deserialize: deserialize_itkimage }
   }, widgets.DOMWidgetModel.serializers)
 })
 
 
-const createRenderingPipeline = (domWidgetView, image) => {
+const createRenderingPipeline = (domWidgetView, rendered_image) => {
   const containerStyle = {
     position: 'relative',
     width: '100%',
@@ -61,32 +61,37 @@ const createRenderingPipeline = (domWidgetView, image) => {
     backgroundColor: [1.0, 1.0, 1.0],
     containerStyle: containerStyle,
   };
-  const imageData = vtkITKHelper.convertItkToVtkImage(image)
-  const is3D = image.imageType.dimension === 3
-  domWidgetView._renderingPipeline = createViewer(domWidgetView.el, {
-    viewerConfig: viewerConfig,
-    image: imageData,
-    use2D: !is3D,
-  })
+  const imageData = vtkITKHelper.convertItkToVtkImage(rendered_image)
+  const is3D = rendered_image.imageType.dimension === 3
+  if (domWidgetView._renderingPipeline) {
+    domWidgetView._renderingPipeline.imageSource.setInputData(imageData)
+    domWidgetView._renderingPipeline.view.renderLater()
+  } else {
+    domWidgetView._renderingPipeline = createViewer(domWidgetView.el, {
+      viewerConfig: viewerConfig,
+      image: imageData,
+      use2D: !is3D,
+    })
+  }
 }
 
 
 // Custom View. Renders the widget model.
 const ViewerView = widgets.DOMWidgetView.extend({
   render: function() {
-    this.image_changed()
-    this.model.on('change:image', this.image_changed, this)
+    this.rendered_image_changed()
+    this.model.on('change:rendered_image', this.rendered_image_changed, this)
   },
 
-  image_changed: function() {
-    const image = this.model.get('image')
-    if(image) {
-      if (!image.data) {
-        const byteArray = new Uint8Array(image.compressedData.buffer)
+  rendered_image_changed: function() {
+    const rendered_image = this.model.get('rendered_image')
+    if(rendered_image) {
+      if (!rendered_image.data) {
+        const byteArray = new Uint8Array(rendered_image.compressedData.buffer)
         const reducer = (accumulator, currentValue) => accumulator * currentValue
-        const pixelCount = image.size.reduce(reducer, 1)
+        const pixelCount = rendered_image.size.reduce(reducer, 1)
         let componentSize = null
-        switch (image.imageType.componentType) {
+        switch (rendered_image.imageType.componentType) {
           case IntTypes.Int8:
             componentSize = 1
             break
@@ -119,9 +124,9 @@ const ViewerView = widgets.DOMWidgetView.extend({
             componentSize = 8
             break
           default:
-            console.error('Unexpected component type: ' + image.imageType.componentType)
+            console.error('Unexpected component type: ' + rendered_image.imageType.componentType)
         }
-        const numberOfBytes = pixelCount * image.imageType.components * componentSize
+        const numberOfBytes = pixelCount * rendered_image.imageType.components * componentSize
         const pipelinePath = 'ZstdDecompress'
         const args = ['input.bin', 'output.bin', String(numberOfBytes)]
         const desiredOutputs = [
@@ -143,24 +148,24 @@ const ViewerView = widgets.DOMWidgetView.extend({
             const duration = Number(t1 - t0).toFixed(1).toString()
             console.log("decompression took " + duration + " milliseconds.")
 
-            switch (image.imageType.componentType) {
+            switch (rendered_image.imageType.componentType) {
               case IntTypes.Int8:
-                image.data = new Int8Array(outputs[0].data.buffer)
+                rendered_image.data = new Int8Array(outputs[0].data.buffer)
                 break
               case IntTypes.UInt8:
-                image.data = outputs[0].data
+                rendered_image.data = outputs[0].data
                 break
               case IntTypes.Int16:
-                image.data = new Int16Array(outputs[0].data.buffer)
+                rendered_image.data = new Int16Array(outputs[0].data.buffer)
                 break
               case IntTypes.UInt16:
-                image.data = new Uint16Array(outputs[0].data.buffer)
+                rendered_image.data = new Uint16Array(outputs[0].data.buffer)
                 break
               case IntTypes.Int32:
-                image.data = new Int32Array(outputs[0].data.buffer)
+                rendered_image.data = new Int32Array(outputs[0].data.buffer)
                 break
               case IntTypes.UInt32:
-                image.data = new Uint32Array(outputs[0].data.buffer)
+                rendered_image.data = new Uint32Array(outputs[0].data.buffer)
                 break
               // not currently defined in JavaScript
               //case IntTypes.Int64:
@@ -168,18 +173,18 @@ const ViewerView = widgets.DOMWidgetView.extend({
               //case IntTypes.UInt64:
                 //break
               case FloatTypes.Float32:
-                image.data = new Float32Array(outputs[0].data.buffer)
+                rendered_image.data = new Float32Array(outputs[0].data.buffer)
                 break
               case FloatTypes.Float64:
-                image.data = new Float64Array(outputs[0].data.buffer)
+                rendered_image.data = new Float64Array(outputs[0].data.buffer)
                 break
               default:
-                console.error('Unexpected component type: ' + image.imageType.componentType)
+                console.error('Unexpected component type: ' + rendered_image.imageType.componentType)
             }
-            createRenderingPipeline(domWidgetView, image)
+            createRenderingPipeline(domWidgetView, rendered_image)
           })
       } else {
-        createRenderingPipeline(this, image)
+        createRenderingPipeline(this, rendered_image)
       }
     }
   }
