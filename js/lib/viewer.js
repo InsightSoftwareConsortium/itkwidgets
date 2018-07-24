@@ -57,18 +57,18 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
     overflow: 'hidden',
     display: 'block-inline'
   };
-  const viewerConfig = {
+  const viewerStyle = {
     backgroundColor: [1.0, 1.0, 1.0],
     containerStyle: containerStyle,
   };
   const imageData = vtkITKHelper.convertItkToVtkImage(rendered_image)
   const is3D = rendered_image.imageType.dimension === 3
-  if (domWidgetView._renderingPipeline) {
-    domWidgetView._renderingPipeline.imageSource.setInputData(imageData)
-    domWidgetView._renderingPipeline.view.renderLater()
+  if (domWidgetView.itkVtkViewer) {
+    domWidgetView.itkVtkViewer.setImage(imageData)
+    domWidgetView.itkVtkViewer.renderLater()
   } else {
-    domWidgetView._renderingPipeline = createViewer(domWidgetView.el, {
-      viewerConfig: viewerConfig,
+    domWidgetView.itkVtkViewer = createViewer(domWidgetView.el, {
+      viewerStyle: viewerStyle,
       image: imageData,
       use2D: !is3D,
     })
