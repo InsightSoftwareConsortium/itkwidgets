@@ -151,7 +151,6 @@ setup_args = {
     ],
     'install_requires': [
         'itk-core',
-        'ipywebrtc',
         'ipywidgets>=7.1.2',
         'numpy',
         'six',
