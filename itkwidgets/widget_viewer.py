@@ -12,6 +12,11 @@ import time
 import ipywidgets as widgets
 from traitlets import Unicode, validate
 from .trait_types import ITKImage, itkimage_serialization
+try:
+    import ipywebrtc
+    ViewerParent = ipywebrtc.MediaStream
+except ImportError:
+    ViewerParent = widgets.DOMWidget
 
 def get_ioloop():
     import IPython
@@ -48,7 +53,7 @@ def debounced(delay_seconds=0.5, method=False):
     return wrapped
 
 @widgets.register
-class Viewer(widgets.DOMWidget):
+class Viewer(ViewerParent):
     """Viewer widget class."""
     _view_name = Unicode('ViewerView').tag(sync=True)
     _model_name = Unicode('ViewerModel').tag(sync=True)
