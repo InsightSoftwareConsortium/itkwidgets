@@ -63,15 +63,21 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
   };
   const imageData = vtkITKHelper.convertItkToVtkImage(rendered_image)
   const is3D = rendered_image.imageType.dimension === 3
-  if (domWidgetView.itkVtkViewer) {
-    domWidgetView.itkVtkViewer.setImage(imageData)
-    domWidgetView.itkVtkViewer.renderLater()
+  if (domWidgetView.model.itkVtkViewer) {
+    domWidgetView.model.itkVtkViewer.setImage(imageData)
+    domWidgetView.model.itkVtkViewer.renderLater()
   } else {
-    domWidgetView.itkVtkViewer = createViewer(domWidgetView.el, {
+    domWidgetView.model.itkVtkViewer = createViewer(domWidgetView.el, {
       viewerStyle: viewerStyle,
       image: imageData,
       use2D: !is3D,
     })
+    const viewProxy = domWidgetView.model.itkVtkViewer.getViewProxy()
+    const renderWindow = viewProxy.getRenderWindow()
+    const viewCanvas = renderWindow.getViews()[0].getCanvas()
+    const stream  = viewCanvas.captureStream(30000./1001.)
+    // Used by ipywebrtc
+    domWidgetView.model.stream = Promise.resolve(stream)
   }
 }
 
