@@ -81,6 +81,27 @@ class Viewer(ViewerParent):
         self.rendered_image = self.image
 
 def view(image):
-    """View the provided image."""
+    """View the provided image.
+
+    Creates and returns an ipywidget to visualize the image.
+
+    The image can be 2D or 3D.
+
+    The type of the image can be an numpy.array, itk.Image,
+    vtk.vtkImageData, imglyb.ReferenceGuardingRandomAccessibleInterval, or
+    something that is NumPy array-like, e.g. a Dask array.
+
+    Parameters
+    ----------
+    image: array_like, itk.Image, or vtk.vtkImageData
+
+    Returns
+    -------
+    viewer : ipywidget
+        Display by placing at the end of a Jupyter cell or calling
+        IPython.display.display. Query or set properties on the object to change
+        the visualization or retrieve values created by interacting with the
+        widget.
+    """
     viewer = Viewer(image=image)
     return viewer
