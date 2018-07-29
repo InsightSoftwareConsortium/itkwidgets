@@ -34,7 +34,13 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       _view_module: 'itk-jupyter-widgets',
       _model_module_version: '0.10.2',
       _view_module_version: '0.10.2',
-      rendered_image: null
+      rendered_image: null,
+      ui_collapsed: false,
+      annotations: true,
+      interpolation: true,
+      mode: 'v',
+      shadow: true,
+      slicing_planes: false,
     })
   }}, {
   serializers: _.extend({
@@ -63,7 +69,7 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
   };
   const imageData = vtkITKHelper.convertItkToVtkImage(rendered_image)
   const is3D = rendered_image.imageType.dimension === 3
-  if (domWidgetView.model.itkVtkViewer) {
+  if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
     domWidgetView.model.itkVtkViewer.setImage(imageData)
     domWidgetView.model.itkVtkViewer.renderLater()
   } else {
@@ -85,8 +91,80 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
 // Custom View. Renders the widget model.
 const ViewerView = widgets.DOMWidgetView.extend({
   render: function() {
-    this.rendered_image_changed()
     this.model.on('change:rendered_image', this.rendered_image_changed, this)
+    this.model.on('change:ui_collapsed', this.ui_collapsed_changed, this)
+    this.model.on('change:annotations', this.annotations_changed, this)
+    this.model.on('change:interpolation', this.interpolation_changed, this)
+    this.model.on('change:mode', this.mode_changed, this)
+    this.model.on('change:shadow', this.shadow_changed, this)
+    this.model.on('change:slicing_planes', this.slicing_planes_changed, this)
+    this.rendered_image_changed().then(() => {
+      this.ui_collapsed_changed()
+      this.annotations_changed()
+      this.interpolation_changed()
+      this.mode_changed()
+      this.shadow_changed()
+      this.slicing_planes_changed()
+      const onUserInterfaceCollapsedToggle = (collapsed) => {
+        if (collapsed !== this.model.get('ui_collapsed')) {
+          this.model.set('ui_collapsed', collapsed)
+          this.model.save_changes()
+        }
+      }
+      this.model.itkVtkViewer.subscribeToggleUserInterfaceCollapsed(onUserInterfaceCollapsedToggle)
+      const onAnnotationsToggle = (enabled) => {
+        if (enabled !== this.model.get('annotations')) {
+          this.model.set('annotations', enabled)
+          this.model.save_changes()
+        }
+      }
+      this.model.itkVtkViewer.subscribeToggleAnnotations(onAnnotationsToggle)
+      const onInterpolationToggle = (enabled) => {
+        if (enabled !== this.model.get('interpolation')) {
+          this.model.set('interpolation', enabled)
+          this.model.save_changes()
+        }
+      }
+      this.model.itkVtkViewer.subscribeToggleInterpolation(onInterpolationToggle)
+      const onViewModeChanged = (mode) => {
+        let pythonMode = null;
+        switch (mode) {
+        case 'XPlane':
+          pythonMode = 'x'
+          break
+        case 'YPlane':
+          pythonMode = 'y'
+          break
+        case 'ZPlane':
+          pythonMode = 'z'
+          break
+        case 'VolumeRendering':
+          pythonMode = 'v'
+          break
+        default:
+          throw new Error('Unknown view mode')
+        }
+        if (pythonMode !== this.model.get('mode')) {
+          this.model.set('mode', pythonMode)
+          this.model.save_changes()
+        }
+      }
+      this.model.itkVtkViewer.subscribeViewModeChanged(onViewModeChanged)
+      const onShadowToggle = (enabled) => {
+        if (enabled !== this.model.get('shadow')) {
+          this.model.set('shadow', enabled)
+          this.model.save_changes()
+        }
+      }
+      this.model.itkVtkViewer.subscribeToggleShadow(onShadowToggle)
+      const onSlicingPlanesToggle = (enabled) => {
+        if (enabled !== this.model.get('slicing_planes')) {
+          this.model.set('slicing_planes', enabled)
+          this.model.save_changes()
+        }
+      }
+      this.model.itkVtkViewer.subscribeToggleSlicingPlanes(onSlicingPlanesToggle)
+    })
   },
 
   rendered_image_changed: function() {
@@ -147,7 +225,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         console.log(`compression amount: ${compressionAmount}`)
         const domWidgetView = this
         const t0 = performance.now()
-        runPipelineBrowser(null, pipelinePath, args, desiredOutputs, inputs)
+        return runPipelineBrowser(null, pipelinePath, args, desiredOutputs, inputs)
           .then(function ({stdout, stderr, outputs, webWorker}) {
             webWorker.terminate()
             const t1 = performance.now();
@@ -187,13 +265,71 @@ const ViewerView = widgets.DOMWidgetView.extend({
               default:
                 console.error('Unexpected component type: ' + rendered_image.imageType.componentType)
             }
-            createRenderingPipeline(domWidgetView, rendered_image)
+            return createRenderingPipeline(domWidgetView, rendered_image)
           })
       } else {
-        createRenderingPipeline(this, rendered_image)
+        return Promise.resolve(createRenderingPipeline(this, rendered_image))
       }
     }
-  }
+  },
+
+  ui_collapsed_changed: function() {
+    const uiCollapsed = this.model.get('ui_collapsed')
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      this.model.itkVtkViewer.setUserInterfaceCollapsed(uiCollapsed)
+    }
+  },
+
+  annotations_changed: function() {
+    const annotations = this.model.get('annotations')
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      this.model.itkVtkViewer.setAnnotationsEnabled(annotations)
+    }
+  },
+
+  interpolation_changed: function() {
+    const interpolation = this.model.get('interpolation')
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      this.model.itkVtkViewer.setInterpolationEnabled(interpolation)
+    }
+  },
+
+  mode_changed: function() {
+    const mode = this.model.get('mode')
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      switch (mode) {
+      case 'x':
+        this.model.itkVtkViewer.setViewMode('XPlane')
+        break
+      case 'y':
+        this.model.itkVtkViewer.setViewMode('YPlane')
+        break
+      case 'z':
+        this.model.itkVtkViewer.setViewMode('ZPlane')
+        break
+      case 'v':
+        this.model.itkVtkViewer.setViewMode('VolumeRendering')
+        break
+      default:
+        throw new Error('Unknown view mode')
+      }
+    }
+  },
+
+  shadow_changed: function() {
+    const shadow = this.model.get('shadow')
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      this.model.itkVtkViewer.setShadowEnabled(shadow)
+    }
+  },
+
+  slicing_planes_changed: function() {
+    const slicing_planes = this.model.get('slicing_planes')
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      this.model.itkVtkViewer.setSlicingPlanesEnabled(slicing_planes)
+    }
+  },
+
 });
 
 module.exports = {

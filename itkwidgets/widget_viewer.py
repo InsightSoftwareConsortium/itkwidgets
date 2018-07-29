@@ -10,7 +10,7 @@ import functools
 import time
 
 import ipywidgets as widgets
-from traitlets import Unicode, validate
+from traitlets import CBool, Unicode, CaselessStrEnum, validate
 from .trait_types import ITKImage, itkimage_serialization
 try:
     import ipywebrtc
@@ -65,6 +65,12 @@ class Viewer(ViewerParent):
     _image_modified_time = 0
     rendered_image = ITKImage(default_value=None, allow_none=True).tag(sync=True, **itkimage_serialization)
     _rendered_image_modified_time = 0
+    ui_collapsed = CBool(default_value=False).tag(sync=True)
+    annotations = CBool(default_value=True).tag(sync=True)
+    interpolation = CBool(default_value=True).tag(sync=True)
+    mode = CaselessStrEnum(('x', 'y', 'z', 'v'), default_value='v').tag(sync=True)
+    shadow = CBool(default_value=True).tag(sync=True)
+    slicing_planes = CBool(default_value=False).tag(sync=True)
 
     def __init__(self, **kwargs):
         super(Viewer, self).__init__(**kwargs)
@@ -80,8 +86,9 @@ class Viewer(ViewerParent):
             return
         self.rendered_image = self.image
 
-def view(image):
-    """View the provided image.
+def view(image, ui_collapsed=False, annotations=True, interpolation=True,
+        mode='v', shadow=True, slicing_planes=False):
+    """View the image.
 
     Creates and returns an ipywidget to visualize the image.
 
@@ -93,7 +100,32 @@ def view(image):
 
     Parameters
     ----------
-    image: array_like, itk.Image, or vtk.vtkImageData
+    image : array_like, itk.Image, or vtk.vtkImageData
+        The 2D or 3D image to visualize.
+
+    ui_collapsed : bool, optional, default: False
+        Collapse the native widget user interface.
+
+    annotations : bool, optional, default: True
+        Display annotations describing orientation and the value of a
+        mouse-position-based data probe.
+
+    interpolation: bool, optional, default: True
+        Linear as opposed to nearest neighbor interpolation for image slices.
+
+    mode: 'x', 'y', 'z', or 'v', optional, default: 'v'
+        Only relevant for 3D images.
+        Viewing mode:
+            'x': x-plane
+            'y': y-plane
+            'z': z-plane
+            'v': volume rendering
+
+    shadow: bool, optional, default: True
+        Use shadowing in the volume rendering.
+
+    slicing_planes: bool, optional, default: False
+        Enable slicing planes on the volume rendering.
 
     Returns
     -------
@@ -103,5 +135,7 @@ def view(image):
         the visualization or retrieve values created by interacting with the
         widget.
     """
-    viewer = Viewer(image=image)
+    viewer = Viewer(image=image, ui_collapsed=ui_collapsed,
+            annotations=annotations, interpolation=interpolation, mode=mode,
+            shadow=shadow, slicing_planes=slicing_planes)
     return viewer
