@@ -69,6 +69,7 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
   };
   const imageData = vtkITKHelper.convertItkToVtkImage(rendered_image)
   const is3D = rendered_image.imageType.dimension === 3
+  domWidgetView.model.use2D = !is3D
   if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
     domWidgetView.model.itkVtkViewer.setImage(imageData)
     domWidgetView.model.itkVtkViewer.renderLater()
@@ -126,44 +127,46 @@ const ViewerView = widgets.DOMWidgetView.extend({
         }
       }
       this.model.itkVtkViewer.subscribeToggleInterpolation(onInterpolationToggle)
-      const onViewModeChanged = (mode) => {
-        let pythonMode = null;
-        switch (mode) {
-        case 'XPlane':
-          pythonMode = 'x'
-          break
-        case 'YPlane':
-          pythonMode = 'y'
-          break
-        case 'ZPlane':
-          pythonMode = 'z'
-          break
-        case 'VolumeRendering':
-          pythonMode = 'v'
-          break
-        default:
-          throw new Error('Unknown view mode')
+      if (!this.model.use2D) {
+        const onViewModeChanged = (mode) => {
+          let pythonMode = null;
+          switch (mode) {
+          case 'XPlane':
+            pythonMode = 'x'
+            break
+          case 'YPlane':
+            pythonMode = 'y'
+            break
+          case 'ZPlane':
+            pythonMode = 'z'
+            break
+          case 'VolumeRendering':
+            pythonMode = 'v'
+            break
+          default:
+            throw new Error('Unknown view mode')
+          }
+          if (pythonMode !== this.model.get('mode')) {
+            this.model.set('mode', pythonMode)
+            this.model.save_changes()
+          }
         }
-        if (pythonMode !== this.model.get('mode')) {
-          this.model.set('mode', pythonMode)
-          this.model.save_changes()
+        this.model.itkVtkViewer.subscribeViewModeChanged(onViewModeChanged)
+        const onShadowToggle = (enabled) => {
+          if (enabled !== this.model.get('shadow')) {
+            this.model.set('shadow', enabled)
+            this.model.save_changes()
+          }
         }
+        this.model.itkVtkViewer.subscribeToggleShadow(onShadowToggle)
+        const onSlicingPlanesToggle = (enabled) => {
+          if (enabled !== this.model.get('slicing_planes')) {
+            this.model.set('slicing_planes', enabled)
+            this.model.save_changes()
+          }
+        }
+        this.model.itkVtkViewer.subscribeToggleSlicingPlanes(onSlicingPlanesToggle)
       }
-      this.model.itkVtkViewer.subscribeViewModeChanged(onViewModeChanged)
-      const onShadowToggle = (enabled) => {
-        if (enabled !== this.model.get('shadow')) {
-          this.model.set('shadow', enabled)
-          this.model.save_changes()
-        }
-      }
-      this.model.itkVtkViewer.subscribeToggleShadow(onShadowToggle)
-      const onSlicingPlanesToggle = (enabled) => {
-        if (enabled !== this.model.get('slicing_planes')) {
-          this.model.set('slicing_planes', enabled)
-          this.model.save_changes()
-        }
-      }
-      this.model.itkVtkViewer.subscribeToggleSlicingPlanes(onSlicingPlanesToggle)
     })
   },
 
@@ -296,7 +299,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
 
   mode_changed: function() {
     const mode = this.model.get('mode')
-    if (this.model.hasOwnProperty('itkVtkViewer')) {
+    if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
       switch (mode) {
       case 'x':
         this.model.itkVtkViewer.setViewMode('XPlane')
@@ -318,14 +321,14 @@ const ViewerView = widgets.DOMWidgetView.extend({
 
   shadow_changed: function() {
     const shadow = this.model.get('shadow')
-    if (this.model.hasOwnProperty('itkVtkViewer')) {
+    if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
       this.model.itkVtkViewer.setShadowEnabled(shadow)
     }
   },
 
   slicing_planes_changed: function() {
     const slicing_planes = this.model.get('slicing_planes')
-    if (this.model.hasOwnProperty('itkVtkViewer')) {
+    if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
       this.model.itkVtkViewer.setSlicingPlanesEnabled(slicing_planes)
     }
   },
