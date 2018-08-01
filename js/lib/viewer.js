@@ -41,6 +41,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       mode: 'v',
       shadow: true,
       slicing_planes: false,
+      roi: [[0., 0., 0.], [0., 0., 0.]],
     })
   }}, {
   serializers: _.extend({
@@ -106,6 +107,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.mode_changed()
       this.shadow_changed()
       this.slicing_planes_changed()
+
       const onUserInterfaceCollapsedToggle = (collapsed) => {
         if (collapsed !== this.model.get('ui_collapsed')) {
           this.model.set('ui_collapsed', collapsed)
@@ -113,6 +115,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         }
       }
       this.model.itkVtkViewer.subscribeToggleUserInterfaceCollapsed(onUserInterfaceCollapsedToggle)
+
       const onAnnotationsToggle = (enabled) => {
         if (enabled !== this.model.get('annotations')) {
           this.model.set('annotations', enabled)
@@ -120,6 +123,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         }
       }
       this.model.itkVtkViewer.subscribeToggleAnnotations(onAnnotationsToggle)
+
       const onInterpolationToggle = (enabled) => {
         if (enabled !== this.model.get('interpolation')) {
           this.model.set('interpolation', enabled)
@@ -127,6 +131,13 @@ const ViewerView = widgets.DOMWidgetView.extend({
         }
       }
       this.model.itkVtkViewer.subscribeToggleInterpolation(onInterpolationToggle)
+
+      const onCroppingPlanesChanged = (planes, bboxCorners) => {
+        this.model.set('roi', [bboxCorners[0], bboxCorners[7]])
+        this.model.save_changes()
+      }
+      this.model.itkVtkViewer.subscribeCroppingPlanesChanged(onCroppingPlanesChanged)
+
       if (!this.model.use2D) {
         const onViewModeChanged = (mode) => {
           let pythonMode = null;

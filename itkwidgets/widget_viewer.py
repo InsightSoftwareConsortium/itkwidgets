@@ -10,7 +10,7 @@ import functools
 import time
 
 import ipywidgets as widgets
-from traitlets import CBool, Unicode, CaselessStrEnum, validate
+from traitlets import CBool, CFloat, Unicode, CaselessStrEnum, Tuple, List, validate
 from .trait_types import ITKImage, itkimage_serialization
 try:
     import ipywebrtc
@@ -61,16 +61,17 @@ class Viewer(ViewerParent):
     _model_module = Unicode('itk-jupyter-widgets').tag(sync=True)
     _view_module_version = Unicode('^0.11.0').tag(sync=True)
     _model_module_version = Unicode('^0.11.0').tag(sync=True)
-    image = ITKImage(default_value=None, allow_none=True).tag(sync=False, **itkimage_serialization)
-    _image_modified_time = 0
+    image = ITKImage(default_value=None, allow_none=True, help="Image to visualize.").tag(sync=False, **itkimage_serialization)
     rendered_image = ITKImage(default_value=None, allow_none=True).tag(sync=True, **itkimage_serialization)
-    _rendered_image_modified_time = 0
-    ui_collapsed = CBool(default_value=False).tag(sync=True)
-    annotations = CBool(default_value=True).tag(sync=True)
-    interpolation = CBool(default_value=True).tag(sync=True)
-    mode = CaselessStrEnum(('x', 'y', 'z', 'v'), default_value='v').tag(sync=True)
-    shadow = CBool(default_value=True).tag(sync=True)
-    slicing_planes = CBool(default_value=False).tag(sync=True)
+    ui_collapsed = CBool(default_value=False, help="Collapse the built in user interface.").tag(sync=True)
+    annotations = CBool(default_value=True, help="Show annotations.").tag(sync=True)
+    interpolation = CBool(default_value=True, help="Use linear interpolation in slicing planes.").tag(sync=True)
+    mode = CaselessStrEnum(('x', 'y', 'z', 'v'), default_value='v', help="View mode: x: x plane, y: y plane, z: z plane, v: volume rendering").tag(sync=True)
+    shadow = CBool(default_value=True, help="Use shadowing in the volume rendering.").tag(sync=True)
+    slicing_planes = CBool(default_value=False, help="Display the slicing planes in volume rendering view mode.").tag(sync=True)
+    roi = List(List(CFloat()),
+            default_value=[[0., 0., 0.], [0., 0., 0.]],
+            help="Region of interest: ((lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z))").tag(sync=True)
 
     def __init__(self, **kwargs):
         super(Viewer, self).__init__(**kwargs)
