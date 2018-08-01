@@ -42,6 +42,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       shadow: true,
       slicing_planes: false,
       roi: [[0., 0., 0.], [0., 0., 0.]],
+      gradient_opacity: 0.2,
     })
   }}, {
   serializers: _.extend({
@@ -107,6 +108,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.mode_changed()
       this.shadow_changed()
       this.slicing_planes_changed()
+      this.gradient_opacity_changed()
 
       const onUserInterfaceCollapsedToggle = (collapsed) => {
         if (collapsed !== this.model.get('ui_collapsed')) {
@@ -163,6 +165,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
           }
         }
         this.model.itkVtkViewer.subscribeViewModeChanged(onViewModeChanged)
+
         const onShadowToggle = (enabled) => {
           if (enabled !== this.model.get('shadow')) {
             this.model.set('shadow', enabled)
@@ -170,6 +173,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
           }
         }
         this.model.itkVtkViewer.subscribeToggleShadow(onShadowToggle)
+
         const onSlicingPlanesToggle = (enabled) => {
           if (enabled !== this.model.get('slicing_planes')) {
             this.model.set('slicing_planes', enabled)
@@ -177,6 +181,14 @@ const ViewerView = widgets.DOMWidgetView.extend({
           }
         }
         this.model.itkVtkViewer.subscribeToggleSlicingPlanes(onSlicingPlanesToggle)
+
+        const onGradientOpacityChange = (opacity) => {
+          if (opacity !== this.model.get('gradient_opacity')) {
+            this.model.set('gradient_opacity', opacity)
+            this.model.save_changes()
+          }
+        }
+        this.model.itkVtkViewer.subscribeGradientOpacityChanged(onGradientOpacityChange)
       }
     })
   },
@@ -341,6 +353,13 @@ const ViewerView = widgets.DOMWidgetView.extend({
     const slicing_planes = this.model.get('slicing_planes')
     if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
       this.model.itkVtkViewer.setSlicingPlanesEnabled(slicing_planes)
+    }
+  },
+
+  gradient_opacity_changed: function() {
+    const gradient_opacity = this.model.get('gradient_opacity')
+    if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
+      this.model.itkVtkViewer.setGradientOpacity(gradient_opacity)
     }
   },
 

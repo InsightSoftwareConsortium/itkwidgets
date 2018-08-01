@@ -72,6 +72,7 @@ class Viewer(ViewerParent):
     roi = List(List(CFloat()),
             default_value=[[0., 0., 0.], [0., 0., 0.]],
             help="Region of interest: ((lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z))").tag(sync=True)
+    gradient_opacity = CFloat(default_value=0.2, help="Volume rendering gradient opacity, from (0.0, 1.0]").tag(sync=True)
 
     def __init__(self, **kwargs):
         super(Viewer, self).__init__(**kwargs)
@@ -87,8 +88,18 @@ class Viewer(ViewerParent):
             return
         self.rendered_image = self.image
 
+    @validate('gradient_opacity')
+    def _validate_gradient_opacity(self, proposal):
+        """Enforce 0 < value <= 1.0."""
+        value = proposal['value']
+        if value <= 0.0:
+            return 0.01
+        if value > 1.0:
+            return 1.0
+        return value
+
 def view(image, ui_collapsed=False, annotations=True, interpolation=True,
-        mode='v', shadow=True, slicing_planes=False):
+        mode='v', shadow=True, slicing_planes=False, gradient_opacity=0.2):
     """View the image.
 
     Creates and returns an ipywidget to visualize the image.
@@ -128,6 +139,9 @@ def view(image, ui_collapsed=False, annotations=True, interpolation=True,
     slicing_planes: bool, optional, default: False
         Enable slicing planes on the volume rendering.
 
+    gradient_opacity: float, optional, default: 0.2
+        Gradient opacity for the volume rendering, in the range (0.0, 1.0].
+
     Returns
     -------
     viewer : ipywidget
@@ -138,5 +152,6 @@ def view(image, ui_collapsed=False, annotations=True, interpolation=True,
     """
     viewer = Viewer(image=image, ui_collapsed=ui_collapsed,
             annotations=annotations, interpolation=interpolation, mode=mode,
-            shadow=shadow, slicing_planes=slicing_planes)
+            shadow=shadow, slicing_planes=slicing_planes,
+            gradient_opacity=gradient_opacity)
     return viewer
