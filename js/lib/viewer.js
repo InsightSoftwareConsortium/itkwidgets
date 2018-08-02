@@ -37,10 +37,13 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       rendered_image: null,
       ui_collapsed: false,
       annotations: true,
-      interpolation: true,
       mode: 'v',
+      interpolation: true,
+      cmap: 'Viridis (matplotlib)',
       shadow: true,
       slicing_planes: false,
+      gradient_opacity: 0.2,
+      roi: [[0., 0., 0.], [0., 0., 0.]],
     })
   }}, {
   serializers: _.extend({
@@ -68,6 +71,9 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
     containerStyle: containerStyle,
   };
   const imageData = vtkITKHelper.convertItkToVtkImage(rendered_image)
+  const bounds = imageData.getBounds()
+  domWidgetView.model.set('roi', [[bounds[0], bounds[2], bounds[4]], [bounds[1], bounds[3], bounds[5]]])
+  domWidgetView.model.save_changes()
   const is3D = rendered_image.imageType.dimension === 3
   domWidgetView.model.use2D = !is3D
   if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
@@ -86,6 +92,12 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
     // Used by ipywebrtc
     domWidgetView.model.stream = Promise.resolve(stream)
   }
+  const dataArray = imageData.getPointData().getScalars()
+  if (dataArray.getNumberOfComponents() > 1) {
+    domWidgetView.model.itkVtkViewer.setColorMap('Grayscale')
+    domWidgetView.model.set('cmap', colorMap)
+    domWidgetView.model.save_changes()
+  }
 }
 
 
@@ -95,17 +107,22 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:rendered_image', this.rendered_image_changed, this)
     this.model.on('change:ui_collapsed', this.ui_collapsed_changed, this)
     this.model.on('change:annotations', this.annotations_changed, this)
-    this.model.on('change:interpolation', this.interpolation_changed, this)
     this.model.on('change:mode', this.mode_changed, this)
+    this.model.on('change:interpolation', this.interpolation_changed, this)
+    this.model.on('change:cmap', this.cmap_changed, this)
     this.model.on('change:shadow', this.shadow_changed, this)
     this.model.on('change:slicing_planes', this.slicing_planes_changed, this)
+    this.model.on('change:gradient_opacity', this.gradient_opacity_changed, this)
     this.rendered_image_changed().then(() => {
-      this.ui_collapsed_changed()
       this.annotations_changed()
       this.interpolation_changed()
+      this.cmap_changed()
       this.mode_changed()
       this.shadow_changed()
       this.slicing_planes_changed()
+      this.gradient_opacity_changed()
+      this.ui_collapsed_changed()
+
       const onUserInterfaceCollapsedToggle = (collapsed) => {
         if (collapsed !== this.model.get('ui_collapsed')) {
           this.model.set('ui_collapsed', collapsed)
@@ -113,6 +130,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         }
       }
       this.model.itkVtkViewer.subscribeToggleUserInterfaceCollapsed(onUserInterfaceCollapsedToggle)
+
       const onAnnotationsToggle = (enabled) => {
         if (enabled !== this.model.get('annotations')) {
           this.model.set('annotations', enabled)
@@ -120,6 +138,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         }
       }
       this.model.itkVtkViewer.subscribeToggleAnnotations(onAnnotationsToggle)
+
       const onInterpolationToggle = (enabled) => {
         if (enabled !== this.model.get('interpolation')) {
           this.model.set('interpolation', enabled)
@@ -127,6 +146,21 @@ const ViewerView = widgets.DOMWidgetView.extend({
         }
       }
       this.model.itkVtkViewer.subscribeToggleInterpolation(onInterpolationToggle)
+
+      const onSelectColorMap = (colorMap) => {
+        if (colorMap !== this.model.get('cmap')) {
+          this.model.set('cmap', colorMap)
+          this.model.save_changes()
+        }
+      }
+      this.model.itkVtkViewer.subscribeSelectColorMap(onSelectColorMap)
+
+      const onCroppingPlanesChanged = (planes, bboxCorners) => {
+        this.model.set('roi', [bboxCorners[0], bboxCorners[7]])
+        this.model.save_changes()
+      }
+      this.model.itkVtkViewer.subscribeCroppingPlanesChanged(onCroppingPlanesChanged)
+
       if (!this.model.use2D) {
         const onViewModeChanged = (mode) => {
           let pythonMode = null;
@@ -152,6 +186,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
           }
         }
         this.model.itkVtkViewer.subscribeViewModeChanged(onViewModeChanged)
+
         const onShadowToggle = (enabled) => {
           if (enabled !== this.model.get('shadow')) {
             this.model.set('shadow', enabled)
@@ -159,6 +194,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
           }
         }
         this.model.itkVtkViewer.subscribeToggleShadow(onShadowToggle)
+
         const onSlicingPlanesToggle = (enabled) => {
           if (enabled !== this.model.get('slicing_planes')) {
             this.model.set('slicing_planes', enabled)
@@ -166,6 +202,14 @@ const ViewerView = widgets.DOMWidgetView.extend({
           }
         }
         this.model.itkVtkViewer.subscribeToggleSlicingPlanes(onSlicingPlanesToggle)
+
+        const onGradientOpacityChange = (opacity) => {
+          if (opacity !== this.model.get('gradient_opacity')) {
+            this.model.set('gradient_opacity', opacity)
+            this.model.save_changes()
+          }
+        }
+        this.model.itkVtkViewer.subscribeGradientOpacityChanged(onGradientOpacityChange)
       }
     })
   },
@@ -290,13 +334,6 @@ const ViewerView = widgets.DOMWidgetView.extend({
     }
   },
 
-  interpolation_changed: function() {
-    const interpolation = this.model.get('interpolation')
-    if (this.model.hasOwnProperty('itkVtkViewer')) {
-      this.model.itkVtkViewer.setInterpolationEnabled(interpolation)
-    }
-  },
-
   mode_changed: function() {
     const mode = this.model.get('mode')
     if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
@@ -319,6 +356,20 @@ const ViewerView = widgets.DOMWidgetView.extend({
     }
   },
 
+  interpolation_changed: function() {
+    const interpolation = this.model.get('interpolation')
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      this.model.itkVtkViewer.setInterpolationEnabled(interpolation)
+    }
+  },
+
+  cmap_changed: function() {
+    const cmap = this.model.get('cmap')
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      this.model.itkVtkViewer.setColorMap(cmap)
+    }
+  },
+
   shadow_changed: function() {
     const shadow = this.model.get('shadow')
     if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
@@ -330,6 +381,13 @@ const ViewerView = widgets.DOMWidgetView.extend({
     const slicing_planes = this.model.get('slicing_planes')
     if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
       this.model.itkVtkViewer.setSlicingPlanesEnabled(slicing_planes)
+    }
+  },
+
+  gradient_opacity_changed: function() {
+    const gradient_opacity = this.model.get('gradient_opacity')
+    if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
+      this.model.itkVtkViewer.setGradientOpacity(gradient_opacity)
     }
   },
 

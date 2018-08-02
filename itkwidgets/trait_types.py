@@ -45,7 +45,10 @@ class ITKImage(traitlets.TraitType):
         if is_arraylike(value):
             array = np.asarray(value)
             self._source_object = array
-            image_from_array = itk.GetImageViewFromArray(array)
+            if array.flags['OWNDATA']:
+                image_from_array = itk.GetImageViewFromArray(array)
+            else:
+                image_from_array = itk.GetImageFromArray(array)
             return image_from_array
         elif have_vtk and isinstance(value, vtk.vtkImageData):
             from vtk.util import numpy_support as vtk_numpy_support
