@@ -71,6 +71,9 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
     containerStyle: containerStyle,
   };
   const imageData = vtkITKHelper.convertItkToVtkImage(rendered_image)
+  const bounds = imageData.getBounds()
+  domWidgetView.model.set('roi', [[bounds[0], bounds[2], bounds[4]], [bounds[1], bounds[3], bounds[5]]])
+  domWidgetView.model.save_changes()
   const is3D = rendered_image.imageType.dimension === 3
   domWidgetView.model.use2D = !is3D
   if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
@@ -111,7 +114,6 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:slicing_planes', this.slicing_planes_changed, this)
     this.model.on('change:gradient_opacity', this.gradient_opacity_changed, this)
     this.rendered_image_changed().then(() => {
-      this.ui_collapsed_changed()
       this.annotations_changed()
       this.interpolation_changed()
       this.cmap_changed()
@@ -119,6 +121,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.shadow_changed()
       this.slicing_planes_changed()
       this.gradient_opacity_changed()
+      this.ui_collapsed_changed()
 
       const onUserInterfaceCollapsedToggle = (collapsed) => {
         if (collapsed !== this.model.get('ui_collapsed')) {

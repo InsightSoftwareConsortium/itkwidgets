@@ -18,6 +18,7 @@ js/package-lock.json
 examples/*.nrrd
 examples/*.png
 examples/*.mha
+examples/*.tif
 examples/vase.vti
 examples/widget_video.webm
 

@@ -9,6 +9,8 @@ import collections
 import functools
 import time
 
+import itk
+import numpy as np
 import ipywidgets as widgets
 from traitlets import CBool, CFloat, Unicode, CaselessStrEnum, Tuple, List, TraitError, validate
 from .trait_types import ITKImage, itkimage_serialization
@@ -189,6 +191,32 @@ class Viewer(ViewerParent):
         if not value in COLORMAPS:
             raise TraitError('Invalid colormap')
         return value
+
+    def roi_region(self):
+        """Return the itk.ImageRegion corresponding to the roi."""
+        dimension = self.image.GetImageDimension()
+        index = self.image.TransformPhysicalPointToIndex(self.roi[0][:dimension])
+        upperIndex = self.image.TransformPhysicalPointToIndex(self.roi[1][:dimension])
+        size = upperIndex - index
+        for dim in range(dimension):
+            size[dim] += 1
+        region = itk.ImageRegion[dimension]()
+        region.SetIndex(index)
+        region.SetSize(tuple(size))
+        region.Crop(self.image.GetLargestPossibleRegion())
+        return region
+
+    def roi_slice(self):
+        """Return the numpy array slice corresponding to the roi."""
+        dimension = self.image.GetImageDimension()
+        region = self.roi_region()
+        index = region.GetIndex()
+        upperIndex = np.array(index) + np.array(region.GetSize())
+        slices = []
+        for dim in range(dimension):
+            slices.insert(0, slice(index[dim], upperIndex[dim] + 1))
+        return tuple(slices)
+
 
 def view(image, ui_collapsed=False, annotations=True, interpolation=True,
         cmap=cm.viridis, mode='v', shadow=True, slicing_planes=False, gradient_opacity=0.2):
