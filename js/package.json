@@ -1,6 +1,6 @@
 {
   "name": "itk-jupyter-widgets",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Interactive Jupyter widgets to visualize images in 2D and 3D",
   "author": "Matthew McCormick",
   "main": "lib/index.js",
