@@ -37,12 +37,13 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       rendered_image: null,
       ui_collapsed: false,
       annotations: true,
-      interpolation: true,
       mode: 'v',
+      interpolation: true,
+      cmap: 'Viridis (matplotlib)',
       shadow: true,
       slicing_planes: false,
-      roi: [[0., 0., 0.], [0., 0., 0.]],
       gradient_opacity: 0.2,
+      roi: [[0., 0., 0.], [0., 0., 0.]],
     })
   }}, {
   serializers: _.extend({
@@ -88,6 +89,12 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
     // Used by ipywebrtc
     domWidgetView.model.stream = Promise.resolve(stream)
   }
+  const dataArray = imageData.getPointData().getScalars()
+  if (dataArray.getNumberOfComponents() > 1) {
+    domWidgetView.model.itkVtkViewer.setColorMap('Grayscale')
+    domWidgetView.model.set('cmap', colorMap)
+    domWidgetView.model.save_changes()
+  }
 }
 
 
@@ -97,14 +104,17 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:rendered_image', this.rendered_image_changed, this)
     this.model.on('change:ui_collapsed', this.ui_collapsed_changed, this)
     this.model.on('change:annotations', this.annotations_changed, this)
-    this.model.on('change:interpolation', this.interpolation_changed, this)
     this.model.on('change:mode', this.mode_changed, this)
+    this.model.on('change:interpolation', this.interpolation_changed, this)
+    this.model.on('change:cmap', this.cmap_changed, this)
     this.model.on('change:shadow', this.shadow_changed, this)
     this.model.on('change:slicing_planes', this.slicing_planes_changed, this)
+    this.model.on('change:gradient_opacity', this.gradient_opacity_changed, this)
     this.rendered_image_changed().then(() => {
       this.ui_collapsed_changed()
       this.annotations_changed()
       this.interpolation_changed()
+      this.cmap_changed()
       this.mode_changed()
       this.shadow_changed()
       this.slicing_planes_changed()
@@ -133,6 +143,14 @@ const ViewerView = widgets.DOMWidgetView.extend({
         }
       }
       this.model.itkVtkViewer.subscribeToggleInterpolation(onInterpolationToggle)
+
+      const onSelectColorMap = (colorMap) => {
+        if (colorMap !== this.model.get('cmap')) {
+          this.model.set('cmap', colorMap)
+          this.model.save_changes()
+        }
+      }
+      this.model.itkVtkViewer.subscribeSelectColorMap(onSelectColorMap)
 
       const onCroppingPlanesChanged = (planes, bboxCorners) => {
         this.model.set('roi', [bboxCorners[0], bboxCorners[7]])
@@ -313,13 +331,6 @@ const ViewerView = widgets.DOMWidgetView.extend({
     }
   },
 
-  interpolation_changed: function() {
-    const interpolation = this.model.get('interpolation')
-    if (this.model.hasOwnProperty('itkVtkViewer')) {
-      this.model.itkVtkViewer.setInterpolationEnabled(interpolation)
-    }
-  },
-
   mode_changed: function() {
     const mode = this.model.get('mode')
     if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
@@ -339,6 +350,20 @@ const ViewerView = widgets.DOMWidgetView.extend({
       default:
         throw new Error('Unknown view mode')
       }
+    }
+  },
+
+  interpolation_changed: function() {
+    const interpolation = this.model.get('interpolation')
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      this.model.itkVtkViewer.setInterpolationEnabled(interpolation)
+    }
+  },
+
+  cmap_changed: function() {
+    const cmap = this.model.get('cmap')
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      this.model.itkVtkViewer.setColorMap(cmap)
     }
   },
 

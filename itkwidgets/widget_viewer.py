@@ -10,13 +10,97 @@ import functools
 import time
 
 import ipywidgets as widgets
-from traitlets import CBool, CFloat, Unicode, CaselessStrEnum, Tuple, List, validate
+from traitlets import CBool, CFloat, Unicode, CaselessStrEnum, Tuple, List, TraitError, validate
 from .trait_types import ITKImage, itkimage_serialization
 try:
     import ipywebrtc
     ViewerParent = ipywebrtc.MediaStream
 except ImportError:
     ViewerParent = widgets.DOMWidget
+
+from . import cm
+
+
+COLORMAPS = ("2hot",
+    "Asymmtrical Earth Tones (6_21b)",
+    "Black, Blue and White",
+    "Black, Orange and White",
+    "Black-Body Radiation",
+    "Blue to Red Rainbow",
+    "Blue to Yellow",
+    "Blues",
+    "BrBG",
+    "BrOrYl",
+    "BuGn",
+    "BuGnYl",
+    "BuPu",
+    "BuRd",
+    "CIELab Blue to Red",
+    "Cold and Hot",
+    "Cool to Warm",
+    "Cool to Warm (Extended)",
+    "GBBr",
+    "GYPi",
+    "GnBu",
+    "GnBuPu",
+    "GnRP",
+    "GnYlRd",
+    "Grayscale",
+    "Green-Blue Asymmetric Divergent (62Blbc)",
+    "Greens",
+    "GyRd",
+    "Haze",
+    "Haze_cyan",
+    "Haze_green",
+    "Haze_lime",
+    "Inferno (matplotlib)",
+    "Linear Blue (8_31f)",
+    "Linear YGB 1211g",
+    "Magma (matplotlib)",
+    "Muted Blue-Green",
+    "OrPu",
+    "Oranges",
+    "PRGn",
+    "PiYG",
+    "Plasma (matplotlib)",
+    "PuBu",
+    "PuOr",
+    "PuRd",
+    "Purples",
+    "Rainbow Blended Black",
+    "Rainbow Blended Grey",
+    "Rainbow Blended White",
+    "Rainbow Desaturated",
+    "RdOr",
+    "RdOrYl",
+    "RdPu",
+    "Red to Blue Rainbow",
+    "Reds",
+    "Spectral_lowBlue",
+    "Viridis (matplotlib)",
+    "Warm to Cool",
+    "Warm to Cool (Extended)",
+    "X Ray",
+    "Yellow 15",
+    "blot",
+    "blue2cyan",
+    "blue2yellow",
+    "bone_Matlab",
+    "coolwarm",
+    "copper_Matlab",
+    "gist_earth",
+    "gray_Matlab",
+    "heated_object",
+    "hsv",
+    "hue_L60",
+    "jet",
+    "magenta",
+    "nic_CubicL",
+    "nic_CubicYF",
+    "nic_Edge",
+    "pink_Matlab",
+    "rainbow")
+
 
 def get_ioloop():
     import IPython
@@ -65,14 +149,15 @@ class Viewer(ViewerParent):
     rendered_image = ITKImage(default_value=None, allow_none=True).tag(sync=True, **itkimage_serialization)
     ui_collapsed = CBool(default_value=False, help="Collapse the built in user interface.").tag(sync=True)
     annotations = CBool(default_value=True, help="Show annotations.").tag(sync=True)
-    interpolation = CBool(default_value=True, help="Use linear interpolation in slicing planes.").tag(sync=True)
     mode = CaselessStrEnum(('x', 'y', 'z', 'v'), default_value='v', help="View mode: x: x plane, y: y plane, z: z plane, v: volume rendering").tag(sync=True)
+    interpolation = CBool(default_value=True, help="Use linear interpolation in slicing planes.").tag(sync=True)
+    cmap = Unicode('Viridis (matplotlib)').tag(sync=True)
     shadow = CBool(default_value=True, help="Use shadowing in the volume rendering.").tag(sync=True)
     slicing_planes = CBool(default_value=False, help="Display the slicing planes in volume rendering view mode.").tag(sync=True)
+    gradient_opacity = CFloat(default_value=0.2, help="Volume rendering gradient opacity, from (0.0, 1.0]").tag(sync=True)
     roi = List(List(CFloat()),
             default_value=[[0., 0., 0.], [0., 0., 0.]],
             help="Region of interest: ((lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z))").tag(sync=True)
-    gradient_opacity = CFloat(default_value=0.2, help="Volume rendering gradient opacity, from (0.0, 1.0]").tag(sync=True)
 
     def __init__(self, **kwargs):
         super(Viewer, self).__init__(**kwargs)
@@ -98,8 +183,15 @@ class Viewer(ViewerParent):
             return 1.0
         return value
 
+    @validate('cmap')
+    def _validate_cmap(self, proposal):
+        value = proposal['value']
+        if not value in COLORMAPS:
+            raise TraitError('Invalid colormap')
+        return value
+
 def view(image, ui_collapsed=False, annotations=True, interpolation=True,
-        mode='v', shadow=True, slicing_planes=False, gradient_opacity=0.2):
+        cmap=cm.viridis, mode='v', shadow=True, slicing_planes=False, gradient_opacity=0.2):
     """View the image.
 
     Creates and returns an ipywidget to visualize the image.
@@ -124,6 +216,9 @@ def view(image, ui_collapsed=False, annotations=True, interpolation=True,
 
     interpolation: bool, optional, default: True
         Linear as opposed to nearest neighbor interpolation for image slices.
+
+    cmap: string, optional, default: 'Viridis (matplotlib)'
+        Colormap. Some valid values available at itkwidgets.cm.*
 
     mode: 'x', 'y', 'z', or 'v', optional, default: 'v'
         Only relevant for 3D images.
@@ -151,7 +246,7 @@ def view(image, ui_collapsed=False, annotations=True, interpolation=True,
         widget.
     """
     viewer = Viewer(image=image, ui_collapsed=ui_collapsed,
-            annotations=annotations, interpolation=interpolation, mode=mode,
-            shadow=shadow, slicing_planes=slicing_planes,
+            annotations=annotations, interpolation=interpolation, cmap=cmap,
+            mode=mode, shadow=shadow, slicing_planes=slicing_planes,
             gradient_opacity=gradient_opacity)
     return viewer
