@@ -9,7 +9,7 @@ git grep -z --full-name -l '.' | xargs -0 sed -i -e "s/$old_version/$version/g"
 git diff
 git add -- itkwidgets/ js/
 git commit -m "ENH: Bump itk-jupyter-widgets to $version"
-cd js && npm run build && cd -
+cd js && npm install && npm run build && cd -
 python setup.py sdist
 python setup.py bdist_wheel
 pip install twine
