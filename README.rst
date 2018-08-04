@@ -62,6 +62,7 @@ After installation, try the following examples that demonstrate how to visualize
 or how to:
 
 - `Select a region of interest <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/SelectRegionOfInterest.ipynb>`_
+- `Specify a colormap <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/SpecifyAColormap.ipynb>`_
 
 Examples on Binder
 --------
@@ -73,6 +74,7 @@ Examples on Binder
 - `NumPy array images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/scikit-image.ipynb>`_ (processed with scikit-image)
 
 - `Select a region of interest <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/SelectRegionOfInterest.ipynb>`_
+- `Specify a colormap <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/SpecifyAColormap.ipynb>`_
 
 
 Troubleshooting
