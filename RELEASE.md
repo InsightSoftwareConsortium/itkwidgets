@@ -7,6 +7,9 @@ export version=X.X.Y
 # Update itkwidgets/_version.py (set release version, replace 'dev' with 'final')
 git grep -z --full-name -l '.' | xargs -0 sed -i -e "s/$old_version/$version/g"
 git diff
+# Check the README for PyPI
+pip install docutils
+python setup.py check -r -s
 git add -- itkwidgets/ js/
 git commit -m "ENH: Bump itk-jupyter-widgets to $version"
 cd js && npm install && npm run build && cd -
