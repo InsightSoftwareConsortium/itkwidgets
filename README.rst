@@ -55,8 +55,8 @@ After installation, try the following examples that demonstrate how to visualize
 - `3D ITK Images <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/3DImage.ipynb>`_
 - `Dask Array images <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/DaskArray.ipynb>`_
 - `ImageJ ImgLib2 images <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/ImageJImgLib2.ipynb>`_ (requires `conda <https://conda.io/>`_ and a local `Fiji <https://fiji.sc/>`_ installation)
-- `NumPy array images <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/NumPyArray.ipynb>`_ (processed with SciPy)
-- `NumPy array images <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/scikit-image.ipynb>`_ (processed with scikit-image)
+- `NumPy array images (processed with SciPy) <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/NumPyArray.ipynb>`_
+- `NumPy array images (processed with scikit-image) <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/scikit-image.ipynb>`_
 - `VTK vtkImageData <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/vtkImageData.ipynb>`_
 
 or how to:
@@ -65,16 +65,20 @@ or how to:
 - `Specify a colormap <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/SpecifyAColormap.ipynb>`_
 
 Examples on Binder
---------
+------------------
 
-- `2D ITK Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples%2F2DImage.ipynb>`_
-- `3D ITK Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples%2F3DImage.ipynb>`_
-- `Dask Array images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/DaskArray.ipynb>`_
-- `NumPy array images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/NumPyArray.ipynb>`_ (processed with SciPy)
-- `NumPy array images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/scikit-image.ipynb>`_ (processed with scikit-image)
+Data types:
 
-- `Select a region of interest <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/SelectRegionOfInterest.ipynb>`_
-- `Specify a colormap <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/SpecifyAColormap.ipynb>`_
+- `Binder: 2D ITK Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples%2F2DImage.ipynb>`_
+- `Binder: 3D ITK Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples%2F3DImage.ipynb>`_
+- `Binder: Dask Array images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/DaskArray.ipynb>`_
+- `Binder: NumPy array images (processed with SciPy) <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/NumPyArray.ipynb>`_
+- `Binder: NumPy array images  (processed with scikit-image) <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/scikit-image.ipynb>`_
+
+Tasks:
+
+- `Binder: Select a region of interest <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/SelectRegionOfInterest.ipynb>`_
+- `Binder: Specify a colormap <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/SpecifyAColormap.ipynb>`_
 
 
 Troubleshooting
