@@ -11,3 +11,4 @@ dependencies:
     - numpy
     - six
     - zstandard
+    - ipywebrtc
