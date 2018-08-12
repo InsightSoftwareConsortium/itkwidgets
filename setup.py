@@ -150,7 +150,7 @@ setup_args = {
         ]),
     ],
     'install_requires': [
-        'itk-core',
+        'itk-core>=4.13.1',
         'ipywidgets>=7.1.2',
         'numpy',
         'six',
