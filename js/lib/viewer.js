@@ -95,7 +95,7 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
   const dataArray = imageData.getPointData().getScalars()
   if (dataArray.getNumberOfComponents() > 1) {
     domWidgetView.model.itkVtkViewer.setColorMap('Grayscale')
-    domWidgetView.model.set('cmap', colorMap)
+    domWidgetView.model.set('cmap', 'Grayscale')
     domWidgetView.model.save_changes()
   }
 }
