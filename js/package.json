@@ -3,6 +3,10 @@
   "version": "0.12.1",
   "description": "Interactive Jupyter widgets to visualize images in 2D and 3D",
   "author": "Matthew McCormick",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/issues"
+  },
   "main": "lib/index.js",
   "repository": {
     "type": "git",
