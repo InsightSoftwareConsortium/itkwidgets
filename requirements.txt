@@ -1,5 +1,5 @@
 itk-core
-ipywidgets>=7.1.2
+ipywidgets>=7.4.0
 numpy
 six
 zstandard
