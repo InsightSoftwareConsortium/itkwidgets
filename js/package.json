@@ -58,9 +58,9 @@
     "copy-webpack-plugin": "^4.5.1",
     "css-element-queries": "^1.0.2",
     "itk": "^9.1.1",
-    "itk-vtk-image-viewer": "^5.4.1",
+    "itk-vtk-image-viewer": "^5.4.2",
     "lodash": "^4.17.5",
-    "vtk.js": "7.4.10"
+    "vtk.js": "7.6.0"
   },
   "jupyterlab": {
     "extension": "dist/labextension"
