@@ -35,6 +35,23 @@ These widgets are built on
     :alt: itk-jupyter-widgets demo
     :align: center
 
+Examples on Binder
+------------------
+
+Data types:
+
+- `Binder: 2D ITK Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples%2F2DImage.ipynb>`_
+- `Binder: 3D ITK Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples%2F3DImage.ipynb>`_
+- `Binder: Dask Array images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/DaskArray.ipynb>`_
+- `Binder: NumPy array images (processed with SciPy) <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/NumPyArray.ipynb>`_
+- `Binder: NumPy array images  (processed with scikit-image) <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/scikit-image.ipynb>`_
+
+Tasks:
+
+- `Binder: Record a video <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/RecordAVideo.ipynb>`_
+- `Binder: Select a region of interest <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/SelectRegionOfInterest.ipynb>`_
+- `Binder: Specify a colormap <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/SpecifyAColormap.ipynb>`_
+
 Installation
 ------------
 
@@ -45,6 +62,53 @@ To install the widgets for the Jupyter Notebook::
 For Jupyter Lab, additionally run::
 
   jupyter labextension install @jupyter-widgets/jupyterlab-manager itk-jupyter-widgets
+
+Usage
+-----
+
+In Jupyter, import the ``view`` function::
+
+  from itkwidgets import view
+
+Then, call the ``view`` function at the end of a cell, passing in the image to
+examine::
+
+  view(image)
+
+For information on additional options, see the ``view`` function docstring::
+
+  view?
+
+Advanced Usage
+^^^^^^^^^^^^^^
+
+The *itk-jupyter-widgets* are based on `ipywidgets
+<https://ipywidgets.readthedocs.io/en/latest/examples/Widget%20Basics.html>`_.
+As a consequence, widgets traits can be queried, assigned, or observed with
+the `viewer` object returned by the `view` function. *itk-jupyter-widgets* can
+be combined with other *ipywidgets* to quickly explore algorithm parameters,
+create graphical interfaces, or create data visualization dashboards.
+
+Mouse Controls
+^^^^^^^^^^^^^^
+
+**Left click + drag**
+  Rotate
+
+**Right click + drag** or **shift + left click + drag**
+  Pan
+
+**Mouse wheel** or **control + left click + drag** or **pinch**
+  Zoom
+
+**Alt + left click + drag left-right**
+  Change color transfer function window
+
+**Shift + left click + drag top-bottom**
+  Change color transfer function level
+
+**Shift + alt + left click + drag top-bottom**
+  Change primary Gaussian volume opacity transfer function magnitude
 
 Examples
 --------
@@ -65,23 +129,6 @@ or how to:
 - `Select a region of interest <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/SelectRegionOfInterest.ipynb>`_
 - `Specify a colormap <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/SpecifyAColormap.ipynb>`_
 
-Examples on Binder
-------------------
-
-Data types:
-
-- `Binder: 2D ITK Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples%2F2DImage.ipynb>`_
-- `Binder: 3D ITK Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples%2F3DImage.ipynb>`_
-- `Binder: Dask Array images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/DaskArray.ipynb>`_
-- `Binder: NumPy array images (processed with SciPy) <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/NumPyArray.ipynb>`_
-- `Binder: NumPy array images  (processed with scikit-image) <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/scikit-image.ipynb>`_
-
-Tasks:
-
-- `Binder: Record a video <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/RecordAVideo.ipynb>`_
-- `Binder: Select a region of interest <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/SelectRegionOfInterest.ipynb>`_
-- `Binder: Specify a colormap <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/SpecifyAColormap.ipynb>`_
-
 
 Troubleshooting
 ---------------
@@ -101,7 +148,7 @@ Set the notebook configuration value::
 Hacking
 -------
 
-For a development installation (requires `Node.js <https://nodejs.org/en/download/>`_)::
+Participation is welcome! For a development installation (requires `Node.js <https://nodejs.org/en/download/>`_)::
 
   git clone https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets.git
   cd itk-jupyter-widgets
