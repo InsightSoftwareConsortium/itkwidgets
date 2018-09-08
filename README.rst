@@ -110,6 +110,44 @@ Mouse Controls
 **Shift + alt + left click + drag top-bottom**
   Change primary Gaussian volume opacity transfer function magnitude
 
+Keyboard Shortcuts
+^^^^^^^^^^^^^^^^^^
+
+Keyboard shortcuts take effect when the mouse is positioned inside the viewer.
+All shortcuts are prefixed with **Alt+**. Corresponding keys for the Dvorak
+keyboard layout have the same effect.
+
+**Alt + 1**
+  X-plane mode
+
+**Alt + 2**
+  Y-plane mode
+
+**Alt + 3**
+  Z-plane mode
+
+**Alt + 4**
+  Volume rendering mode
+
+**Alt + q**
+  Toggle user interface
+
+**Alt + w**
+  Toggle region of interest (ROI) selection widget
+
+**Alt + e**
+  Reset ROI
+
+**Alt + r**
+  Reset camera
+
+**Alt + s**
+  Toggle slicing planes in volume rendering mode
+
+**Alt + f**
+  Toggle fullscreen
+
+
 Examples
 --------
 
