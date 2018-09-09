@@ -5,5 +5,4 @@
 // already be loaded by the notebook otherwise.
 
 // Export widget models and views, and the npm package version number.
-module.exports = require('./viewer.js');
-module.exports['version'] = require('../package.json').version;
+module.exports = require('./index.js');
