@@ -121,6 +121,7 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
     const stream  = viewCanvas.captureStream(30000./1001.)
     // Used by ipywebrtc
     domWidgetView.model.stream = Promise.resolve(stream)
+    domWidgetView.initialize_viewer()
   }
   const dataArray = imageData.getPointData().getScalars()
   if (dataArray.getNumberOfComponents() > 1) {
@@ -423,6 +424,10 @@ const ViewerView = widgets.DOMWidgetView.extend({
     if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
       this.model.itkVtkViewer.setGradientOpacity(gradient_opacity)
     }
+  },
+
+  initialize_viewer: function() {
+    // possible to override in extensions
   },
 
 });
