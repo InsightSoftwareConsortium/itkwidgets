@@ -264,7 +264,7 @@ module.exports = [
         whitelist: [
           /^vtk.js[\/].*/,
           /^itk[\/].*/,
-          /^itk-vtk-image-viewer[\/].*/,
+          /^itk-vtk-viewer[\/].*/,
         ],
       }),
     ],
