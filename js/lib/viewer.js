@@ -35,6 +35,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       _model_module_version: '0.13.1',
       _view_module_version: '0.13.1',
       rendered_image: null,
+      _rendering_image: false,
       ui_collapsed: false,
       annotations: true,
       mode: 'v',
@@ -50,6 +51,22 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
     rendered_image: { serialize: serialize_itkimage, deserialize: deserialize_itkimage }
   }, widgets.DOMWidgetModel.serializers)
 })
+
+
+const resetRenderingStatus = (domWidgetView) => {
+  const viewProxy = domWidgetView.model.itkVtkViewer.getViewProxy()
+  const representation = viewProxy.getRepresentations()[0];
+  let unsubscriber = null
+  const onLightingActivated = () => {
+    domWidgetView.model.set('_rendering_image', false)
+    domWidgetView.model.save_changes()
+    if (unsubscriber) {
+      unsubscriber.unsubscribe()
+    }
+  }
+  const volumeMapper = representation.getMapper()
+  unsubscriber = volumeMapper.onLightingActivated(onLightingActivated)
+}
 
 
 const createRenderingPipeline = (domWidgetView, rendered_image) => {
@@ -77,6 +94,7 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
   const is3D = rendered_image.imageType.dimension === 3
   domWidgetView.model.use2D = !is3D
   if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
+    resetRenderingStatus(domWidgetView)
     domWidgetView.model.itkVtkViewer.setImage(imageData)
     domWidgetView.model.itkVtkViewer.renderLater()
   } else {
@@ -85,6 +103,7 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
       image: imageData,
       use2D: !is3D,
     })
+    resetRenderingStatus(domWidgetView)
     const viewProxy = domWidgetView.model.itkVtkViewer.getViewProxy()
     const renderWindow = viewProxy.getRenderWindow()
     const viewCanvas = renderWindow.getViews()[0].getCanvas()
