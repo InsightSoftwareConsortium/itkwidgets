@@ -25,19 +25,16 @@ const LineProfilerView = viewer.ViewerView.extend({
     lineWidget.setInteractor(viewProxy.getInteractor())
     lineWidget.setEnabled(1);
     lineWidget.setWidgetStateToStart()
-    console.log(viewProxy)
-    console.log(lineWidget)
     const volumeRepresentation = viewProxy.getRepresentations()[0]
     const lineRepresentation = lineWidget.getWidgetRep();
-    console.log(volumeRepresentation)
     function onInteractionEvent() {
       const mode = viewProxy.getViewMode()
+      const line1Position = lineRepresentation.getPoint1WorldPosition()
+      const line2Position = lineRepresentation.getPoint2WorldPosition()
       switch (mode) {
       case 'XPlane':
-        const line1Position = lineRepresentation.getPoint1WorldPosition()
-        const line2Position = lineRepresentation.getPoint2WorldPosition()
         // Offset so it is visible
-        const xPosition = volumeRepresentation.getXSlice() + 0.1 * volumeRepresentation.getPropertyDomainByName('xSlice').step
+        const xPosition = volumeRepresentation.getXSlice() + 0.0 * volumeRepresentation.getPropertyDomainByName('xSlice').step
         if (line1Position[0] !== xPosition) {
           line1Position[0] = xPosition
           lineRepresentation.setPoint1WorldPosition(line1Position)
@@ -46,26 +43,42 @@ const LineProfilerView = viewer.ViewerView.extend({
           line2Position[0] = xPosition
           lineRepresentation.setPoint2WorldPosition(line2Position)
         }
-        console.log('XPlane')
         break;
       case 'YPlane':
-        console.log('YPlane')
+        const yPosition = volumeRepresentation.getYSlice() + 0.0 * volumeRepresentation.getPropertyDomainByName('ySlice').step
+        if (line1Position[1] !== yPosition) {
+          line1Position[1] = yPosition
+          lineRepresentation.setPoint1WorldPosition(line1Position)
+        }
+        if (line2Position[1] !== yPosition) {
+          line2Position[1] = yPosition
+          lineRepresentation.setPoint2WorldPosition(line2Position)
+        }
         break;
       case 'ZPlane':
-        console.log('ZPlane')
+        const zPosition = volumeRepresentation.getZSlice() + 0.0 * volumeRepresentation.getPropertyDomainByName('zSlice').step
+        if (line1Position[2] !== zPosition) {
+          line1Position[2] = zPosition
+          lineRepresentation.setPoint1WorldPosition(line1Position)
+        }
+        if (line2Position[2] !== zPosition) {
+          line2Position[2] = zPosition
+          lineRepresentation.setPoint2WorldPosition(line2Position)
+        }
         break;
       case 'VolumeRendering':
-        console.log('VolumeRendering')
         break;
       default:
         vtkErrorMacro('Unexpected view mode');
       }
       console.log('InteractionEvent!')
-      console.log(lineRepresentation.getPoint1DisplayPosition())
       console.log(lineRepresentation.getPoint1WorldPosition())
     }
     lineWidget.onInteractionEvent(onInteractionEvent)
     this.model.itkVtkViewer.subscribeViewModeChanged(onInteractionEvent)
+    this.model.itkVtkViewer.subscribeXSliceChanged(onInteractionEvent)
+    this.model.itkVtkViewer.subscribeYSliceChanged(onInteractionEvent)
+    this.model.itkVtkViewer.subscribeZSliceChanged(onInteractionEvent)
   },
 
 });
