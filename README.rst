@@ -65,6 +65,7 @@ Data types:
 
 Tasks:
 
+- `Binder: Interactively explore algorithm parameters <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/InteractiveParameterExploration.ipynb>`_
 - `Binder: Record a video <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/RecordAVideo.ipynb>`_
 - `Binder: Select a region of interest <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/SelectRegionOfInterest.ipynb>`_
 - `Binder: Specify a colormap <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/SpecifyAColormap.ipynb>`_
@@ -180,6 +181,7 @@ After installation, try the following examples that demonstrate how to visualize
 
 or how to:
 
+- `Interatively explore algorithm parameters <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/RecordAVideo.ipynb>`_
 - `Record a video <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/RecordAVideo.ipynb>`_
 - `Select a region of interest <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/SelectRegionOfInterest.ipynb>`_
 - `Specify a colormap <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/SpecifyAColormap.ipynb>`_
