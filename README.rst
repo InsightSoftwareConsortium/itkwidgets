@@ -18,9 +18,31 @@ itk-jupyter-widgets
 
 Interactive `Jupyter <https://jupyter.org/>`_ widgets to visualize images in 2D and 3D.
 
+**Key Features**:
+
+- Exquisite volume rendering
+- Tri-plane image slicing
+- Innovative, powerful opacity transfer function / window / level widget
+
+- Support for
+  - NumPy Arrays
+  - itk.Image
+  - vtk.vtkImageData
+  - Dask Arrays
+  - ImageJ / Fiji / ImageJ2 images
+
+- Anisotropic voxel spacing supported
+- Combine with other *ipywidgets* to quickly create graphical interfaces to
+  algorithms
+
 .. image:: https://i.imgur.com/d8aXycW.png
     :width: 800px
     :alt: itk-jupyter-widgets chest CT in JupyterLab
+
+.. image:: https://thumbs.gfycat.com/ShyFelineBeetle-size_restricted.gif
+    :width: 640px
+    :alt: itk-jupyter-widgets demo
+    :align: center
 
 These widgets are designed to support image analysis with the `Insight Toolkit
 (ITK) <https://itk.org/>`_, but they also work with other spatial analysis tools
@@ -29,11 +51,6 @@ in the scientific Python ecosystem.
 These widgets are built on
 `itk.js <https://github.com/InsightSoftwareConsortium/itk-js>`_ and
 `vtk.js <https://github.com/Kitware/vtk-js>`_.
-
-.. image:: https://thumbs.gfycat.com/ShyFelineBeetle-size_restricted.gif
-    :width: 640px
-    :alt: itk-jupyter-widgets demo
-    :align: center
 
 Examples on Binder
 ------------------
