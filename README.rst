@@ -18,13 +18,17 @@ itk-jupyter-widgets
 
 Interactive `Jupyter <https://jupyter.org/>`_ widgets to visualize images in 2D and 3D.
 
+.. image:: https://i.imgur.com/d8aXycW.png
+    :width: 800px
+    :alt: itk-jupyter-widgets chest CT in JupyterLab
+
 **Key Features**:
 
 - Exquisite volume rendering
-- Tri-plane image slicing
+- Tri-plane volume slicing
 - Innovative, powerful opacity transfer function / window / level widget
-
 - Support for
+
   - NumPy Arrays
   - itk.Image
   - vtk.vtkImageData
@@ -32,12 +36,9 @@ Interactive `Jupyter <https://jupyter.org/>`_ widgets to visualize images in 2D 
   - ImageJ / Fiji / ImageJ2 images
 
 - Anisotropic voxel spacing supported
+- 3D and 2D image support
 - Combine with other *ipywidgets* to quickly create graphical interfaces to
   algorithms
-
-.. image:: https://i.imgur.com/d8aXycW.png
-    :width: 800px
-    :alt: itk-jupyter-widgets chest CT in JupyterLab
 
 .. image:: https://thumbs.gfycat.com/ShyFelineBeetle-size_restricted.gif
     :width: 640px
@@ -181,7 +182,7 @@ After installation, try the following examples that demonstrate how to visualize
 
 or how to:
 
-- `Interatively explore algorithm parameters <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/RecordAVideo.ipynb>`_
+- `Interatively explore algorithm parameters <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/InteractiveParameterExploration.ipynb>`_
 - `Record a video <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/RecordAVideo.ipynb>`_
 - `Select a region of interest <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/SelectRegionOfInterest.ipynb>`_
 - `Specify a colormap <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/SpecifyAColormap.ipynb>`_
