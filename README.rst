@@ -34,6 +34,7 @@ Interactive `Jupyter <https://jupyter.org/>`_ widgets to visualize images in 2D 
   - vtk.vtkImageData
   - Dask Arrays
   - ImageJ / Fiji / ImageJ2 images
+  - Additional NumPy Array-like objects
 
 - Anisotropic voxel spacing supported
 - 3D and 2D image support
