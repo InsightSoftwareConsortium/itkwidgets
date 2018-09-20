@@ -138,6 +138,30 @@ def debounced(delay_seconds=0.5, method=False):
         return execute
     return wrapped
 
+# https://ipywidgets.readthedocs.io/en/stable/examples/Widget%20Asynchronous.html
+def yield_for_change(widget, attribute):
+    """Pause a generator to wait for a widget change event.
+
+    This is a decorator for a generator function which pauses the generator on yield
+    until the given widget attribute changes. The new value of the attribute is
+    sent to the generator and is the value of the yield.
+    """
+    def f(iterator):
+        @functools.wraps(iterator)
+        def inner():
+            i = iterator()
+            def next_i(change):
+                try:
+                    i.send(change.new)
+                except StopIteration as e:
+                    widget.unobserve(next_i, attribute)
+            widget.observe(next_i, attribute)
+            # start the generator
+            next(i)
+        return inner
+    return f
+
+
 @widgets.register
 class Viewer(ViewerParent):
     """Viewer widget class."""
@@ -149,6 +173,7 @@ class Viewer(ViewerParent):
     _model_module_version = Unicode('^0.13.1').tag(sync=True)
     image = ITKImage(default_value=None, allow_none=True, help="Image to visualize.").tag(sync=False, **itkimage_serialization)
     rendered_image = ITKImage(default_value=None, allow_none=True).tag(sync=True, **itkimage_serialization)
+    _rendering_image = CBool(default_value=False, help="We are currently rendering the image.").tag(sync=True)
     ui_collapsed = CBool(default_value=False, help="Collapse the built in user interface.").tag(sync=True)
     annotations = CBool(default_value=True, help="Show annotations.").tag(sync=True)
     mode = CaselessStrEnum(('x', 'y', 'z', 'v'), default_value='v', help="View mode: x: x plane, y: y plane, z: z plane, v: volume rendering").tag(sync=True)
@@ -166,13 +191,20 @@ class Viewer(ViewerParent):
         self._update_rendered_image()
         self.observe(self.update_rendered_image, ['image'])
 
-    @debounced(delay_seconds=0.4, method=True)
+    @debounced(delay_seconds=0.2, method=True)
     def update_rendered_image(self, change=None):
         self._update_rendered_image()
 
     def _update_rendered_image(self):
         if self.image is None:
             return
+        if self._rendering_image:
+            @yield_for_change(self, '_rendering_image')
+            def f():
+                x = yield
+                assert(x == False)
+            f()
+        self._rendering_image = True
         self.rendered_image = self.image
 
     @validate('gradient_opacity')
