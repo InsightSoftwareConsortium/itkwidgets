@@ -13,6 +13,7 @@ import itk
 import numpy as np
 import ipywidgets as widgets
 from traitlets import CBool, CFloat, Unicode, CaselessStrEnum, Tuple, List, TraitError, validate
+from ipydatawidgets import NDArray, array_serialization, shape_constraints
 from .trait_types import ITKImage, itkimage_serialization
 try:
     import ipywebrtc
@@ -182,9 +183,10 @@ class Viewer(ViewerParent):
     shadow = CBool(default_value=True, help="Use shadowing in the volume rendering.").tag(sync=True)
     slicing_planes = CBool(default_value=False, help="Display the slicing planes in volume rendering view mode.").tag(sync=True)
     gradient_opacity = CFloat(default_value=0.2, help="Volume rendering gradient opacity, from (0.0, 1.0]").tag(sync=True)
-    roi = List(List(CFloat()),
-            default_value=[[0., 0., 0.], [0., 0., 0.]],
-            help="Region of interest: ((lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z))").tag(sync=True)
+    roi = NDArray(dtype=np.float64, default_value=np.zeros((2, 3), dtype=np.float64),
+                help="Region of interest: ((lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z))")\
+            .tag(sync=True, **array_serialization)\
+            .valid(shape_constraints(2, 3))
 
     def __init__(self, **kwargs):
         super(Viewer, self).__init__(**kwargs)
@@ -227,8 +229,8 @@ class Viewer(ViewerParent):
     def roi_region(self):
         """Return the itk.ImageRegion corresponding to the roi."""
         dimension = self.image.GetImageDimension()
-        index = self.image.TransformPhysicalPointToIndex(self.roi[0][:dimension])
-        upperIndex = self.image.TransformPhysicalPointToIndex(self.roi[1][:dimension])
+        index = self.image.TransformPhysicalPointToIndex(tuple(self.roi[0][:dimension]))
+        upperIndex = self.image.TransformPhysicalPointToIndex(tuple(self.roi[1][:dimension]))
         size = upperIndex - index
         for dim in range(dimension):
             size[dim] += 1
