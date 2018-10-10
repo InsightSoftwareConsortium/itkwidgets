@@ -90,7 +90,6 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
   const imageData = vtkITKHelper.convertItkToVtkImage(rendered_image)
   const bounds = imageData.getBounds()
   domWidgetView.model.set('roi', [[bounds[0], bounds[2], bounds[4]], [bounds[1], bounds[3], bounds[5]]])
-  domWidgetView.model.save_changes()
   const is3D = rendered_image.imageType.dimension === 3
   domWidgetView.model.use2D = !is3D
   if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
@@ -106,6 +105,9 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
     resetRenderingStatus(domWidgetView)
     const viewProxy = domWidgetView.model.itkVtkViewer.getViewProxy()
     const renderWindow = viewProxy.getRenderWindow()
+    // Firefox requires calling .getContext on the canvas, which is
+    // performed by .initialize()
+    renderWindow.getViews()[0].initialize()
     const viewCanvas = renderWindow.getViews()[0].getCanvas()
     const stream  = viewCanvas.captureStream(30000./1001.)
     // Used by ipywebrtc
@@ -115,8 +117,8 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
   if (dataArray.getNumberOfComponents() > 1) {
     domWidgetView.model.itkVtkViewer.setColorMap('Grayscale')
     domWidgetView.model.set('cmap', 'Grayscale')
-    domWidgetView.model.save_changes()
   }
+  domWidgetView.model.save_changes()
 }
 
 
@@ -230,7 +232,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         }
         this.model.itkVtkViewer.subscribeGradientOpacityChanged(onGradientOpacityChange)
       }
-    })
+    }).catch(error => { console.error('View caught unexpected error:', error); });
   },
 
   rendered_image_changed: function() {
