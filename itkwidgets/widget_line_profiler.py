@@ -44,7 +44,7 @@ class LineProfiler(Viewer):
                 kwargs['mode'] = 'z'
         super(LineProfiler, self).__init__(**kwargs)
 
-def line_profile(image, **viewer_kwargs):
+def line_profile(image, order=2, **viewer_kwargs):
     """View the image with a line profile.
 
     Creates and returns an ipywidget to visualize the image along with a line
@@ -57,7 +57,11 @@ def line_profile(image, **viewer_kwargs):
     image : array_like, itk.Image, or vtk.vtkImageData
         The 2D or 3D image to visualize.
 
-    viewer_kwargs :
+    order : int, optional
+        Spline order for line profile interpolation. The order has to be in the
+        range 0-5.
+
+    viewer_kwargs : optional
         Keyword arguments for the viewer. See help(itkwidgets.view).
 
     """
@@ -71,11 +75,12 @@ def line_profile(image, **viewer_kwargs):
         distance = np.sqrt(sum([(profiler.point1[ii] - profiler.point2[ii])**2 for ii in range(dimension)]))
         index1 = tuple(image.TransformPhysicalPointToIndex(tuple(profiler.point1[:dimension])))
         index2 = tuple(image.TransformPhysicalPointToIndex(tuple(profiler.point2[:dimension])))
-        num_points = int(np.round(np.sqrt(sum([(index1[ii] - index2[ii])**2 for ii in range(dimension)])))) * 2
+        num_points = int(np.round(np.sqrt(sum([(index1[ii] - index2[ii])**2 for ii in range(dimension)])) * 2.1))
         coords = []
         for ii in range(dimension-1, -1, -1):
             coords.append(np.linspace(index1[ii], index2[ii], num_points))
-        mapped = scipy.ndimage.map_coordinates(image_array, np.vstack(coords))
+        mapped = scipy.ndimage.map_coordinates(image_array, np.vstack(coords),
+                                               order=order)
 
         return np.linspace(0.0, distance, num_points), mapped
 
