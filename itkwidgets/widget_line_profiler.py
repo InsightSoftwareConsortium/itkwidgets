@@ -6,6 +6,7 @@ Image visualization with a line profile.
 from traitlets import Unicode
 
 import numpy as np
+import scipy.ndimage
 import ipywidgets as widgets
 from .widget_viewer import Viewer
 from ipydatawidgets import NDArray, array_serialization, shape_constraints
@@ -13,6 +14,7 @@ from traitlets import CBool
 import matplotlib.pyplot as plt
 import matplotlib
 import IPython
+import itk
 
 @widgets.register
 class LineProfiler(Viewer):
@@ -62,21 +64,47 @@ def line_profile(image, **viewer_kwargs):
 
     profiler = LineProfiler(image=image, **viewer_kwargs)
 
+    image_array = itk.GetArrayViewFromImage(image)
+    dimension = image.GetImageDimension()
+
+    def get_profile():
+        distance = np.sqrt(sum([(profiler.point1[ii] - profiler.point2[ii])**2 for ii in range(dimension)]))
+        index1 = tuple(image.TransformPhysicalPointToIndex(tuple(profiler.point1[:dimension])))
+        index2 = tuple(image.TransformPhysicalPointToIndex(tuple(profiler.point2[:dimension])))
+        num_points = int(np.round(np.sqrt(sum([(index1[ii] - index2[ii])**2 for ii in range(dimension)])))) * 2
+        coords = []
+        for ii in range(dimension-1, -1, -1):
+            coords.append(np.linspace(index1[ii], index2[ii], num_points))
+        mapped = scipy.ndimage.map_coordinates(image_array, np.vstack(coords))
+
+        return np.linspace(0.0, distance, num_points), mapped
+
     ipython = IPython.get_ipython()
     ipython.enable_matplotlib('widget')
 
     is_interactive = matplotlib.is_interactive()
     matplotlib.interactive(False)
 
-    x = np.linspace(0, 2*np.pi, 400)
-    y = np.sin(x**2)
     fig, ax = plt.subplots()
-    ax.plot(x, y)
-    fig.canvas.draw()
-    fig.canvas.flush_events()
+    def update_plot():
+        ax.plot(*get_profile())
+        ax.set_xlabel('Distance')
+        ax.set_ylabel('Intensity')
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+
+    def update_profile(change):
+        is_interactive = matplotlib.is_interactive()
+        matplotlib.interactive(False)
+        ax.clear()
+        update_plot()
+
+        matplotlib.interactive(is_interactive)
+    update_plot()
+    matplotlib.interactive(is_interactive)
+
+    profiler.observe(update_profile, names=['point1', 'point2'])
 
     widget = widgets.VBox([profiler, fig.canvas])
-
-    matplotlib.interactive(is_interactive)
 
     return widget

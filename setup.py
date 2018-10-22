@@ -154,6 +154,7 @@ setup_args = {
         'ipydatawidgets>=3.2.0',
         'ipywidgets>=7.4.0',
         'numpy',
+        'scipy',
         'six',
 	'zstandard',
     ],
