@@ -80,7 +80,7 @@ def line_profile(image, order=2, **viewer_kwargs):
         for ii in range(dimension-1, -1, -1):
             coords.append(np.linspace(index1[ii], index2[ii], num_points))
         mapped = scipy.ndimage.map_coordinates(image_array, np.vstack(coords),
-                                               order=order)
+                                               order=order, mode='nearest')
 
         return np.linspace(0.0, distance, num_points), mapped
 
