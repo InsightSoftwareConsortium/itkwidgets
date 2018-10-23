@@ -38,6 +38,7 @@ Interactive `Jupyter <https://jupyter.org/>`_ widgets to visualize images in 2D 
 
 - Anisotropic voxel spacing supported
 - 3D and 2D image support
+- Line profiles
 - Combine with other *ipywidgets* to quickly create graphical interfaces to
   algorithms
 
@@ -67,6 +68,7 @@ Data types:
 
 Tasks:
 
+- `Binder: Examine a line profile <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/LineProfile.ipynb>`_
 - `Binder: Interactively explore algorithm parameters <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/InteractiveParameterExploration.ipynb>`_
 - `Binder: Record a video <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/RecordAVideo.ipynb>`_
 - `Binder: Select a region of interest <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/SelectRegionOfInterest.ipynb>`_
@@ -98,6 +100,10 @@ examine::
 For information on additional options, see the ``view`` function docstring::
 
   view?
+
+Other available widgets:
+
+- ``itkwidgets.line_profile``
 
 Advanced Usage
 ^^^^^^^^^^^^^^
@@ -183,6 +189,7 @@ After installation, try the following examples that demonstrate how to visualize
 
 or how to:
 
+- `Examine a line profile <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/LineProfile.ipynb>`_
 - `Interatively explore algorithm parameters <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/InteractiveParameterExploration.ipynb>`_
 - `Record a video <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/RecordAVideo.ipynb>`_
 - `Select a region of interest <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/SelectRegionOfInterest.ipynb>`_
