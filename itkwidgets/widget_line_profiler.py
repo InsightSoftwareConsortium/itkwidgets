@@ -82,6 +82,12 @@ def line_profile(image, order=2, plotter=None, **viewer_kwargs):
         except ImportError:
             pass
     if not plotter:
+        try:
+            import bqplot
+            plotter = 'bqplot'
+        except ImportError:
+            pass
+    if not plotter:
         plotter = 'ipympl'
 
 
@@ -100,7 +106,19 @@ def line_profile(image, order=2, plotter=None, **viewer_kwargs):
 
     if plotter == 'plotly':
         import plotly.graph_objs as go
-        fig = go.FigureWidget()
+        layout = go.Layout(
+            xaxis=dict(title='Distance'),
+            yaxis=dict(title='Intensity')
+            )
+        fig = go.FigureWidget(layout=layout)
+    elif plotter == 'bqplot':
+        import bqplot
+        x_scale = bqplot.LinearScale()
+        y_scale = bqplot.LinearScale()
+        x_axis = bqplot.Axis(scale=x_scale, grid_lines='solid', label='Distance')
+        y_axis = bqplot.Axis(scale=y_scale, orientation='vertical', grid_lines='solid', label='Intensity')
+        line = bqplot.Lines(scales={'x': x_scale, 'y': y_scale})
+        fig = bqplot.Figure(marks=[line], axes=[x_axis, y_axis])
     elif plotter == 'ipympl':
         ipython = IPython.get_ipython()
         ipython.enable_matplotlib('widget')
@@ -117,6 +135,10 @@ def line_profile(image, order=2, plotter=None, **viewer_kwargs):
             distance, intensity = get_profile()
             fig.data[0]['x'] = distance
             fig.data[0]['y'] = intensity
+        elif plotter == 'bqplot':
+            distance, intensity = get_profile()
+            fig.marks[0].x = distance
+            fig.marks[0].y = intensity
         elif plotter == 'ipympl':
             ax.plot(*get_profile())
             ax.set_xlabel('Distance')
@@ -126,6 +148,8 @@ def line_profile(image, order=2, plotter=None, **viewer_kwargs):
 
     def update_profile(change):
         if plotter == 'plotly':
+            update_plot()
+        elif plotter == 'bqplot':
             update_plot()
         elif plotter == 'ipympl':
             is_interactive = matplotlib.is_interactive()
@@ -138,6 +162,9 @@ def line_profile(image, order=2, plotter=None, **viewer_kwargs):
         distance, intensity = get_profile()
         trace = go.Scattergl(x=distance, y=intensity)
         fig.add_trace(trace)
+        widget = widgets.VBox([profiler, fig])
+    elif plotter == 'bqplot':
+        update_plot()
         widget = widgets.VBox([profiler, fig])
     elif plotter == 'ipympl':
         update_plot()
