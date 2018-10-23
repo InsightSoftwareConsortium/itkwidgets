@@ -44,7 +44,7 @@ class LineProfiler(Viewer):
                 kwargs['mode'] = 'z'
         super(LineProfiler, self).__init__(**kwargs)
 
-def line_profile(image, order=2, **viewer_kwargs):
+def line_profile(image, order=2, plotter=None, **viewer_kwargs):
     """View the image with a line profile.
 
     Creates and returns an ipywidget to visualize the image along with a line
@@ -61,6 +61,10 @@ def line_profile(image, order=2, **viewer_kwargs):
         Spline order for line profile interpolation. The order has to be in the
         range 0-5.
 
+    plotter : 'plotly', 'bqplot', or 'ipympl'
+        Plotting library to use. If not defined, use plotly if available,
+        otherwise bqplot if available, otherwise ipympl.
+
     viewer_kwargs : optional
         Keyword arguments for the viewer. See help(itkwidgets.view).
 
@@ -70,6 +74,16 @@ def line_profile(image, order=2, **viewer_kwargs):
 
     image_array = itk.GetArrayViewFromImage(image)
     dimension = image.GetImageDimension()
+
+    if not plotter:
+        try:
+            import plotly.graph_objs as go
+            plotter = 'plotly'
+        except ImportError:
+            pass
+    if not plotter:
+        plotter = 'ipympl'
+
 
     def get_profile():
         distance = np.sqrt(sum([(profiler.point1[ii] - profiler.point2[ii])**2 for ii in range(dimension)]))
@@ -84,32 +98,52 @@ def line_profile(image, order=2, **viewer_kwargs):
 
         return np.linspace(0.0, distance, num_points), mapped
 
-    ipython = IPython.get_ipython()
-    ipython.enable_matplotlib('widget')
+    if plotter == 'plotly':
+        import plotly.graph_objs as go
+        fig = go.FigureWidget()
+    elif plotter == 'ipympl':
+        ipython = IPython.get_ipython()
+        ipython.enable_matplotlib('widget')
 
-    is_interactive = matplotlib.is_interactive()
-    matplotlib.interactive(False)
-
-    fig, ax = plt.subplots()
-    def update_plot():
-        ax.plot(*get_profile())
-        ax.set_xlabel('Distance')
-        ax.set_ylabel('Intensity')
-        fig.canvas.draw()
-        fig.canvas.flush_events()
-
-    def update_profile(change):
         is_interactive = matplotlib.is_interactive()
         matplotlib.interactive(False)
-        ax.clear()
-        update_plot()
 
+        fig, ax = plt.subplots()
+    else:
+        raise ValueError('Invalid plotter: ' + plotter)
+
+    def update_plot():
+        if plotter == 'plotly':
+            distance, intensity = get_profile()
+            fig.data[0]['x'] = distance
+            fig.data[0]['y'] = intensity
+        elif plotter == 'ipympl':
+            ax.plot(*get_profile())
+            ax.set_xlabel('Distance')
+            ax.set_ylabel('Intensity')
+            fig.canvas.draw()
+            fig.canvas.flush_events()
+
+    def update_profile(change):
+        if plotter == 'plotly':
+            update_plot()
+        elif plotter == 'ipympl':
+            is_interactive = matplotlib.is_interactive()
+            matplotlib.interactive(False)
+            ax.clear()
+            update_plot()
+            matplotlib.interactive(is_interactive)
+
+    if plotter == 'plotly':
+        distance, intensity = get_profile()
+        trace = go.Scattergl(x=distance, y=intensity)
+        fig.add_trace(trace)
+        widget = widgets.VBox([profiler, fig])
+    elif plotter == 'ipympl':
+        update_plot()
         matplotlib.interactive(is_interactive)
-    update_plot()
-    matplotlib.interactive(is_interactive)
+        widget = widgets.VBox([profiler, fig.canvas])
 
     profiler.observe(update_profile, names=['point1', 'point2'])
-
-    widget = widgets.VBox([profiler, fig.canvas])
 
     return widget
