@@ -13,24 +13,7 @@ try:
 except ImportError:
     pass
 
-def is_arraylike(arr):
-    return hasattr(arr, 'shape') and \
-        hasattr(arr, 'dtype') and \
-        hasattr(arr, '__array__') and \
-        hasattr(arr, 'ndim')
-
-have_imglyb = False
-try:
-    import imglyb
-    have_imglyb = True
-except ImportError:
-    pass
-have_vtk = False
-try:
-    import vtk
-    have_vtk = True
-except ImportError:
-    pass
+from ._to_itk import to_itk_image
 
 class ITKImage(traitlets.TraitType):
     """A trait type holding an itk.Image object"""
@@ -42,28 +25,10 @@ class ITKImage(traitlets.TraitType):
     _source_object = None
 
     def validate(self, obj, value):
-        if is_arraylike(value):
-            array = np.asarray(value)
-            self._source_object = array
-            if array.flags['OWNDATA']:
-                image_from_array = itk.GetImageViewFromArray(array)
-            else:
-                image_from_array = itk.GetImageFromArray(array)
-            return image_from_array
-        elif have_vtk and isinstance(value, vtk.vtkImageData):
-            from vtk.util import numpy_support as vtk_numpy_support
-            array = vtk_numpy_support.vtk_to_numpy(value.GetPointData().GetScalars())
-            array.shape = tuple(value.GetDimensions())[::-1]
-            self._source_object = array
-            image_from_array = itk.GetImageViewFromArray(array)
-            image_from_array.SetSpacing(value.GetSpacing())
-            image_from_array.SetOrigin(value.GetOrigin())
-            return image_from_array
-        elif have_imglyb and isinstance(value,
-                imglyb.util.ReferenceGuardingRandomAccessibleInterval):
-            array = imglyb.to_numpy(value)
-            self._source_object = array
-            image_from_array = itk.GetImageViewFromArray(array)
+        self._source_object = value
+
+        image_from_array = to_itk_image(value)
+        if image_from_array:
             return image_from_array
 
         try:
@@ -74,7 +39,6 @@ class ITKImage(traitlets.TraitType):
             # the same object, the actual contents may have changed, as
             # indicated by image.GetMTime()
             value = itk.output(value)
-            self._source_object = value
             grafted = value.__New_orig__()
             grafted.Graft(value)
             return grafted
