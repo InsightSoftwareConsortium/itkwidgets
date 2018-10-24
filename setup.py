@@ -153,6 +153,7 @@ setup_args = {
         'itk-core>=4.13.1',
         'ipydatawidgets>=3.2.0',
         'ipywidgets>=7.4.0',
+        'ipympl',
         'numpy',
         'scipy',
         'six',
