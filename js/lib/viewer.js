@@ -2,7 +2,7 @@ import 'babel-polyfill'
 const widgets = require('@jupyter-widgets/base')
 const  _ = require('lodash')
 import {
-    simplearray_serialization
+    fixed_shape_serialization
 } from "jupyter-dataserializers"
 import vtkITKHelper from 'vtk.js/Sources/Common/DataModel/ITKHelper'
 import createViewer from 'itk-vtk-viewer/src/createViewer'
@@ -47,12 +47,12 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       shadow: true,
       slicing_planes: false,
       gradient_opacity: 0.2,
-      roi: { array: new Float64Array([0., 0., 0., 0., 0., 0.]), shape: [2, 3] },
+      roi: new Float64Array([0., 0., 0., 0., 0., 0.])
     })
   }}, {
   serializers: _.extend({
     rendered_image: { serialize: serialize_itkimage, deserialize: deserialize_itkimage },
-    roi: simplearray_serialization,
+    roi: fixed_shape_serialization([2, 3]),
   }, widgets.DOMWidgetModel.serializers)
 })
 
@@ -94,10 +94,8 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
   const imageData = vtkITKHelper.convertItkToVtkImage(rendered_image)
   const bounds = imageData.getBounds()
   domWidgetView.model.set('roi',
-    {
-      array: new Float64Array([bounds[0], bounds[2], bounds[4], bounds[1], bounds[3], bounds[5]]),
-      shape: [2, 3]
-    })
+      new Float64Array([bounds[0], bounds[2], bounds[4], bounds[1], bounds[3], bounds[5]])
+    )
   domWidgetView.model.save_changes()
   const is3D = rendered_image.imageType.dimension === 3
   domWidgetView.model.use2D = !is3D
@@ -121,6 +119,7 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
     const stream  = viewCanvas.captureStream(30000./1001.)
     // Used by ipywebrtc
     domWidgetView.model.stream = Promise.resolve(stream)
+    domWidgetView.initialize_viewer()
   }
   const dataArray = imageData.getPointData().getScalars()
   if (dataArray.getNumberOfComponents() > 1) {
@@ -187,10 +186,8 @@ const ViewerView = widgets.DOMWidgetView.extend({
 
       const onCroppingPlanesChanged = (planes, bboxCorners) => {
         this.model.set('roi',
-          {
-            array: new Float64Array([bboxCorners[0][0], bboxCorners[0][1], bboxCorners[0][2], bboxCorners[7][0], bboxCorners[7][1], bboxCorners[7][2]]),
-            shape: [2, 3]
-          })
+            new Float64Array([bboxCorners[0][0], bboxCorners[0][1], bboxCorners[0][2], bboxCorners[7][0], bboxCorners[7][1], bboxCorners[7][2]]),
+          )
         this.model.save_changes()
       }
       this.model.itkVtkViewer.subscribeCroppingPlanesChanged(onCroppingPlanesChanged)
@@ -423,6 +420,10 @@ const ViewerView = widgets.DOMWidgetView.extend({
     if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
       this.model.itkVtkViewer.setGradientOpacity(gradient_opacity)
     }
+  },
+
+  initialize_viewer: function() {
+    // possible to override in extensions
   },
 
 });

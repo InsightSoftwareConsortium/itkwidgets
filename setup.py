@@ -151,9 +151,11 @@ setup_args = {
     ],
     'install_requires': [
         'itk-core>=4.13.1',
-        'ipydatawidgets>=3.0.0',
+        'ipydatawidgets>=3.2.0',
         'ipywidgets>=7.4.0',
+        'ipympl',
         'numpy',
+        'scipy',
         'six',
 	'zstandard',
     ],
