@@ -1,5 +1,8 @@
 itk-core
+ipydatawidgets>=3.2.0
 ipywidgets>=7.4.0
+ipympl
 numpy
+scipy
 six
 zstandard
