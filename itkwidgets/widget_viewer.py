@@ -187,15 +187,43 @@ class Viewer(ViewerParent):
                 help="Region of interest: ((lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z))")\
             .tag(sync=True, **array_serialization)\
             .valid(shape_constraints(2, 3))
+    size_limit_2d = NDArray(dtype=np.int64, default_value=np.array([2048, 2048], dtype=np.int64),
+            help="Size limit for 2D image visualization.").tag(sync=False)
+    size_limit_3d = NDArray(dtype=np.int64, default_value=np.array([256, 256, 256], dtype=np.int64),
+            help="Size limit for 3D image visualization.").tag(sync=False)
+    _downsampling = CBool(default_value=False,
+            help="We are downsampling the image to meet the size limits.").tag(sync=True)
+
 
     def __init__(self, **kwargs):
         super(Viewer, self).__init__(**kwargs)
+
+        dimension = self.image.GetImageDimension()
+        size = self.image.GetLargestPossibleRegion().GetSize()
+        if dimension == 2:
+            for dim in range(dimension):
+                if size[dim] > self.size_limit_2d[dim]:
+                    self._downsampling = True
+        else:
+            for dim in range(dimension):
+                if size[dim] > self.size_limit_3d[dim]:
+                    self._downsampling = True
+        if self._downsampling:
+            self.shrinker = itk.BinShrinkImageFilter.New(self.image)
         self._update_rendered_image()
         self.observe(self.update_rendered_image, ['image'])
 
     @debounced(delay_seconds=0.2, method=True)
     def update_rendered_image(self, change=None):
         self._update_rendered_image()
+
+    @staticmethod
+    def _find_shrink_factors(limit, dimension, size):
+		shrink_factors = [1,] * dimension
+		for dim in range(dimension):
+			while(int(np.floor(float(size[dim]) / shrink_factors[dim])) > limit[dim]):
+				shrink_factors[dim] += 1
+		return shrink_factors
 
     def _update_rendered_image(self):
         if self.image is None:
@@ -207,7 +235,21 @@ class Viewer(ViewerParent):
                 assert(x == False)
             f()
         self._rendering_image = True
-        self.rendered_image = self.image
+
+
+        if self._downsampling:
+            region = self.image.GetLargestPossibleRegion()
+            size = region.GetSize()
+            dimension = self.image.GetImageDimension()
+            if dimension == 2:
+                shrink_factors = self._find_shrink_factors(self.size_limit_2d, dimension, size)
+            else:
+                shrink_factors = self._find_shrink_factors(self.size_limit_3d, dimension, size)
+            self.shrinker.SetShrinkFactors(shrink_factors)
+            self.shrinker.UpdateLargestPossibleRegion()
+            self.rendered_image = self.shrinker.GetOutput()
+        else:
+            self.rendered_image = self.image
 
     @validate('gradient_opacity')
     def _validate_gradient_opacity(self, proposal):
@@ -253,7 +295,8 @@ class Viewer(ViewerParent):
 
 
 def view(image, ui_collapsed=False, annotations=True, interpolation=True,
-        cmap=cm.viridis, mode='v', shadow=True, slicing_planes=False, gradient_opacity=0.2):
+        cmap=cm.viridis, mode='v', shadow=True, slicing_planes=False,
+        gradient_opacity=0.22, **kwargs):
     """View the image.
 
     Creates and returns an ipywidget to visualize the image.
@@ -299,6 +342,17 @@ def view(image, ui_collapsed=False, annotations=True, interpolation=True,
     gradient_opacity: float, optional, default: 0.2
         Gradient opacity for the volume rendering, in the range (0.0, 1.0].
 
+    Other Parameters
+    ----------------
+
+    size_limit_2d: 2x1 numpy int64 array, optional, default: [2048, 2048]
+        Size limit for 2D image visualization. If the roi is larger than this
+        size, it will be downsampled for visualization
+
+    size_limit_3d: 3x1 numpy int64 array, optional, default: [192, 192, 192]
+        Size limit for 3D image visualization. If the roi is larger than this
+        size, it will be downsampled for visualization.
+
     Returns
     -------
     viewer : ipywidget
@@ -310,5 +364,5 @@ def view(image, ui_collapsed=False, annotations=True, interpolation=True,
     viewer = Viewer(image=image, ui_collapsed=ui_collapsed,
             annotations=annotations, interpolation=interpolation, cmap=cmap,
             mode=mode, shadow=shadow, slicing_planes=slicing_planes,
-            gradient_opacity=gradient_opacity)
+            gradient_opacity=gradient_opacity, **kwargs)
     return viewer
