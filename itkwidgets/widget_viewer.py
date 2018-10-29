@@ -203,11 +203,15 @@ class Viewer(ViewerParent):
         largest_region = self.image.GetLargestPossibleRegion()
         size = largest_region.GetSize()
 
+        # Cache this so we do not need to recompute on it when resetting the roi
+        self._largest_roi_rendered_image = None
+        self._largest_roi = None
         if not np.any(self.roi):
             largest_index = largest_region.GetIndex()
             self.roi[0][:dimension] = np.array(self.image.TransformIndexToPhysicalPoint(largest_index))
             largest_index_upper = largest_index + size
             self.roi[1][:dimension] = np.array(self.image.TransformIndexToPhysicalPoint(largest_index_upper))
+            self._largest_roi = self.roi.copy()
 
         if dimension == 2:
             for dim in range(dimension):
@@ -241,12 +245,15 @@ class Viewer(ViewerParent):
             new_roi[0][:dimension] = np.array(self.image.TransformIndexToPhysicalPoint(largest_index))
             largest_index_upper = largest_index + size
             new_roi[1][:dimension] = np.array(self.image.TransformIndexToPhysicalPoint(largest_index_upper))
+            self._largest_roi = new_roi.copy()
             self.roi = new_roi
         if change.new == True:
             self._reset_crop_requested = False
 
     @debounced(delay_seconds=0.2, method=True)
     def update_rendered_image(self, change=None):
+        self._largest_roi_rendered_image = None
+        self._largest_roi = None
         self._update_rendered_image()
 
     @staticmethod
@@ -291,7 +298,19 @@ class Viewer(ViewerParent):
 
             size = region.GetSize()
 
+            is_largest = False
+            if self._largest_roi is not None and np.all(self._largest_roi == self.roi):
+                is_largest = True
+            if self._largest_roi_rendered_image is not None:
+                self.rendered_image = self._largest_roi_rendered_image
+                return
+
             self.shrinker.UpdateLargestPossibleRegion()
+            if is_largest:
+                self._largest_roi_rendered_image = self.shrinker.GetOutput()
+                self._largest_roi_rendered_image.DisconnectPipeline()
+                self.rendered_image = self._largest_roi_rendered_image
+                return
             self.rendered_image = self.shrinker.GetOutput()
         else:
             self.rendered_image = self.image
