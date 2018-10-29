@@ -189,17 +189,26 @@ class Viewer(ViewerParent):
             .valid(shape_constraints(2, 3))
     size_limit_2d = NDArray(dtype=np.int64, default_value=np.array([2048, 2048], dtype=np.int64),
             help="Size limit for 2D image visualization.").tag(sync=False)
-    size_limit_3d = NDArray(dtype=np.int64, default_value=np.array([256, 256, 256], dtype=np.int64),
+    size_limit_3d = NDArray(dtype=np.int64, default_value=np.array([192, 192, 192], dtype=np.int64),
             help="Size limit for 3D image visualization.").tag(sync=False)
     _downsampling = CBool(default_value=False,
             help="We are downsampling the image to meet the size limits.").tag(sync=True)
+    _reset_crop_requested = CBool(default_value=False,
+            help="The user requested a reset of the roi.").tag(sync=True)
 
 
     def __init__(self, **kwargs):
         super(Viewer, self).__init__(**kwargs)
-
         dimension = self.image.GetImageDimension()
-        size = self.image.GetLargestPossibleRegion().GetSize()
+        largest_region = self.image.GetLargestPossibleRegion()
+        size = largest_region.GetSize()
+
+        if not np.any(self.roi):
+            largest_index = largest_region.GetIndex()
+            self.roi[0][:dimension] = np.array(self.image.TransformIndexToPhysicalPoint(largest_index))
+            largest_index_upper = largest_index + size
+            self.roi[1][:dimension] = np.array(self.image.TransformIndexToPhysicalPoint(largest_index_upper))
+
         if dimension == 2:
             for dim in range(dimension):
                 if size[dim] > self.size_limit_2d[dim]:
@@ -209,9 +218,32 @@ class Viewer(ViewerParent):
                 if size[dim] > self.size_limit_3d[dim]:
                     self._downsampling = True
         if self._downsampling:
-            self.shrinker = itk.BinShrinkImageFilter.New(self.image)
+            self.extractor = itk.ExtractImageFilter.New(self.image)
+            self.extractor.InPlaceOn()
+            self.shrinker = itk.BinShrinkImageFilter.New(self.extractor)
         self._update_rendered_image()
+        if self._downsampling:
+            self.observe(self._on_roi_changed, ['roi'])
+
+        self.observe(self._on_reset_crop_requested, ['_reset_crop_requested'])
         self.observe(self.update_rendered_image, ['image'])
+
+    def _on_roi_changed(self, change=None):
+        self.update_rendered_image()
+
+    def _on_reset_crop_requested(self, change=None):
+        if change.new == True and self._downsampling:
+            dimension = self.image.GetImageDimension()
+            largest_region = self.image.GetLargestPossibleRegion()
+            size = largest_region.GetSize()
+            largest_index = largest_region.GetIndex()
+            new_roi = self.roi.copy()
+            new_roi[0][:dimension] = np.array(self.image.TransformIndexToPhysicalPoint(largest_index))
+            largest_index_upper = largest_index + size
+            new_roi[1][:dimension] = np.array(self.image.TransformIndexToPhysicalPoint(largest_index_upper))
+            self.roi = new_roi
+        if change.new == True:
+            self._reset_crop_requested = False
 
     @debounced(delay_seconds=0.2, method=True)
     def update_rendered_image(self, change=None):
@@ -236,16 +268,29 @@ class Viewer(ViewerParent):
             f()
         self._rendering_image = True
 
-
         if self._downsampling:
-            region = self.image.GetLargestPossibleRegion()
-            size = region.GetSize()
             dimension = self.image.GetImageDimension()
+            index = self.image.TransformPhysicalPointToIndex(self.roi[0][:dimension])
+            upper_index = self.image.TransformPhysicalPointToIndex(self.roi[1][:dimension])
+            size = upper_index - index
+
             if dimension == 2:
                 shrink_factors = self._find_shrink_factors(self.size_limit_2d, dimension, size)
             else:
                 shrink_factors = self._find_shrink_factors(self.size_limit_3d, dimension, size)
             self.shrinker.SetShrinkFactors(shrink_factors)
+
+            region = itk.ImageRegion[dimension]()
+            region.SetIndex(index)
+            region.SetSize(tuple(size))
+            # Account for rounding
+            # truncation issues
+            region.PadByRadius(1)
+            region.Crop(self.image.GetLargestPossibleRegion())
+            self.extractor.SetExtractionRegion(region)
+
+            size = region.GetSize()
+
             self.shrinker.UpdateLargestPossibleRegion()
             self.rendered_image = self.shrinker.GetOutput()
         else:
@@ -272,8 +317,8 @@ class Viewer(ViewerParent):
         """Return the itk.ImageRegion corresponding to the roi."""
         dimension = self.image.GetImageDimension()
         index = self.image.TransformPhysicalPointToIndex(tuple(self.roi[0][:dimension]))
-        upperIndex = self.image.TransformPhysicalPointToIndex(tuple(self.roi[1][:dimension]))
-        size = upperIndex - index
+        upper_index = self.image.TransformPhysicalPointToIndex(tuple(self.roi[1][:dimension]))
+        size = upper_index - index
         for dim in range(dimension):
             size[dim] += 1
         region = itk.ImageRegion[dimension]()
@@ -287,10 +332,10 @@ class Viewer(ViewerParent):
         dimension = self.image.GetImageDimension()
         region = self.roi_region()
         index = region.GetIndex()
-        upperIndex = np.array(index) + np.array(region.GetSize())
+        upper_index = np.array(index) + np.array(region.GetSize())
         slices = []
         for dim in range(dimension):
-            slices.insert(0, slice(index[dim], upperIndex[dim] + 1))
+            slices.insert(0, slice(index[dim], upper_index[dim] + 1))
         return tuple(slices)
 
 
