@@ -258,11 +258,11 @@ class Viewer(ViewerParent):
 
     @staticmethod
     def _find_shrink_factors(limit, dimension, size):
-		shrink_factors = [1,] * dimension
-		for dim in range(dimension):
-			while(int(np.floor(float(size[dim]) / shrink_factors[dim])) > limit[dim]):
-				shrink_factors[dim] += 1
-		return shrink_factors
+        shrink_factors = [1,] * dimension
+        for dim in range(dimension):
+          while(int(np.floor(float(size[dim]) / shrink_factors[dim])) > limit[dim]):
+            shrink_factors[dim] += 1
+        return shrink_factors
 
     def _update_rendered_image(self):
         if self.image is None:
