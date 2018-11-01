@@ -47,7 +47,8 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       shadow: true,
       slicing_planes: false,
       gradient_opacity: 0.2,
-      roi: new Float64Array([0., 0., 0., 0., 0., 0.])
+      roi: new Float64Array([0., 0., 0., 0., 0., 0.]),
+      _reset_crop_requested: false,
     })
   }}, {
   serializers: _.extend({
@@ -62,6 +63,12 @@ const resetRenderingStatus = (domWidgetView) => {
   const representation = viewProxy.getRepresentations()[0];
   let unsubscriber = null
   const onLightingActivated = () => {
+    // Why is this necessary?
+    const shadow = domWidgetView.model.get('shadow')
+    representation.setUseShadow(shadow);
+    if (viewProxy.getViewMode() == 'VolumeRendering') {
+      viewProxy.resetCamera()
+    }
     domWidgetView.model.set('_rendering_image', false)
     domWidgetView.model.save_changes()
     if (unsubscriber) {
@@ -92,17 +99,11 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
     containerStyle: containerStyle,
   };
   const imageData = vtkITKHelper.convertItkToVtkImage(rendered_image)
-  const bounds = imageData.getBounds()
-  domWidgetView.model.set('roi',
-      new Float64Array([bounds[0], bounds[2], bounds[4], bounds[1], bounds[3], bounds[5]])
-    )
-  domWidgetView.model.save_changes()
   const is3D = rendered_image.imageType.dimension === 3
   domWidgetView.model.use2D = !is3D
   if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
     resetRenderingStatus(domWidgetView)
     domWidgetView.model.itkVtkViewer.setImage(imageData)
-    domWidgetView.model.itkVtkViewer.renderLater()
   } else {
     domWidgetView.model.itkVtkViewer = createViewer(domWidgetView.el, {
       viewerStyle: viewerStyle,
@@ -125,8 +126,8 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
   if (dataArray.getNumberOfComponents() > 1) {
     domWidgetView.model.itkVtkViewer.setColorMap('Grayscale')
     domWidgetView.model.set('cmap', 'Grayscale')
+    domWidgetView.model.save_changes()
   }
-  domWidgetView.model.save_changes()
 }
 
 
@@ -185,12 +186,20 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.model.itkVtkViewer.subscribeSelectColorMap(onSelectColorMap)
 
       const onCroppingPlanesChanged = (planes, bboxCorners) => {
-        this.model.set('roi',
-            new Float64Array([bboxCorners[0][0], bboxCorners[0][1], bboxCorners[0][2], bboxCorners[7][0], bboxCorners[7][1], bboxCorners[7][2]]),
-          )
-        this.model.save_changes()
+        if (!this.model.get('_rendering_image')) {
+          this.model.set('roi',
+              new Float64Array([bboxCorners[0][0], bboxCorners[0][1], bboxCorners[0][2], bboxCorners[7][0], bboxCorners[7][1], bboxCorners[7][2]]),
+            )
+          this.model.save_changes()
+        }
       }
       this.model.itkVtkViewer.subscribeCroppingPlanesChanged(onCroppingPlanesChanged)
+
+      const onResetCrop = () => {
+        this.model.set('_reset_crop_requested', true)
+        this.model.save_changes()
+      }
+      this.model.itkVtkViewer.subscribeResetCrop(onResetCrop)
 
       if (!this.model.use2D) {
         const onViewModeChanged = (mode) => {

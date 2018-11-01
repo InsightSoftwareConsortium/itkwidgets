@@ -187,15 +187,84 @@ class Viewer(ViewerParent):
                 help="Region of interest: ((lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z))")\
             .tag(sync=True, **array_serialization)\
             .valid(shape_constraints(2, 3))
+    size_limit_2d = NDArray(dtype=np.int64, default_value=np.array([2048, 2048], dtype=np.int64),
+            help="Size limit for 2D image visualization.").tag(sync=False)
+    size_limit_3d = NDArray(dtype=np.int64, default_value=np.array([192, 192, 192], dtype=np.int64),
+            help="Size limit for 3D image visualization.").tag(sync=False)
+    _downsampling = CBool(default_value=False,
+            help="We are downsampling the image to meet the size limits.").tag(sync=True)
+    _reset_crop_requested = CBool(default_value=False,
+            help="The user requested a reset of the roi.").tag(sync=True)
+
 
     def __init__(self, **kwargs):
         super(Viewer, self).__init__(**kwargs)
+        dimension = self.image.GetImageDimension()
+        largest_region = self.image.GetLargestPossibleRegion()
+        size = largest_region.GetSize()
+
+        # Cache this so we do not need to recompute on it when resetting the roi
+        self._largest_roi_rendered_image = None
+        self._largest_roi = None
+        if not np.any(self.roi):
+            largest_index = largest_region.GetIndex()
+            self.roi[0][:dimension] = np.array(self.image.TransformIndexToPhysicalPoint(largest_index))
+            largest_index_upper = largest_index + size
+            self.roi[1][:dimension] = np.array(self.image.TransformIndexToPhysicalPoint(largest_index_upper))
+            self._largest_roi = self.roi.copy()
+
+        if dimension == 2:
+            for dim in range(dimension):
+                if size[dim] > self.size_limit_2d[dim]:
+                    self._downsampling = True
+        else:
+            for dim in range(dimension):
+                if size[dim] > self.size_limit_3d[dim]:
+                    self._downsampling = True
+        if self._downsampling:
+            self.extractor = itk.ExtractImageFilter.New(self.image)
+            self.extractor.InPlaceOn()
+            self.shrinker = itk.BinShrinkImageFilter.New(self.extractor)
         self._update_rendered_image()
+        if self._downsampling:
+            self.observe(self._on_roi_changed, ['roi'])
+
+        self.observe(self._on_reset_crop_requested, ['_reset_crop_requested'])
         self.observe(self.update_rendered_image, ['image'])
+
+    @debounced(delay_seconds=1.5, method=True)
+    def _on_roi_changed(self, change=None):
+        if self._downsampling:
+            self.update_rendered_image()
+
+    def _on_reset_crop_requested(self, change=None):
+        if change.new == True and self._downsampling:
+            dimension = self.image.GetImageDimension()
+            largest_region = self.image.GetLargestPossibleRegion()
+            size = largest_region.GetSize()
+            largest_index = largest_region.GetIndex()
+            new_roi = self.roi.copy()
+            new_roi[0][:dimension] = np.array(self.image.TransformIndexToPhysicalPoint(largest_index))
+            largest_index_upper = largest_index + size
+            new_roi[1][:dimension] = np.array(self.image.TransformIndexToPhysicalPoint(largest_index_upper))
+            self._largest_roi = new_roi.copy()
+            self.roi = new_roi
+        if change.new == True:
+            self._reset_crop_requested = False
 
     @debounced(delay_seconds=0.2, method=True)
     def update_rendered_image(self, change=None):
+        self._largest_roi_rendered_image = None
+        self._largest_roi = None
         self._update_rendered_image()
+
+    @staticmethod
+    def _find_shrink_factors(limit, dimension, size):
+        shrink_factors = [1,] * dimension
+        for dim in range(dimension):
+          while(int(np.floor(float(size[dim]) / shrink_factors[dim])) > limit[dim]):
+            shrink_factors[dim] += 1
+        return shrink_factors
 
     def _update_rendered_image(self):
         if self.image is None:
@@ -207,7 +276,46 @@ class Viewer(ViewerParent):
                 assert(x == False)
             f()
         self._rendering_image = True
-        self.rendered_image = self.image
+
+        if self._downsampling:
+            dimension = self.image.GetImageDimension()
+            index = self.image.TransformPhysicalPointToIndex(self.roi[0][:dimension])
+            upper_index = self.image.TransformPhysicalPointToIndex(self.roi[1][:dimension])
+            size = upper_index - index
+
+            if dimension == 2:
+                shrink_factors = self._find_shrink_factors(self.size_limit_2d, dimension, size)
+            else:
+                shrink_factors = self._find_shrink_factors(self.size_limit_3d, dimension, size)
+            self.shrinker.SetShrinkFactors(shrink_factors)
+
+            region = itk.ImageRegion[dimension]()
+            region.SetIndex(index)
+            region.SetSize(tuple(size))
+            # Account for rounding
+            # truncation issues
+            region.PadByRadius(1)
+            region.Crop(self.image.GetLargestPossibleRegion())
+            self.extractor.SetExtractionRegion(region)
+
+            size = region.GetSize()
+
+            is_largest = False
+            if self._largest_roi is not None and np.all(self._largest_roi == self.roi):
+                is_largest = True
+            if self._largest_roi_rendered_image is not None:
+                self.rendered_image = self._largest_roi_rendered_image
+                return
+
+            self.shrinker.UpdateLargestPossibleRegion()
+            if is_largest:
+                self._largest_roi_rendered_image = self.shrinker.GetOutput()
+                self._largest_roi_rendered_image.DisconnectPipeline()
+                self.rendered_image = self._largest_roi_rendered_image
+                return
+            self.rendered_image = self.shrinker.GetOutput()
+        else:
+            self.rendered_image = self.image
 
     @validate('gradient_opacity')
     def _validate_gradient_opacity(self, proposal):
@@ -230,8 +338,8 @@ class Viewer(ViewerParent):
         """Return the itk.ImageRegion corresponding to the roi."""
         dimension = self.image.GetImageDimension()
         index = self.image.TransformPhysicalPointToIndex(tuple(self.roi[0][:dimension]))
-        upperIndex = self.image.TransformPhysicalPointToIndex(tuple(self.roi[1][:dimension]))
-        size = upperIndex - index
+        upper_index = self.image.TransformPhysicalPointToIndex(tuple(self.roi[1][:dimension]))
+        size = upper_index - index
         for dim in range(dimension):
             size[dim] += 1
         region = itk.ImageRegion[dimension]()
@@ -245,15 +353,16 @@ class Viewer(ViewerParent):
         dimension = self.image.GetImageDimension()
         region = self.roi_region()
         index = region.GetIndex()
-        upperIndex = np.array(index) + np.array(region.GetSize())
+        upper_index = np.array(index) + np.array(region.GetSize())
         slices = []
         for dim in range(dimension):
-            slices.insert(0, slice(index[dim], upperIndex[dim] + 1))
+            slices.insert(0, slice(index[dim], upper_index[dim] + 1))
         return tuple(slices)
 
 
 def view(image, ui_collapsed=False, annotations=True, interpolation=True,
-        cmap=cm.viridis, mode='v', shadow=True, slicing_planes=False, gradient_opacity=0.2):
+        cmap=cm.viridis, mode='v', shadow=True, slicing_planes=False,
+        gradient_opacity=0.22, **kwargs):
     """View the image.
 
     Creates and returns an ipywidget to visualize the image.
@@ -299,6 +408,17 @@ def view(image, ui_collapsed=False, annotations=True, interpolation=True,
     gradient_opacity: float, optional, default: 0.2
         Gradient opacity for the volume rendering, in the range (0.0, 1.0].
 
+    Other Parameters
+    ----------------
+
+    size_limit_2d: 2x1 numpy int64 array, optional, default: [2048, 2048]
+        Size limit for 2D image visualization. If the roi is larger than this
+        size, it will be downsampled for visualization
+
+    size_limit_3d: 3x1 numpy int64 array, optional, default: [192, 192, 192]
+        Size limit for 3D image visualization. If the roi is larger than this
+        size, it will be downsampled for visualization.
+
     Returns
     -------
     viewer : ipywidget
@@ -310,5 +430,5 @@ def view(image, ui_collapsed=False, annotations=True, interpolation=True,
     viewer = Viewer(image=image, ui_collapsed=ui_collapsed,
             annotations=annotations, interpolation=interpolation, cmap=cmap,
             mode=mode, shadow=shadow, slicing_planes=slicing_planes,
-            gradient_opacity=gradient_opacity)
+            gradient_opacity=gradient_opacity, **kwargs)
     return viewer
