@@ -232,8 +232,10 @@ class Viewer(ViewerParent):
         self.observe(self._on_reset_crop_requested, ['_reset_crop_requested'])
         self.observe(self.update_rendered_image, ['image'])
 
+    @debounced(delay_seconds=1.5, method=True)
     def _on_roi_changed(self, change=None):
-        self.update_rendered_image()
+        if self._downsampling:
+            self.update_rendered_image()
 
     def _on_reset_crop_requested(self, change=None):
         if change.new == True and self._downsampling:
