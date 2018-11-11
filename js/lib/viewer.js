@@ -103,6 +103,12 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
   const imageData = vtkITKHelper.convertItkToVtkImage(rendered_image)
   const is3D = rendered_image.imageType.dimension === 3
   domWidgetView.model.use2D = !is3D
+  // Avoid triggering an roi update when the cropping planes change from
+  // setting a new image
+  domWidgetView.model.ignoreCroppingPlanesChanged = true
+  setTimeout(() => {
+    domWidgetView.model.ignoreCroppingPlanesChanged = false
+  }, 200)
   if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
     resetVolumeRenderingStatus(domWidgetView)
     domWidgetView.model.itkVtkViewer.setImage(imageData)
@@ -188,7 +194,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.model.itkVtkViewer.subscribeSelectColorMap(onSelectColorMap)
 
       const onCroppingPlanesChanged = (planes, bboxCorners) => {
-        if (!this.model.get('_volume_rendering_image') && this.model.get('mode') === 'v') {
+        if (!this.model.get('_volume_rendering_image') && !this.model.ignoreCroppingPlanesChanged && this.model.get('mode') === 'v') {
           this.model.set('roi',
               new Float64Array([bboxCorners[0][0], bboxCorners[0][1], bboxCorners[0][2], bboxCorners[7][0], bboxCorners[7][1], bboxCorners[7][2]]),
             )
