@@ -297,6 +297,7 @@ class Viewer(ViewerParent):
             # truncation issues
             region.PadByRadius(1)
             region.Crop(self.image.GetLargestPossibleRegion())
+
             self.extractor.SetExtractionRegion(region)
 
             size = region.GetSize()
@@ -312,9 +313,13 @@ class Viewer(ViewerParent):
             if is_largest:
                 self._largest_roi_rendered_image = self.shrinker.GetOutput()
                 self._largest_roi_rendered_image.DisconnectPipeline()
+                self._largest_roi_rendered_image.SetOrigin(self.roi[0][:dimension])
                 self.rendered_image = self._largest_roi_rendered_image
                 return
-            self.rendered_image = self.shrinker.GetOutput()
+            shrunk = self.shrinker.GetOutput()
+            shrunk.DisconnectPipeline()
+            shrunk.SetOrigin(self.roi[0][:dimension])
+            self.rendered_image = shrunk
         else:
             self.rendered_image = self.image
 
