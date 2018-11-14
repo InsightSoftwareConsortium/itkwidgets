@@ -67,7 +67,10 @@ const resetVolumeRenderingStatus = (domWidgetView) => {
       // Why is this necessary?
       const shadow = domWidgetView.model.get('shadow')
       representation.setUseShadow(shadow);
-      if (viewProxy.getViewMode() == 'VolumeRendering') {
+      const gradientOpacity = domWidgetView.model.get('gradient_opacity')
+      // Todo: Fix this in vtk.js
+      representation.setEdgeGradient(representation.getEdgeGradient() + 1e-7)
+      if (viewProxy.getViewMode() === 'VolumeRendering') {
         viewProxy.resetCamera()
       }
       domWidgetView.model.set('_volume_rendering_image', false)
