@@ -38,7 +38,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       _model_module_version: '0.15.0',
       _view_module_version: '0.15.0',
       rendered_image: null,
-      _volume_rendering_image: false,
+      _rendering_image: false,
       ui_collapsed: false,
       annotations: true,
       mode: 'v',
@@ -60,6 +60,11 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
 
 const resetVolumeRenderingStatus = (domWidgetView) => {
   const viewProxy = domWidgetView.model.itkVtkViewer.getViewProxy()
+  if (domWidgetView.model.use2D) {
+    domWidgetView.model.set('_rendering_image', false)
+    domWidgetView.model.save_changes()
+    return
+  }
   if (viewProxy.getViewMode() === 'VolumeRendering') {
     const representation = viewProxy.getRepresentations()[0];
     let unsubscriber = null
@@ -73,7 +78,7 @@ const resetVolumeRenderingStatus = (domWidgetView) => {
       if (viewProxy.getViewMode() === 'VolumeRendering') {
         viewProxy.resetCamera()
       }
-      domWidgetView.model.set('_volume_rendering_image', false)
+      domWidgetView.model.set('_rendering_image', false)
       domWidgetView.model.save_changes()
       if (unsubscriber) {
         unsubscriber.unsubscribe()
@@ -106,14 +111,15 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
   const imageData = vtkITKHelper.convertItkToVtkImage(rendered_image)
   const is3D = rendered_image.imageType.dimension === 3
   domWidgetView.model.use2D = !is3D
-  // Avoid triggering an roi update when the cropping planes change from
-  // setting a new image
-  domWidgetView.model.ignoreCroppingPlanesChanged = true
-  setTimeout(() => {
-    domWidgetView.model.ignoreCroppingPlanesChanged = false
-  }, 200)
+  domWidgetView.model.skipOnCroppingPlanesChanged = false
   if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
+
     resetVolumeRenderingStatus(domWidgetView)
+    if (domWidgetView.model.itkVtkViewer.getViewProxy().getViewMode() !== 'VolumeRendering') {
+      domWidgetView.model.skipOnCroppingPlanesChanged = true
+      domWidgetView.model.set('_rendering_image', false)
+      domWidgetView.model.save_changes()
+    }
     domWidgetView.model.itkVtkViewer.setImage(imageData)
   } else {
     domWidgetView.model.itkVtkViewer = createViewer(domWidgetView.el, {
@@ -122,6 +128,9 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
       use2D: !is3D,
     })
     resetVolumeRenderingStatus(domWidgetView)
+    if (domWidgetView.model.itkVtkViewer.getViewProxy().getViewMode() !== 'VolumeRendering') {
+      domWidgetView.model._rendering_image = false
+    }
     const viewProxy = domWidgetView.model.itkVtkViewer.getViewProxy()
     const renderWindow = viewProxy.getRenderWindow()
     // Firefox requires calling .getContext on the canvas, which is
@@ -197,11 +206,13 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.model.itkVtkViewer.subscribeSelectColorMap(onSelectColorMap)
 
       const onCroppingPlanesChanged = (planes, bboxCorners) => {
-        if (!this.model.get('_volume_rendering_image') && !this.model.ignoreCroppingPlanesChanged && this.model.get('mode') === 'v') {
+        if (!this.model.get('_rendering_image') && !this.model.skipOnCroppingPlanesChanged) {
           this.model.set('roi',
               new Float64Array([bboxCorners[0][0], bboxCorners[0][1], bboxCorners[0][2], bboxCorners[7][0], bboxCorners[7][1], bboxCorners[7][2]]),
             )
           this.model.save_changes()
+        } else {
+          this.model.skipOnCroppingPlanesChanged = false
         }
       }
       this.model.itkVtkViewer.subscribeCroppingPlanesChanged(onCroppingPlanesChanged)
@@ -405,7 +416,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         throw new Error('Unknown view mode')
       }
       if (mode !== 'v') {
-        this.model.set('_volume_rendering_image', false)
+        this.model.set('_rendering_image', false)
         this.model.save_changes()
       }
     }
