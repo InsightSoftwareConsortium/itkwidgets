@@ -21,11 +21,20 @@ try:
     have_vtk = True
 except ImportError:
     pass
+have_dask = False
+try:
+    import dask.array
+    have_dask = True
+except ImportError:
+    pass
 
 def to_itk_image(other_image_datatype):
     if is_arraylike(other_image_datatype):
         array = np.asarray(other_image_datatype)
-        if array.flags['OWNDATA']:
+        case_use_view = array.flags['OWNDATA']
+        if have_dask and isinstance(other_image_datatype, dask.array.core.Array):
+            case_use_view = False
+        if case_use_view:
             image_from_array = itk.GetImageViewFromArray(array)
         else:
             image_from_array = itk.GetImageFromArray(array)
