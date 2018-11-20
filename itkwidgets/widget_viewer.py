@@ -174,7 +174,7 @@ class Viewer(ViewerParent):
     _model_module_version = Unicode('^0.15.0').tag(sync=True)
     image = ITKImage(default_value=None, allow_none=True, help="Image to visualize.").tag(sync=False, **itkimage_serialization)
     rendered_image = ITKImage(default_value=None, allow_none=True).tag(sync=True, **itkimage_serialization)
-    _volume_rendering_image = CBool(default_value=False, help="We are currently volume rendering the image.").tag(sync=True)
+    _rendering_image = CBool(default_value=False, help="We are currently volume rendering the image.").tag(sync=True)
     ui_collapsed = CBool(default_value=False, help="Collapse the built in user interface.").tag(sync=True)
     annotations = CBool(default_value=True, help="Show annotations.").tag(sync=True)
     mode = CaselessStrEnum(('x', 'y', 'z', 'v'), default_value='v', help="View mode: x: x plane, y: y plane, z: z plane, v: volume rendering").tag(sync=True)
@@ -269,14 +269,13 @@ class Viewer(ViewerParent):
     def _update_rendered_image(self):
         if self.image is None:
             return
-        if self._volume_rendering_image:
-            @yield_for_change(self, '_volume_rendering_image')
+        if self._rendering_image:
+            @yield_for_change(self, '_rendering_image')
             def f():
                 x = yield
                 assert(x == False)
             f()
-        if self.mode == 'v':
-            self._volume_rendering_image = True
+        self._rendering_image = True
 
         if self._downsampling:
             dimension = self.image.GetImageDimension()
