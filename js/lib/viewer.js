@@ -411,6 +411,12 @@ const ViewerView = widgets.DOMWidgetView.extend({
         break
       case 'v':
         this.model.itkVtkViewer.setViewMode('VolumeRendering')
+        // Why is this necessary?
+        // Todo: fix in vtk.js
+        const viewProxy = this.model.itkVtkViewer.getViewProxy()
+        const representation = viewProxy.getRepresentations()[0];
+        const shadow = this.model.get('shadow')
+        representation.setUseShadow(shadow);
         break
       default:
         throw new Error('Unknown view mode')
