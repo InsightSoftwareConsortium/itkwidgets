@@ -21,6 +21,8 @@ examples/*.mha
 examples/*.tif
 examples/vase.vti
 examples/widget_video.webm
+examples/emdata_janelia_822252/
+examples/emdata_janelia_822252.zip
 
 js/lib/ZstdDecompress/web-build/
 .pytest_cache/
