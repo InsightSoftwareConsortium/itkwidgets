@@ -5,6 +5,7 @@ import {
     fixed_shape_serialization
 } from "jupyter-dataserializers"
 import vtkITKHelper from 'vtk.js/Sources/Common/DataModel/ITKHelper'
+import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate'
 import createViewer from 'itk-vtk-viewer/src/createViewer'
 import IntTypes from 'itk/IntTypes'
 import FloatTypes from 'itk/FloatTypes'
@@ -48,12 +49,15 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       slicing_planes: false,
       gradient_opacity: 0.2,
       roi: new Float64Array([0., 0., 0., 0., 0., 0.]),
+      _largest_roi: new Float64Array([0., 0., 0., 0., 0., 0.]),
+      select_roi: false,
       _reset_crop_requested: false,
     })
   }}, {
   serializers: _.extend({
     rendered_image: { serialize: serialize_itkimage, deserialize: deserialize_itkimage },
     roi: fixed_shape_serialization([2, 3]),
+    _largest_roi: fixed_shape_serialization([2, 3]),
   }, widgets.DOMWidgetModel.serializers)
 })
 
@@ -138,6 +142,99 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
     renderWindow.getViews()[0].initialize()
     const viewCanvas = renderWindow.getViews()[0].getCanvas()
     const stream  = viewCanvas.captureStream(30000./1001.)
+
+    const renderer = viewProxy.getRenderer()
+    const viewportPosition = vtkCoordinate.newInstance()
+    viewportPosition.setCoordinateSystemToNormalizedViewport()
+    const cropROIByViewport = (event) => {
+      if (domWidgetView.model.get('select_roi')) {
+        return
+      }
+
+      let mode = domWidgetView.model.get('mode')
+      if (mode === 'v') {
+        if (domWidgetView.model.use2D) {
+          mode = 'z'
+        } else {
+          return
+        }
+      }
+      //const size = interactor.getView().getViewportSize(interactor.getCurrentRenderer())
+      viewportPosition.setValue(0.0, 0.0, 0.0)
+      const lowerLeft = viewportPosition.getComputedWorldValue(renderer)
+      viewportPosition.setValue(1.0, 1.0, 0.0)
+      const upperRight = viewportPosition.getComputedWorldValue(renderer)
+      const roi = domWidgetView.model.get('roi').slice()
+      const largestRoi = domWidgetView.model.get('_largest_roi')
+      const padFactor = 0.5
+      const xPadding = (upperRight[0] - lowerLeft[0]) * padFactor
+      let yPadding = (upperRight[1] - lowerLeft[1]) * padFactor
+      if (mode === 'z') {
+        yPadding = (lowerLeft[1] - upperRight[1]) * padFactor
+      }
+      const zPadding = (upperRight[2] - lowerLeft[2]) * padFactor
+      switch (mode) {
+      case 'x':
+        roi[1] = lowerLeft[1] - yPadding
+        roi[4] = upperRight[1] + yPadding
+        roi[2] = lowerLeft[2] - zPadding
+        roi[5] = upperRight[2] + zPadding
+        // Zoom all the way out
+        if(roi[2] < largestRoi[2] &&
+           roi[1] < largestRoi[1] &&
+           roi[5] > largestRoi[5] &&
+           roi[4] > largestRoi[4]) {
+          roi[2] = largestRoi[2]
+          roi[1] = largestRoi[1]
+          roi[5] = largestRoi[5]
+          roi[4] = largestRoi[4]
+          break
+        }
+        break
+      case 'y':
+        roi[0] = lowerLeft[0] - xPadding
+        roi[3] = upperRight[0] + xPadding
+        roi[2] = lowerLeft[2] - zPadding
+        roi[5] = upperRight[2] + zPadding
+        // Zoom all the way out
+        if(roi[2] < largestRoi[2] &&
+           roi[0] < largestRoi[0] &&
+           roi[5] > largestRoi[5] &&
+           roi[3] > largestRoi[3]) {
+          roi[2] = largestRoi[2]
+          roi[0] = largestRoi[0]
+          roi[5] = largestRoi[5]
+          roi[3] = largestRoi[3]
+          break
+        }
+        break
+      case 'z':
+        roi[0] = lowerLeft[0] - xPadding
+        roi[3] = upperRight[0] + xPadding
+        roi[1] = upperRight[1] - yPadding
+        roi[4] = lowerLeft[1] + yPadding
+        // Zoom all the way out
+        if(roi[0] < largestRoi[0] &&
+           roi[1] < largestRoi[1] &&
+           roi[3] > largestRoi[3] &&
+           roi[4] > largestRoi[4]) {
+          roi[0] = largestRoi[0]
+          roi[1] = largestRoi[1]
+          roi[3] = largestRoi[3]
+          roi[4] = largestRoi[4]
+          break
+        }
+        break
+      default:
+        throw new Error('Unexpected view mode')
+      }
+      domWidgetView.model.set('roi', roi)
+      domWidgetView.model.save_changes()
+    }
+    const interactor = viewProxy.getInteractor()
+    interactor.onEndMouseWheel(cropROIByViewport)
+    interactor.onEndPan(cropROIByViewport)
+    interactor.onEndPinch(cropROIByViewport)
     // Used by ipywebrtc
     domWidgetView.model.stream = Promise.resolve(stream)
     domWidgetView.initialize_viewer()
@@ -163,6 +260,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:shadow', this.shadow_changed, this)
     this.model.on('change:slicing_planes', this.slicing_planes_changed, this)
     this.model.on('change:gradient_opacity', this.gradient_opacity_changed, this)
+    this.model.on('change:select_roi', this.select_roi_changed, this)
     this.rendered_image_changed().then(() => {
       this.annotations_changed()
       this.interpolation_changed()
@@ -172,6 +270,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.slicing_planes_changed()
       this.gradient_opacity_changed()
       this.ui_collapsed_changed()
+      this.select_roi_changed()
 
       const onUserInterfaceCollapsedToggle = (collapsed) => {
         if (collapsed !== this.model.get('ui_collapsed')) {
@@ -222,6 +321,14 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.save_changes()
       }
       this.model.itkVtkViewer.subscribeResetCrop(onResetCrop)
+
+      const onToggleCroppingPlanes = (enabled) => {
+        if (enabled !== this.model.get('select_roi')) {
+          this.model.set('select_roi', enabled)
+          this.model.save_changes()
+        }
+      }
+      this.model.itkVtkViewer.subscribeToggleCroppingPlanes(onToggleCroppingPlanes)
 
       if (!this.model.use2D) {
         const onViewModeChanged = (mode) => {
@@ -460,6 +567,13 @@ const ViewerView = widgets.DOMWidgetView.extend({
     const gradient_opacity = this.model.get('gradient_opacity')
     if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
       this.model.itkVtkViewer.setGradientOpacity(gradient_opacity)
+    }
+  },
+
+  select_roi_changed: function() {
+    const select_roi = this.model.get('select_roi')
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      this.model.itkVtkViewer.setCroppingPlanesEnabled(select_roi)
     }
   },
 
