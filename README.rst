@@ -78,9 +78,13 @@ Tasks:
 Installation
 ------------
 
-To install the widgets for the Jupyter Notebook::
+To install the widgets for the Jupyter Notebook with pip::
 
   pip install itkwidgets
+  
+or with conda::
+
+  conda install -c conda-forge itkwidgets
 
 For Jupyter Lab, additionally run::
 
