@@ -187,7 +187,12 @@ class Viewer(ViewerParent):
                 help="Region of interest: ((lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z))")\
             .tag(sync=True, **array_serialization)\
             .valid(shape_constraints(2, 3))
-    size_limit_2d = NDArray(dtype=np.int64, default_value=np.array([2048, 2048], dtype=np.int64),
+    _largest_roi = NDArray(dtype=np.float64, default_value=np.zeros((2, 3), dtype=np.float64),
+                help="Largest possible region of interest: ((lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z))")\
+            .tag(sync=True, **array_serialization)\
+            .valid(shape_constraints(2, 3))
+    select_roi = CBool(default_value=False, help="Enable an interactive region of interest widget for the image.").tag(sync=True)
+    size_limit_2d = NDArray(dtype=np.int64, default_value=np.array([1024, 1024], dtype=np.int64),
             help="Size limit for 2D image visualization.").tag(sync=False)
     size_limit_3d = NDArray(dtype=np.int64, default_value=np.array([192, 192, 192], dtype=np.int64),
             help="Size limit for 3D image visualization.").tag(sync=False)
@@ -205,7 +210,7 @@ class Viewer(ViewerParent):
 
         # Cache this so we do not need to recompute on it when resetting the roi
         self._largest_roi_rendered_image = None
-        self._largest_roi = None
+        self._largest_roi = np.zeros((2, 3), dtype=np.float64)
         if not np.any(self.roi):
             largest_index = largest_region.GetIndex()
             self.roi[0][:dimension] = np.array(self.image.TransformIndexToPhysicalPoint(largest_index))
@@ -235,7 +240,7 @@ class Viewer(ViewerParent):
     @debounced(delay_seconds=1.5, method=True)
     def _on_roi_changed(self, change=None):
         if self._downsampling:
-            self.update_rendered_image()
+            self._update_rendered_image()
 
     def _on_reset_crop_requested(self, change=None):
         if change.new == True and self._downsampling:
@@ -255,7 +260,7 @@ class Viewer(ViewerParent):
     @debounced(delay_seconds=0.2, method=True)
     def update_rendered_image(self, change=None):
         self._largest_roi_rendered_image = None
-        self._largest_roi = None
+        self._largest_roi = np.zeros((2, 3), dtype=np.float64)
         self._update_rendered_image()
 
     @staticmethod
@@ -302,11 +307,11 @@ class Viewer(ViewerParent):
             size = region.GetSize()
 
             is_largest = False
-            if self._largest_roi is not None and np.all(self._largest_roi == self.roi):
+            if np.any(self._largest_roi) and np.all(self._largest_roi == self.roi):
                 is_largest = True
-            if self._largest_roi_rendered_image is not None:
-                self.rendered_image = self._largest_roi_rendered_image
-                return
+                if self._largest_roi_rendered_image is not None:
+                    self.rendered_image = self._largest_roi_rendered_image
+                    return
 
             self.shrinker.UpdateLargestPossibleRegion()
             if is_largest:
@@ -413,10 +418,13 @@ def view(image, ui_collapsed=False, annotations=True, interpolation=True,
     gradient_opacity: float, optional, default: 0.2
         Gradient opacity for the volume rendering, in the range (0.0, 1.0].
 
+    select_roi: bool, optional, default: False
+        Enable an interactive region of interest widget for the image.
+
     Other Parameters
     ----------------
 
-    size_limit_2d: 2x1 numpy int64 array, optional, default: [2048, 2048]
+    size_limit_2d: 2x1 numpy int64 array, optional, default: [1024, 1024]
         Size limit for 2D image visualization. If the roi is larger than this
         size, it will be downsampled for visualization
 
