@@ -150,6 +150,7 @@ setup_args = {
     ],
     'install_requires': [
         'itk-core>=4.13.1',
+        'itk-filtering>=4.13.1',
         'ipydatawidgets>=3.2.0',
         'ipywidgets>=7.4.0',
         'ipympl',
