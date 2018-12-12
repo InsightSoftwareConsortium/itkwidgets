@@ -4,12 +4,8 @@ Compare two images with a checkerboard pattern. This is particularly useful for
 examining registration results.
 """
 
-from traitlets import Unicode
-
-import numpy as np
 import ipywidgets as widgets
 from .widget_viewer import Viewer
-from traitlets import CInt
 import itk
 from ._to_itk import to_itk_image
 
@@ -34,7 +30,14 @@ def checkerboard(image1, image2, pattern=3, **viewer_kwargs):
 
     """
 
-    checkerboard_filter = itk.CheckerBoardImageFilter.New(image1, image2)
+    itk_image1 = to_itk_image(image1)
+    if not itk_image1:
+        itk_image1 = itk.output(image1)
+    itk_image2 = to_itk_image(image2)
+    if not itk_image2:
+        itk_image2 = itk.output(image2)
+
+    checkerboard_filter = itk.CheckerBoardImageFilter.New(itk_image1, itk_image2)
 
     dimension = image1.GetImageDimension()
     checker_pattern = [pattern]*dimension
