@@ -4,12 +4,13 @@ Compare two images with a checkerboard pattern. This is particularly useful for
 examining registration results.
 """
 
+import numpy as np
 import ipywidgets as widgets
 from .widget_viewer import Viewer
 import itk
 from ._to_itk import to_itk_image
 
-def checkerboard(image1, image2, pattern=3, **viewer_kwargs):
+def checkerboard(image1, image2, pattern=3, invert=False, **viewer_kwargs):
     """Compare two images with a checkerboard pattern.
 
     This is particularly useful for examining registration results.
@@ -24,6 +25,9 @@ def checkerboard(image1, image2, pattern=3, **viewer_kwargs):
 
     pattern : int, optional, default: 3
         Size of the checkerboard pattern.
+
+    invert : bool, optional, default: False
+        Swap inputs.
 
     viewer_kwargs : optional
         Keyword arguments for the viewer. See help(itkwidgets.view).
@@ -78,9 +82,14 @@ def checkerboard(image1, image2, pattern=3, **viewer_kwargs):
     dimension = itk_image1.GetImageDimension()
     checker_pattern = [pattern]*dimension
     checkerboard_filter.SetCheckerPattern(checker_pattern)
+    checkerboard_filter_inverse = itk.CheckerBoardImageFilter.New(input2, input1)
 
-    checkerboard_filter.Update()
-    checkerboard = checkerboard_filter.GetOutput()
+    if invert:
+        checkerboard_filter_inverse.Update()
+        checkerboard = checkerboard_filter_inverse.GetOutput()
+    else:
+        checkerboard_filter.Update()
+        checkerboard = checkerboard_filter.GetOutput()
 
     if 'annotations' not in viewer_kwargs:
         viewer_kwargs['annotations'] = False
@@ -99,13 +108,21 @@ def checkerboard(image1, image2, pattern=3, **viewer_kwargs):
 
     pattern_slider = widgets.IntSlider(value=pattern, min=2, max=max_size,
             step=1, description='Pattern size:')
+    invert_checkbox = widgets.Checkbox(value=invert, description = 'Invert')
     def update_checkerboard(change):
-        checker_pattern = [change.new]*dimension
+        checker_pattern = [pattern_slider.value]*dimension
         checkerboard_filter.SetCheckerPattern(checker_pattern)
-        checkerboard_filter.Update()
-        viewer.image = checkerboard_filter.GetOutput()
+        checkerboard_filter_inverse.SetCheckerPattern(checker_pattern)
+        if invert_checkbox.value:
+            checkerboard_filter_inverse.Update()
+            viewer.image = checkerboard_filter_inverse.GetOutput()
+        else:
+            checkerboard_filter.Update()
+            viewer.image = checkerboard_filter.GetOutput()
     pattern_slider.observe(update_checkerboard, ['value'])
+    invert_checkbox.observe(update_checkerboard, ['value'])
 
-    widget = widgets.VBox([viewer, pattern_slider])
+    widget = widgets.VBox([viewer,
+        widgets.HBox([pattern_slider, invert_checkbox])])
 
     return widget
