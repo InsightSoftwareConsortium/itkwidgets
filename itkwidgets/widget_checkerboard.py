@@ -36,10 +36,46 @@ def checkerboard(image1, image2, pattern=3, **viewer_kwargs):
     itk_image2 = to_itk_image(image2)
     if not itk_image2:
         itk_image2 = itk.output(image2)
+    input1 = itk_image1
+    input2 = itk_image2
 
-    checkerboard_filter = itk.CheckerBoardImageFilter.New(itk_image1, itk_image2)
+    region_image1 = itk_image1.GetLargestPossibleRegion()
+    region_image2 = itk_image2.GetLargestPossibleRegion()
+    same_physical_space = \
+        np.allclose(np.array(itk_image1.GetOrigin()), np.array(itk_image2.GetOrigin())) and \
+        np.allclose(np.array(itk_image1.GetSpacing()), np.array(itk_image2.GetSpacing())) and \
+        itk_image1.GetDirection() == itk_image2.GetDirection() and \
+        np.allclose(np.array(region_image1.GetIndex()), np.array(region_image2.GetIndex())) and \
+        np.allclose(np.array(region_image1.GetSize()), np.array(region_image2.GetSize()))
+    if not same_physical_space:
+        upsample_image2 = True
+        if itk_image1.GetSpacing() != itk_image2.GetSpacing():
+            min1 = min(itk_image1.GetSpacing())
+            min2 = min(itk_image2.GetSpacing())
+            if min2 < min1:
+                upsample_image2 = False
+        else:
+            size1 = max(itk.size(itk_image1))
+            size2 = max(itk.size(itk_image1))
+            if size2 > size1:
+                upsample_image2 = False
 
-    dimension = image1.GetImageDimension()
+        if upsample_image2:
+            resampler = itk.ResampleImageFilter.New(itk_image2)
+            resampler.UseReferenceImageOn()
+            resampler.SetReferenceImage(itk_image1)
+            resampler.Update()
+            input2 = resampler.GetOutput()
+        else:
+            resampler = itk.ResampleImageFilter.New(itk_image1)
+            resampler.UseReferenceImageOn()
+            resampler.SetReferenceImage(itk_image2)
+            resampler.Update()
+            input1 = resampler.GetOutput()
+
+    checkerboard_filter = itk.CheckerBoardImageFilter.New(input1, input2)
+
+    dimension = itk_image1.GetImageDimension()
     checker_pattern = [pattern]*dimension
     checkerboard_filter.SetCheckerPattern(checker_pattern)
 
@@ -54,9 +90,10 @@ def checkerboard(image1, image2, pattern=3, **viewer_kwargs):
         viewer_kwargs['ui_collapsed'] = True
     viewer = Viewer(image=checkerboard, **viewer_kwargs)
 
-    max_size1 = int(min(itk.size(image1)) / 8)
+    # Heuristic to specify the max pattern size
+    max_size1 = int(min(itk.size(itk_image1)) / 8)
     max_size1 = max(max_size1, pattern*2)
-    max_size2 = int(min(itk.size(image2)) / 8)
+    max_size2 = int(min(itk.size(itk_image2)) / 8)
     max_size2 = max(max_size2, pattern*2)
     max_size = max(max_size1, max_size2)
 
