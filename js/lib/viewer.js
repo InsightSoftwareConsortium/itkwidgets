@@ -1,4 +1,4 @@
-import 'babel-polyfill'
+import '@babel/polyfill'
 const widgets = require('@jupyter-widgets/base')
 const  _ = require('lodash')
 import {

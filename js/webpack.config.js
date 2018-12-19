@@ -4,26 +4,29 @@ var version = require('./package.json').version;
 const CopyPlugin = require('copy-webpack-plugin');
 const nodeExternals = require('webpack-node-externals');
 
-const vtkRules = require('vtk.js/Utilities/config/rules-vtk.js');
-const commonRules = require('vtk.js/Utilities/config/rules-examples.js');
+const vtkRules = require('vtk.js/Utilities/config/dependency.js').webpack.core.rules;
+const cssRules = require('vtk.js/Utilities/config/dependency.js').webpack.css.rules;
 
 // Custom webpack rules are generally the same for all webpack bundles, hence
 // stored in a separate local variable.
 var rules = [
+  // itk-vtk-viewer
   {
-    test: /\.css$/,
-    use: ['style-loader', 'css-loader'],
+    test: /\.svg$/,
+    use: [{ loader: 'raw-loader' }],
+  },
+  // itk-vtk-viewer
+  {
+    test: /\.(png|jpg)$/,
+    use: 'url-loader?limit=81920'
   },
   {
     test: /\.js$/,
     use: {
-      loader: 'babel-loader',
-      options: {
-        presets: ['env'],
-      },
+      loader: 'babel-loader'
     },
   },
-].concat(vtkRules, commonRules);
+].concat(vtkRules, cssRules);
 
 const resolve = {
   modules: [path.resolve(__dirname, 'node_modules')],
