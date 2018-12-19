@@ -69,6 +69,7 @@ Data types:
 
 Tasks:
 
+- `Binder: Compare images with a checkerboard pattern <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/Checkerboard.ipynb>`_
 - `Binder: Examine a line profile <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/LineProfile.ipynb>`_
 - `Binder: Interactively explore algorithm parameters <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/InteractiveParameterExploration.ipynb>`_
 - `Binder: Record a video <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/RecordAVideo.ipynb>`_
@@ -81,7 +82,7 @@ Installation
 To install the widgets for the Jupyter Notebook with pip::
 
   pip install itkwidgets
-  
+
 or with conda::
 
   conda install -c conda-forge itkwidgets
@@ -108,7 +109,8 @@ For information on additional options, see the ``view`` function docstring::
 
 Other available widgets:
 
-- ``itkwidgets.line_profile``
+- ``itkwidgets.line_profile``: Plot an intensity line profile.
+- ``itkwidgets.checkerboard``: Compare two images in a checkerboard pattern.
 
 Advanced Usage
 ^^^^^^^^^^^^^^
@@ -195,6 +197,7 @@ After installation, try the following examples that demonstrate how to visualize
 
 or how to:
 
+- `Compares images with a checkerboard pattern <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/Checkerboard.ipynb>`_
 - `Examine a line profile <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/LineProfile.ipynb>`_
 - `Interatively explore algorithm parameters <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/InteractiveParameterExploration.ipynb>`_
 - `Record a video <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/RecordAVideo.ipynb>`_

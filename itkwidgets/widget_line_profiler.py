@@ -43,6 +43,8 @@ class LineProfiler(Viewer):
             # select points
             if 'mode' not in kwargs:
                 kwargs['mode'] = 'z'
+        if 'ui_collapsed' not in kwargs:
+            kwargs['ui_collapsed'] = True
         super(LineProfiler, self).__init__(**kwargs)
 
 def line_profile(image, order=2, plotter=None, comparisons=None, **viewer_kwargs):
