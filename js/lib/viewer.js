@@ -1,6 +1,5 @@
 import '@babel/polyfill'
 const widgets = require('@jupyter-widgets/base')
-const  _ = require('lodash')
 import {
     fixed_shape_serialization
 } from "jupyter-dataserializers"
@@ -11,6 +10,10 @@ import IntTypes from 'itk/IntTypes'
 import FloatTypes from 'itk/FloatTypes'
 import IOTypes from 'itk/IOTypes'
 import runPipelineBrowser from 'itk/runPipelineBrowser'
+
+const ANNOTATION_DEFAULT = '<table style="margin-left: 0;"><tr><td style="margin-left: auto; margin-right: 0;">Index:</td><td>${iIndex},</td><td>${jIndex},</td><td>${kIndex}</td></tr><tr><td style="margin-left: auto; margin-right: 0;">Position:</td><td>${xPosition},</td><td>${yPosition},</td><td>${zPosition}</td></tr><tr><td style="margin-left: auto; margin-right: 0;"">Value:</td><td>${value}</td></tr></table>'
+const ANNOTATION_CUSTOM_PREFIX = '<table style="margin-left: 0;"><tr><td style="margin-left: auto; margin-right: 0;">Scale/Index:</td>'
+const ANNOTATION_CUSTOM_POSTFIX = '</tr><tr><td style="margin-left: auto; margin-right: 0;">Position:</td><td>${xPosition},</td><td>${yPosition},</td><td>${zPosition}</td></tr><tr><td style="margin-left: auto; margin-right: 0;"">Value:</td><td>${value}</td></tr></table>'
 
 const serialize_itkimage = (itkimage) => {
   if (itkimage === null) {
@@ -31,7 +34,7 @@ const deserialize_itkimage = (jsonitkimage) => {
 
 const ViewerModel = widgets.DOMWidgetModel.extend({
   defaults: function() {
-    return _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
+    return Object.assign(widgets.DOMWidgetModel.prototype.defaults(), {
       _model_name: 'ViewerModel',
       _view_name: 'ViewerView',
       _model_module: 'itk-jupyter-widgets',
@@ -52,12 +55,14 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       _largest_roi: new Float64Array([0., 0., 0., 0., 0., 0.]),
       select_roi: false,
       _reset_crop_requested: false,
+      _scale_factors: new Uint8Array([1, 1, 1]),
     })
   }}, {
-  serializers: _.extend({
+  serializers: Object.assign({
     rendered_image: { serialize: serialize_itkimage, deserialize: deserialize_itkimage },
     roi: fixed_shape_serialization([2, 3]),
     _largest_roi: fixed_shape_serialization([2, 3]),
+    _scale_factors: fixed_shape_serialization([3,]),
   }, widgets.DOMWidgetModel.serializers)
 })
 
@@ -261,6 +266,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:slicing_planes', this.slicing_planes_changed, this)
     this.model.on('change:gradient_opacity', this.gradient_opacity_changed, this)
     this.model.on('change:select_roi', this.select_roi_changed, this)
+    this.model.on('change:_scale_factors', this.scale_factors_changed, this)
     this.rendered_image_changed().then(() => {
       this.annotations_changed()
       this.interpolation_changed()
@@ -271,6 +277,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.gradient_opacity_changed()
       this.ui_collapsed_changed()
       this.select_roi_changed()
+      this.scale_factors_changed()
 
       const onUserInterfaceCollapsedToggle = (collapsed) => {
         if (collapsed !== this.model.get('ui_collapsed')) {
@@ -574,6 +581,36 @@ const ViewerView = widgets.DOMWidgetView.extend({
     const select_roi = this.model.get('select_roi')
     if (this.model.hasOwnProperty('itkVtkViewer')) {
       this.model.itkVtkViewer.setCroppingPlanesEnabled(select_roi)
+    }
+  },
+
+  scale_factors_changed: function() {
+    const scaleFactors = this.model.get('_scale_factors')
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      const viewProxy = this.model.itkVtkViewer.getViewProxy()
+      if (scaleFactors[0] === 1 && scaleFactors[1] === 1 && scaleFactors[2] === 1) {
+        viewProxy.setCornerAnnotation('se',
+          `${ANNOTATION_DEFAULT}`)
+      } else {
+        let scaleIndex = ''
+        if (scaleFactors[0] === 1) {
+          scaleIndex = `${scaleIndex}<td>\${iIndex}</td>`
+        } else {
+          scaleIndex = `${scaleIndex}<td>${scaleFactors[0]}X</td>`
+        }
+        if (scaleFactors[1] === 1) {
+          scaleIndex = `${scaleIndex}<td>\${jIndex}</td>`
+        } else {
+          scaleIndex = `${scaleIndex}<td>${scaleFactors[1]}X</td>`
+        }
+        if (scaleFactors[2] === 1) {
+          scaleIndex = `${scaleIndex}<td>\${kIndex}</td>`
+        } else {
+          scaleIndex = `${scaleIndex}<td>${scaleFactors[2]}X</td>`
+        }
+        viewProxy.setCornerAnnotation('se',
+          `${ANNOTATION_CUSTOM_PREFIX}${scaleIndex}${ANNOTATION_CUSTOM_POSTFIX}`)
+      }
     }
   },
 

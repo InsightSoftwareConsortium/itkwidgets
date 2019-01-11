@@ -196,6 +196,8 @@ class Viewer(ViewerParent):
             help="Size limit for 2D image visualization.").tag(sync=False)
     size_limit_3d = NDArray(dtype=np.int64, default_value=np.array([192, 192, 192], dtype=np.int64),
             help="Size limit for 3D image visualization.").tag(sync=False)
+    _scale_factors = NDArray(dtype=np.uint8, default_value=np.array([1, 1, 1], dtype=np.uint8),
+            help="Image downscaling factors.").tag(sync=True, **array_serialization)
     _downsampling = CBool(default_value=False,
             help="We are downsampling the image to meet the size limits.").tag(sync=True)
     _reset_crop_requested = CBool(default_value=False,
@@ -264,12 +266,12 @@ class Viewer(ViewerParent):
         self._update_rendered_image()
 
     @staticmethod
-    def _find_shrink_factors(limit, dimension, size):
-        shrink_factors = [1,] * dimension
+    def _find_scale_factors(limit, dimension, size):
+        scale_factors = [1,] * 3
         for dim in range(dimension):
-          while(int(np.floor(float(size[dim]) / shrink_factors[dim])) > limit[dim]):
-            shrink_factors[dim] += 1
-        return shrink_factors
+            while(int(np.floor(float(size[dim]) / scale_factors[dim])) > limit[dim]):
+                scale_factors[dim] += 1
+        return scale_factors
 
     def _update_rendered_image(self):
         if self.image is None:
@@ -289,10 +291,11 @@ class Viewer(ViewerParent):
             size = upper_index - index
 
             if dimension == 2:
-                shrink_factors = self._find_shrink_factors(self.size_limit_2d, dimension, size)
+                scale_factors = self._find_scale_factors(self.size_limit_2d, dimension, size)
             else:
-                shrink_factors = self._find_shrink_factors(self.size_limit_3d, dimension, size)
-            self.shrinker.SetShrinkFactors(shrink_factors)
+                scale_factors = self._find_scale_factors(self.size_limit_3d, dimension, size)
+            self._scale_factors = np.array(scale_factors, dtype=np.uint8)
+            self.shrinker.SetShrinkFactors(scale_factors[:dimension])
 
             region = itk.ImageRegion[dimension]()
             region.SetIndex(index)

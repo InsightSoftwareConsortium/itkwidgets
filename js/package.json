@@ -49,10 +49,12 @@
     "webpack": "^4.16.4",
     "webpack-cli": "^3.1.0",
     "webpack-node-externals": "^1.7.2",
+    "webpackbar": "^3.1.4",
     "worker-loader": "^2.0.0"
   },
   "dependencies": {
     "@babel/polyfill": "^7.0.0",
+    "@babel/runtime": "^7.2.0",
     "@jupyter-widgets/base": "^1.1.8",
     "autoprefixer": "^9.4.3",
     "copy-webpack-plugin": "^4.5.1",
@@ -60,7 +62,6 @@
     "itk": "^9.1.1",
     "itk-vtk-viewer": "^6.5.2",
     "jupyter-dataserializers": "^2.0.1",
-    "lodash": "^4.17.5",
     "vtk.js": "^8.3.2"
   },
   "jupyterlab": {
