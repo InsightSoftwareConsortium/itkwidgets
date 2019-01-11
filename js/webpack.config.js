@@ -3,6 +3,7 @@ var version = require('./package.json').version;
 
 const CopyPlugin = require('copy-webpack-plugin');
 const nodeExternals = require('webpack-node-externals');
+const WebPackBar = require('webpackbar');
 
 const vtkRules = require('vtk.js/Utilities/config/dependency.js').webpack.core.rules;
 const cssRules = require('vtk.js/Utilities/config/dependency.js').webpack.css.rules;
@@ -40,6 +41,10 @@ const performance = {
   maxAssetSize: maxAssetSize,
   maxEntrypointSize: maxAssetSize,
 };
+const devServer = {
+  noInfo: true,
+  stats: 'minimal'
+}
 
 module.exports = [
   {
@@ -60,8 +65,12 @@ module.exports = [
       path: path.resolve(__dirname, '..', 'itkwidgets', 'static'),
       libraryTarget: 'amd',
     },
+    plugins: [
+      new WebPackBar(),
+    ],
     resolve,
     performance,
+    devServer,
   },
   {
     // Bundle for the notebook containing the custom widget views and models
@@ -141,9 +150,11 @@ module.exports = [
           ),
         },
       ]),
+      new WebPackBar(),
     ],
     externals: ['@jupyter-widgets/base'],
     performance,
+    devServer,
   },
   {
     // Embeddable itk-jupyter-widgets bundle
@@ -231,9 +242,11 @@ module.exports = [
           ),
         },
       ]),
+      new WebPackBar(),
     ],
     externals: ['@jupyter-widgets/base'],
     performance,
+    devServer,
   },
   {
     // Bundle for JupyterLab
@@ -261,6 +274,9 @@ module.exports = [
         './itkConfig$': path.resolve(__dirname, 'lib', 'itkConfigCDN.js'),
       },
     },
+    plugins: [
+      new WebPackBar(),
+    ],
     externals: [
       nodeExternals({
         whitelist: [
@@ -270,5 +286,6 @@ module.exports = [
         ],
       }),
     ],
+    devServer,
   },
 ];

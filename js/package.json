@@ -49,6 +49,7 @@
     "webpack": "^4.16.4",
     "webpack-cli": "^3.1.0",
     "webpack-node-externals": "^1.7.2",
+    "webpackbar": "^3.1.4",
     "worker-loader": "^2.0.0"
   },
   "dependencies": {
