@@ -43,7 +43,6 @@ const performance = {
 };
 const devServer = {
   noInfo: true,
-  stats: 'minimal'
 }
 
 module.exports = [

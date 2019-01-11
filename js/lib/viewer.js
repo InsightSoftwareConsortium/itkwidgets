@@ -1,6 +1,5 @@
 import '@babel/polyfill'
 const widgets = require('@jupyter-widgets/base')
-const  _ = require('lodash')
 import {
     fixed_shape_serialization
 } from "jupyter-dataserializers"
@@ -31,7 +30,7 @@ const deserialize_itkimage = (jsonitkimage) => {
 
 const ViewerModel = widgets.DOMWidgetModel.extend({
   defaults: function() {
-    return _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
+    return Object.assign(widgets.DOMWidgetModel.prototype.defaults(), {
       _model_name: 'ViewerModel',
       _view_name: 'ViewerView',
       _model_module: 'itk-jupyter-widgets',
@@ -54,7 +53,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       _reset_crop_requested: false,
     })
   }}, {
-  serializers: _.extend({
+  serializers: Object.assign({
     rendered_image: { serialize: serialize_itkimage, deserialize: deserialize_itkimage },
     roi: fixed_shape_serialization([2, 3]),
     _largest_roi: fixed_shape_serialization([2, 3]),

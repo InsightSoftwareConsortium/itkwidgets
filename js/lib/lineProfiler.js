@@ -1,6 +1,5 @@
 const viewer = require('./viewer')
 const widgets = require('@jupyter-widgets/base')
-const  _ = require('lodash')
 import {
     fixed_shape_serialization
 } from "jupyter-dataserializers"
@@ -9,7 +8,7 @@ import macro from 'vtk.js/Sources/macro';
 
 const LineProfilerModel = viewer.ViewerModel.extend({
   defaults: function() {
-    return _.extend(viewer.ViewerModel.prototype.defaults(), {
+    return Object.assign(viewer.ViewerModel.prototype.defaults(), {
       _model_name: 'LineProfilerModel',
       _view_name: 'LineProfilerView',
       _model_module: 'itk-jupyter-widgets',
@@ -21,7 +20,7 @@ const LineProfilerModel = viewer.ViewerModel.extend({
       _select_initial_points: false,
     })
   }}, {
-  serializers: _.extend({
+  serializers: Object.assign({
     point1: fixed_shape_serialization([3,]),
     point2: fixed_shape_serialization([3,]),
   }, widgets.DOMWidgetModel.serializers) }
