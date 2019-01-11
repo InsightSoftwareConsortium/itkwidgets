@@ -53,6 +53,7 @@
   },
   "dependencies": {
     "@babel/polyfill": "^7.0.0",
+    "@babel/runtime": "^7.2.0",
     "@jupyter-widgets/base": "^1.1.8",
     "autoprefixer": "^9.4.3",
     "copy-webpack-plugin": "^4.5.1",
