@@ -9,10 +9,10 @@ def is_arraylike(arr):
         hasattr(arr, '__array__') and \
         hasattr(arr, 'ndim')
 
-have_imglyb = False
+have_imagej = False
 try:
-    import imglyb
-    have_imglyb = True
+    import imagej
+    have_imagej = True
 except ImportError:
     pass
 have_vtk = False
@@ -47,10 +47,11 @@ def to_itk_image(other_image_datatype):
         image_from_array.SetSpacing(other_image_datatype.GetSpacing())
         image_from_array.SetOrigin(other_image_datatype.GetOrigin())
         return image_from_array
-    elif have_imglyb and isinstance(other_image_datatype,
-            imglyb.util.ReferenceGuardingRandomAccessibleInterval):
-        array = imglyb.to_numpy(other_image_datatype)
-        image_from_array = itk.GetImageViewFromArray(array)
-        return image_from_array
+    elif have_imagej:
+        import imglyb
+        if isinstance(other_image_datatype, imglyb.util.ReferenceGuardingRandomAccessibleInterval):
+            array = imglyb.to_numpy(other_image_datatype)
+            image_from_array = itk.GetImageViewFromArray(array)
+            return image_from_array
 
     return None
