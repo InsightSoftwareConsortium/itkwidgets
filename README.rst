@@ -31,7 +31,7 @@ Interactive `Jupyter <https://jupyter.org/>`_ widgets to visualize images in 2D 
 
   - NumPy Arrays
   - itk.Image
-  - vtk.vtkImageData, vtki.UniformGrid
+  - vtk.vtkImageData, pyvista.UniformGrid
   - Dask Arrays
   - ImageJ / Fiji / ImageJ2 images
   - Additional NumPy Array-like objects
@@ -194,7 +194,7 @@ After installation, try the following examples that demonstrate how to visualize
 - `NumPy array images (processed with SciPy) <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/NumPyArray.ipynb>`_
 - `NumPy array images (processed with scikit-image) <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/scikit-image.ipynb>`_
 - `VTK vtkImageData <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/vtkImageData.ipynb>`_
-- `vtki UniformGrid <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/vtki.UniformGrid.ipynb>`_
+- `pyvista UniformGrid <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/pyvista.UniformGrid.ipynb>`_
 
 or how to:
 
