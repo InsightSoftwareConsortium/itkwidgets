@@ -138,7 +138,7 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
     })
     resetVolumeRenderingStatus(domWidgetView)
     if (domWidgetView.model.itkVtkViewer.getViewProxy().getViewMode() !== 'VolumeRendering') {
-      domWidgetView.model._rendering_image = false
+      domWidgetView.model.set('_rendering_image', false)
     }
     const viewProxy = domWidgetView.model.itkVtkViewer.getViewProxy()
     const renderWindow = viewProxy.getRenderWindow()
