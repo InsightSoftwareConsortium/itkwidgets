@@ -295,7 +295,6 @@ class Viewer(ViewerParent):
             else:
                 scale_factors = self._find_scale_factors(self.size_limit_3d, dimension, size)
             self._scale_factors = np.array(scale_factors, dtype=np.uint8)
-            self.shrinker.SetInput(self.image)
             self.shrinker.SetShrinkFactors(scale_factors[:dimension])
 
             region = itk.ImageRegion[dimension]()
