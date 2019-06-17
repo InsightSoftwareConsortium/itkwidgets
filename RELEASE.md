@@ -31,7 +31,7 @@ git push upstream v$version
 # clean out the `dist` and `node_modules` directories
 git clean -fdx
 cd js
-npm install
+npm ci
 npm run build
 npm publish
 cd ..
