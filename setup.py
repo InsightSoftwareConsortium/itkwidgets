@@ -132,6 +132,7 @@ setup_args = {
     'version': version_ns['__version__'],
     'description': 'Jupyter widgets to visualize images in 2D and 3D',
     'long_description': readme(),
+    'long_description_content_type': 'text/x-rst',
     'include_package_data': True,
     'data_files': [
         ('share/jupyter/nbextensions/itk-jupyter-widgets', [
