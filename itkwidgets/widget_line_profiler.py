@@ -101,7 +101,7 @@ def line_profile(image, order=2, plotter=None, comparisons=None, **viewer_kwargs
             image_ = image_from_array
         else:
             image_ = image_or_array
-        image_array = itk.GetArrayViewFromImage(image_)
+        image_array = itk.array_view_from_image(image_)
         dimension = image_.GetImageDimension()
         distance = np.sqrt(sum([(profiler.point1[ii] - profiler.point2[ii])**2 for ii in range(dimension)]))
         index1 = tuple(image_.TransformPhysicalPointToIndex(tuple(profiler.point1[:dimension])))
