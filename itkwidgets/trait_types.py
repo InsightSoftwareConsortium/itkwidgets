@@ -222,7 +222,11 @@ def itkimage_from_json(js, manager=None):
                 numberOfBytes),
                     dtype=dtype)
         pixelBufferArray.shape = js['size'][::-1]
-        image = itk.PyBuffer[ImageType].GetImageFromArray(pixelBufferArray)
+        # Workaround for GetImageFromArray required until 5.0.1
+        # and https://github.com/numpy/numpy/pull/11739
+        pixelBufferArrayCopyToBeRemoved = pixelBufferArray.copy()
+        # image = itk.PyBuffer[ImageType].GetImageFromArray(pixelBufferArray)
+        image = itk.PyBuffer[ImageType].GetImageFromArray(pixelBufferArrayCopyToBeRemoved)
         Dimension = image.GetImageDimension()
         image.SetOrigin(js['origin'])
         image.SetSpacing(js['spacing'])
