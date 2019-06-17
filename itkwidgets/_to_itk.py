@@ -35,15 +35,15 @@ def to_itk_image(other_image_datatype):
         if have_dask and isinstance(other_image_datatype, dask.array.core.Array):
             case_use_view = False
         if case_use_view:
-            image_from_array = itk.GetImageViewFromArray(array)
+            image_from_array = itk.image_view_from_array(array)
         else:
-            image_from_array = itk.GetImageFromArray(array)
+            image_from_array = itk.image_from_array(array)
         return image_from_array
     elif have_vtk and isinstance(other_image_datatype, vtk.vtkImageData):
         from vtk.util import numpy_support as vtk_numpy_support
         array = vtk_numpy_support.vtk_to_numpy(other_image_datatype.GetPointData().GetScalars())
         array.shape = tuple(other_image_datatype.GetDimensions())[::-1]
-        image_from_array = itk.GetImageViewFromArray(array)
+        image_from_array = itk.image_view_from_array(array)
         image_from_array.SetSpacing(other_image_datatype.GetSpacing())
         image_from_array.SetOrigin(other_image_datatype.GetOrigin())
         return image_from_array
@@ -51,7 +51,7 @@ def to_itk_image(other_image_datatype):
         import imglyb
         if isinstance(other_image_datatype, imglyb.util.ReferenceGuardingRandomAccessibleInterval):
             array = imglyb.to_numpy(other_image_datatype)
-            image_from_array = itk.GetImageViewFromArray(array)
+            image_from_array = itk.image_view_from_array(array)
             return image_from_array
 
     return None
