@@ -120,7 +120,7 @@ def itkimage_to_json(itkimage, manager=None):
         directionMatrix = direction.GetVnlMatrix()
         directionList = []
         dimension = itkimage.GetImageDimension()
-        pixelArr = itk.GetArrayViewFromImage(itkimage)
+        pixelArr = itk.array_view_from_image(itkimage)
         compressor = zstd.ZstdCompressor(level=3)
         compressed = compressor.compress(pixelArr.data)
         pixelArrCompressed = memoryview(compressed)
