@@ -230,7 +230,6 @@ class Viewer(ViewerParent):
                     self._downsampling = True
         if self._downsampling:
             self.extractor = itk.ExtractImageFilter.New(self.image)
-            self.extractor.InPlaceOn()
             self.shrinker = itk.BinShrinkImageFilter.New(self.extractor)
         self._update_rendered_image()
         if self._downsampling:
@@ -239,7 +238,6 @@ class Viewer(ViewerParent):
         self.observe(self._on_reset_crop_requested, ['_reset_crop_requested'])
         self.observe(self.update_rendered_image, ['image'])
 
-    @debounced(delay_seconds=1.5, method=True)
     def _on_roi_changed(self, change=None):
         if self._downsampling:
             self._update_rendered_image()
@@ -283,6 +281,7 @@ class Viewer(ViewerParent):
                 assert(x == False)
             f()
         self._rendering_image = True
+
 
         if self._downsampling:
             dimension = self.image.GetImageDimension()
