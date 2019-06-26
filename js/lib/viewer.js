@@ -67,38 +67,6 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
 })
 
 
-const resetVolumeRenderingStatus = (domWidgetView) => {
-  const viewProxy = domWidgetView.model.itkVtkViewer.getViewProxy()
-  if (domWidgetView.model.use2D) {
-    domWidgetView.model.set('_rendering_image', false)
-    domWidgetView.model.save_changes()
-    return
-  }
-  if (viewProxy.getViewMode() === 'VolumeRendering') {
-    const representation = viewProxy.getRepresentations()[0];
-    let unsubscriber = null
-    const onLightingActivated = () => {
-      // Why is this necessary?
-      const shadow = domWidgetView.model.get('shadow')
-      representation.setUseShadow(shadow);
-      const gradientOpacity = domWidgetView.model.get('gradient_opacity')
-      // Todo: Fix this in vtk.js
-      representation.setEdgeGradient(representation.getEdgeGradient() + 1e-7)
-      if (viewProxy.getViewMode() === 'VolumeRendering') {
-        viewProxy.resetCamera()
-      }
-      domWidgetView.model.set('_rendering_image', false)
-      domWidgetView.model.save_changes()
-      if (unsubscriber) {
-        unsubscriber.unsubscribe()
-      }
-    }
-    const volumeMapper = representation.getMapper()
-    unsubscriber = volumeMapper.onLightingActivated(onLightingActivated)
-  }
-}
-
-
 const createRenderingPipeline = (domWidgetView, rendered_image) => {
   const containerStyle = {
     position: 'relative',
@@ -122,24 +90,28 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
   domWidgetView.model.use2D = !is3D
   domWidgetView.model.skipOnCroppingPlanesChanged = false
   if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
-
-    resetVolumeRenderingStatus(domWidgetView)
-    if (domWidgetView.model.itkVtkViewer.getViewProxy().getViewMode() !== 'VolumeRendering') {
-      domWidgetView.model.skipOnCroppingPlanesChanged = true
-      domWidgetView.model.set('_rendering_image', false)
-      domWidgetView.model.save_changes()
-    }
+    domWidgetView.model.skipOnCroppingPlanesChanged = true
+    console.log('Updating existing image')
     domWidgetView.model.itkVtkViewer.setImage(imageData)
+
+    // Why is this necessary?
+    const viewProxy = domWidgetView.model.itkVtkViewer.getViewProxy()
+    const shadow = domWidgetView.model.get('shadow')
+    const representation = viewProxy.getRepresentations()[0];
+    representation.setUseShadow(shadow);
+    const gradientOpacity = domWidgetView.model.get('gradient_opacity')
+    // Todo: Fix this in vtk.js
+    representation.setEdgeGradient(representation.getEdgeGradient() + 1e-7)
+    if (viewProxy.getViewMode() === 'VolumeRendering') {
+      viewProxy.resetCamera()
+    }
   } else {
     domWidgetView.model.itkVtkViewer = createViewer(domWidgetView.el, {
       viewerStyle: viewerStyle,
       image: imageData,
       use2D: !is3D,
+      rotate: false,
     })
-    resetVolumeRenderingStatus(domWidgetView)
-    if (domWidgetView.model.itkVtkViewer.getViewProxy().getViewMode() !== 'VolumeRendering') {
-      domWidgetView.model.set('_rendering_image', false)
-    }
     const viewProxy = domWidgetView.model.itkVtkViewer.getViewProxy()
     const renderWindow = viewProxy.getRenderWindow()
     // Firefox requires calling .getContext on the canvas, which is
@@ -164,7 +136,6 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
           return
         }
       }
-      //const size = interactor.getView().getViewportSize(interactor.getCurrentRenderer())
       viewportPosition.setValue(0.0, 0.0, 0.0)
       const lowerLeft = viewportPosition.getComputedWorldValue(renderer)
       viewportPosition.setValue(1.0, 1.0, 0.0)
@@ -243,6 +214,7 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
     // Used by ipywebrtc
     domWidgetView.model.stream = Promise.resolve(stream)
     domWidgetView.initialize_viewer()
+
   }
   const dataArray = imageData.getPointData().getScalars()
   if (dataArray.getNumberOfComponents() > 1) {
@@ -250,6 +222,8 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
     domWidgetView.model.set('cmap', 'Grayscale')
     domWidgetView.model.save_changes()
   }
+  domWidgetView.model.set('_rendering_image', false)
+  domWidgetView.model.save_changes()
 }
 
 
@@ -313,6 +287,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
 
       const onCroppingPlanesChanged = (planes, bboxCorners) => {
         if (!this.model.get('_rendering_image') && !this.model.skipOnCroppingPlanesChanged) {
+          this.model.skipOnCroppingPlanesChanged = true
           this.model.set('roi',
               new Float64Array([bboxCorners[0][0], bboxCorners[0][1], bboxCorners[0][2], bboxCorners[7][0], bboxCorners[7][1], bboxCorners[7][2]]),
             )
@@ -534,10 +509,6 @@ const ViewerView = widgets.DOMWidgetView.extend({
         break
       default:
         throw new Error('Unknown view mode')
-      }
-      if (mode !== 'v') {
-        this.model.set('_rendering_image', false)
-        this.model.save_changes()
       }
     }
   },
