@@ -58,3 +58,7 @@ def test_itkimage_from_json():
     assert(asimage.GetPixel((5,0)) == 66)
     assert(asimage.GetPixel((5,3)) == 87)
     assert(asimage.GetPixel((3,3)) == 22)
+
+def test_VTKPolyData():
+    info_text = trait_types.VTKPolyData.info_text
+    assert(info_text.find('vtk.js') != -1)
