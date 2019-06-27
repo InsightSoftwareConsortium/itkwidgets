@@ -242,3 +242,24 @@ itkimage_serialization = {
     'from_json': itkimage_from_json,
     'to_json': itkimage_to_json
 }
+
+class VTKPolyData(traitlets.TraitType):
+    """A trait type holding an Python data structure compatible with vtk.js.
+
+    https://kitware.github.io/vtk-js/docs/structures_PolyData.html"""
+
+    info_text = 'A data structure for rendering geometry in vtk.js ' + \
+    'consisting of points, verts (vertices), lines, polys (polygons), ' + \
+    'triangle strips, point data, and cell data.'
+
+    # Hold a reference to the source object to use with shallow views
+    _source_object = None
+
+    def validate(self, obj, value):
+        self._source_object = value
+
+        # coerced_polydata = to_vtkjs_polydata(value)
+        # if coerced_polydata:
+            # return coerced_polydata
+
+        self.error(obj, value)
