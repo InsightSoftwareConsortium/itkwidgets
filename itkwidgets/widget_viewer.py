@@ -176,6 +176,7 @@ class Viewer(ViewerParent):
     rendered_image = ITKImage(default_value=None, allow_none=True).tag(sync=True, **itkimage_serialization)
     _rendering_image = CBool(default_value=False, help="We are currently volume rendering the image.").tag(sync=True)
     ui_collapsed = CBool(default_value=False, help="Collapse the built in user interface.").tag(sync=True)
+    rotate = CBool(default_value=False, help="Rotate the camera around the scene.").tag(sync=True)
     annotations = CBool(default_value=True, help="Show annotations.").tag(sync=True)
     mode = CaselessStrEnum(('x', 'y', 'z', 'v'), default_value='v', help="View mode: x: x plane, y: y plane, z: z plane, v: volume rendering").tag(sync=True)
     interpolation = CBool(default_value=True, help="Use linear interpolation in slicing planes.").tag(sync=True)
@@ -373,7 +374,7 @@ class Viewer(ViewerParent):
         return tuple(slices)
 
 
-def view(image, ui_collapsed=False, annotations=True, interpolation=True,
+def view(image, rotate=False, ui_collapsed=False, annotations=True, interpolation=True,
         cmap=cm.viridis, mode='v', shadow=True, slicing_planes=False,
         gradient_opacity=0.22, **kwargs):
     """View the image.
@@ -393,6 +394,10 @@ def view(image, ui_collapsed=False, annotations=True, interpolation=True,
 
     ui_collapsed : bool, optional, default: False
         Collapse the native widget user interface.
+
+    rotate : bool, optional, default: False
+        Continuously rotate the camera around the scene in volume rendering
+        mode.
 
     annotations : bool, optional, default: True
         Display annotations describing orientation and the value of a
@@ -443,7 +448,7 @@ def view(image, ui_collapsed=False, annotations=True, interpolation=True,
         the visualization or retrieve values created by interacting with the
         widget.
     """
-    viewer = Viewer(image=image, ui_collapsed=ui_collapsed,
+    viewer = Viewer(image=image, rotate=rotate, ui_collapsed=ui_collapsed,
             annotations=annotations, interpolation=interpolation, cmap=cmap,
             mode=mode, shadow=shadow, slicing_planes=slicing_planes,
             gradient_opacity=gradient_opacity, **kwargs)
