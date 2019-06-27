@@ -44,6 +44,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       rendered_image: null,
       _rendering_image: false,
       ui_collapsed: false,
+      rotate: false,
       annotations: true,
       mode: 'v',
       interpolation: true,
@@ -232,6 +233,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
   render: function() {
     this.model.on('change:rendered_image', this.rendered_image_changed, this)
     this.model.on('change:ui_collapsed', this.ui_collapsed_changed, this)
+    this.model.on('change:rotate', this.rotate_changed, this)
     this.model.on('change:annotations', this.annotations_changed, this)
     this.model.on('change:mode', this.mode_changed, this)
     this.model.on('change:interpolation', this.interpolation_changed, this)
@@ -250,6 +252,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.slicing_planes_changed()
       this.gradient_opacity_changed()
       this.ui_collapsed_changed()
+      this.rotate_changed()
       this.select_roi_changed()
       this.scale_factors_changed()
 
@@ -260,6 +263,14 @@ const ViewerView = widgets.DOMWidgetView.extend({
         }
       }
       this.model.itkVtkViewer.subscribeToggleUserInterfaceCollapsed(onUserInterfaceCollapsedToggle)
+
+      const onRotateToggle = (rotate) => {
+        if (rotate !== this.model.get('rotate')) {
+          this.model.set('rotate', rotate)
+          this.model.save_changes()
+        }
+      }
+      this.model.itkVtkViewer.subscribeToggleRotate(onRotateToggle)
 
       const onAnnotationsToggle = (enabled) => {
         if (enabled !== this.model.get('annotations')) {
@@ -475,6 +486,13 @@ const ViewerView = widgets.DOMWidgetView.extend({
     const uiCollapsed = this.model.get('ui_collapsed')
     if (this.model.hasOwnProperty('itkVtkViewer')) {
       this.model.itkVtkViewer.setUserInterfaceCollapsed(uiCollapsed)
+    }
+  },
+
+  rotate_changed: function() {
+    const rotate = this.model.get('rotate')
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      this.model.itkVtkViewer.setRotateEnabled(rotate)
     }
   },
 
