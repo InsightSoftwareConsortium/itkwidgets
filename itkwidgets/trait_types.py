@@ -244,9 +244,9 @@ itkimage_serialization = {
 }
 
 class VTKPolyData(traitlets.TraitType):
-    """A trait type holding an Python data structure compatible with vtk.js.
+    """A trait type holding a Python data structure compatible with vtk.js.
 
-    https://kitware.github.io/vtk-js/docs/structures_PolyData.html"""
+    See: https://kitware.github.io/vtk-js/docs/structures_PolyData.html"""
 
     info_text = 'A data structure for rendering geometry in vtk.js ' + \
     'consisting of points, verts (vertices), lines, polys (polygons), ' + \
