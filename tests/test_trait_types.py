@@ -84,6 +84,7 @@ def test_numpy_array_to_point_set():
     assert(point_set['points']['vtkClass'] == 'vtkPoints')
     assert(point_set['points']['numberOfComponents'] == 3)
     assert(point_set['points']['dataType'] == 'Float32Array')
+    assert(point_set['points']['size'] == number_of_points * 3)
     assert(np.array_equal(point_set['points']['values'],
         point_set_array.astype(np.float32)))
 
@@ -94,6 +95,7 @@ def test_numpy_array_to_point_set():
     assert(point_set['points']['vtkClass'] == 'vtkPoints')
     assert(point_set['points']['numberOfComponents'] == 3)
     assert(point_set['points']['dataType'] == 'Float32Array')
+    assert(point_set['points']['size'] == number_of_points * 3)
 
     point_set_array.resize((number_of_points, 3))
     point_set_array[:,2] = 0.0
@@ -111,11 +113,33 @@ def test_polydata_list_to_json():
     point_set_2 = to_point_set(point_set_array_2)
     polydata_list = [point_set_1, point_set_2]
 
-    json = trait_types.polydata_list_to_json(polydata_list)
-    assert(len(json) == 2)
-    polydata_1 = json[0]
+    asjson = trait_types.polydata_list_to_json(polydata_list)
+    assert(len(asjson) == 2)
+    polydata_1 = asjson[0]
     assert(polydata_1['vtkClass'] == 'vtkPolyData')
     assert(polydata_1['points']['vtkClass'] == 'vtkPoints')
     assert(polydata_1['points']['numberOfComponents'] == 3)
     assert(polydata_1['points']['dataType'] == 'Float32Array')
     assert(len(polydata_1['points']['compressedValues']) == 129)
+
+def test_polydata_list_from_json():
+    number_of_points = 10
+    point_set_array_1 = np.random.multivariate_normal(gaussian_1_mean, gaussian_1_cov,
+            number_of_points)
+    point_set_array_2 = np.random.multivariate_normal(gaussian_2_mean, gaussian_2_cov,
+            number_of_points)
+
+    point_set_1 = to_point_set(point_set_array_1)
+    point_set_2 = to_point_set(point_set_array_2)
+    polydata_list = [point_set_1, point_set_2]
+
+    asjson = trait_types.polydata_list_to_json(polydata_list)
+    polydata_list_from_json = trait_types.polydata_list_from_json(asjson)
+    assert(len(polydata_list_from_json) == 2)
+    polydata_1 = polydata_list_from_json[0]
+    assert(polydata_1['vtkClass'] == 'vtkPolyData')
+    assert(polydata_1['points']['vtkClass'] == 'vtkPoints')
+    assert(polydata_1['points']['numberOfComponents'] == 3)
+    assert(polydata_1['points']['dataType'] == 'Float32Array')
+    assert(np.array_equal(polydata_1['points']['values'],
+        point_set_array_1.astype(np.float32)))

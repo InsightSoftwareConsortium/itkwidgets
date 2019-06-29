@@ -67,6 +67,7 @@ def to_point_set(point_set_like):
             points = { 'vtkClass': 'vtkPoints',
                        'numberOfComponents': 3,
                        'dataType': 'Float32Array',
+                       'size': point_values.size,
                        'values': point_values }
             point_set['points'] = points
             return point_set
