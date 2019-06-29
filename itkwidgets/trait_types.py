@@ -213,9 +213,10 @@ def itkimage_from_json(js, manager=None):
         decompressor = zstd.ZstdDecompressor()
         if six.PY2:
             asBytes = js['compressedData'].tobytes()
-            pixelBufferArrayCompressed = np.frombuffer(asBytes, dtype=dtype)
+            pixelBufferArrayCompressed = np.frombuffer(asBytes, dtype=np.uint8)
         else:
-            pixelBufferArrayCompressed = np.frombuffer(js['compressedData'], dtype=dtype)
+            pixelBufferArrayCompressed = np.frombuffer(js['compressedData'],
+                    dtype=np.uint8)
         pixelCount = reduce(lambda x, y: x*y, js['size'], 1)
         numberOfBytes = pixelCount * js['imageType']['components'] * np.dtype(dtype).itemsize
         pixelBufferArray = \
@@ -266,51 +267,81 @@ def polydata_list_to_json(polydata_list, manager=None):
 
         json = []
         for polydata in polydata_list:
-            json_polydata = copy.deepcopy(polydata)
+            json_polydata = dict()
+            for top_key, top_value in polydata.items():
+                if isinstance(top_value, dict):
+                    nested_value_copy = dict()
+                    for nested_key, nested_value in top_value.items():
+                        if not nested_key == 'values':
+                            nested_value_copy[nested_key] = nested_value
+                    json_polydata[top_key] = nested_value_copy
+                else:
+                    json_polydata[top_key] = top_value
             if 'points' in json_polydata:
-                point_values = json_polydata['points']['values']
+                point_values = polydata['points']['values']
                 compressed = compressor.compress(point_values.data)
                 compressedView = memoryview(compressed)
-                json_polydata['points'].pop('values')
                 json_polydata['points']['compressedValues'] = compressedView
 
             json.append(json_polydata)
         return json
 
+def _type_to_numpy(jstype):
+    _js_to_numpy_dtype = {
+            'Int8Array': np.int8,
+            'Uint8Array': np.uint8,
+            'Int16Array': np.int16,
+            'Uint16Array': np.uint16,
+            'Int32Array': np.int32,
+            'Uint32Array': np.uint32,
+            'BigInt64Array': np.int64,
+            'BigUint64Array': np.uint64,
+            'Float32Array': np.float32,
+            'Float64Array': np.float64
+            }
+    return _js_to_numpy_dtype[jstype]
+
 def polydata_list_from_json(js, manager=None):
-    """Deserialize a Javascript vtk.js PolyData object."""
+    """Deserialize a Javascript vtk.js PolyData object.
+
+    Decompresses data buffers.
+    """
     if js is None:
         return None
     else:
-        ImageType, dtype = _type_to_image(js['imageType'])
         decompressor = zstd.ZstdDecompressor()
-        if six.PY2:
-            asBytes = js['compressedData'].tobytes()
-            pixelBufferArrayCompressed = np.frombuffer(asBytes, dtype=dtype)
-        else:
-            pixelBufferArrayCompressed = np.frombuffer(js['compressedData'], dtype=dtype)
-        pixelCount = reduce(lambda x, y: x*y, js['size'], 1)
-        numberOfBytes = pixelCount * js['imageType']['components'] * np.dtype(dtype).itemsize
-        pixelBufferArray = \
-            np.frombuffer(decompressor.decompress(pixelBufferArrayCompressed,
-                numberOfBytes),
-                    dtype=dtype)
-        pixelBufferArray.shape = js['size'][::-1]
-        # Workaround for GetImageFromArray required until 5.0.1
-        # and https://github.com/numpy/numpy/pull/11739
-        pixelBufferArrayCopyToBeRemoved = pixelBufferArray.copy()
-        # image = itk.PyBuffer[ImageType].GetImageFromArray(pixelBufferArray)
-        image = itk.PyBuffer[ImageType].GetImageFromArray(pixelBufferArrayCopyToBeRemoved)
-        Dimension = image.GetImageDimension()
-        image.SetOrigin(js['origin'])
-        image.SetSpacing(js['spacing'])
-        direction = image.GetDirection()
-        directionMatrix = direction.GetVnlMatrix()
-        directionJs = js['direction']['data']
-        for col in range(Dimension):
-            for row in range(Dimension):
-                directionMatrix.put(row, col, directionJs[col + row * Dimension])
-        return image
+
+        polydata_list = []
+        for json_polydata in js:
+            polydata = dict()
+            for top_key, top_value in json_polydata.items():
+                if isinstance(top_value, dict):
+                    nested_value_copy = dict()
+                    for nested_key, nested_value in top_value.items():
+                        if not nested_key == 'compressedValues':
+                            nested_value_copy[nested_key] = nested_value
+                    polydata[top_key] = nested_value_copy
+                else:
+                    polydata[top_key] = top_value
+
+            if 'points' in polydata:
+                dtype = _type_to_numpy(polydata['points']['dataType'])
+                if six.PY2:
+                    asBytes = json_polydata['points']['compressedData'].tobytes()
+                    valuesBufferArrayCompressed = np.frombuffer(asBytes, dtype=np.uint8)
+                else:
+                    valuesBufferArrayCompressed = np.frombuffer(json_polydata['points']['compressedValues'],
+                            dtype=np.uint8)
+                numberOfBytes = json_polydata['points']['size'] * np.dtype(dtype).itemsize
+                valuesBufferArray = \
+                    np.frombuffer(decompressor.decompress(valuesBufferArrayCompressed,
+                        numberOfBytes),
+                            dtype=dtype)
+                valuesBufferArray.shape = (int(json_polydata['points']['size'] / 3), 3)
+                polydata['points']['values'] = valuesBufferArray
+
+            polydata_list.append(polydata)
+        return polydata_list
 
 polydata_list_serialization = {
     'from_json': polydata_list_from_json,
