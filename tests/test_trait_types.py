@@ -2,6 +2,8 @@ import itk
 import itkwidgets.trait_types as trait_types
 import numpy as np
 
+from itkwidgets._transform_types import to_point_set
+
 def test_ITKImage():
     info_text = trait_types.ITKImage.info_text
     assert(info_text.find('image') != -1)
@@ -59,6 +61,53 @@ def test_itkimage_from_json():
     assert(asimage.GetPixel((5,3)) == 87)
     assert(asimage.GetPixel((3,3)) == 22)
 
-def test_VTKPolyData():
-    info_text = trait_types.VTKPolyData.info_text
+def test_PolyData():
+    info_text = trait_types.PolyData.info_text
     assert(info_text.find('vtk.js') != -1)
+
+gaussian_1_mean = [0.0, 0.0, 0.0]
+gaussian_1_cov = [[1.0, 0.0, 0.0], [0.0, 2.0, 0.0], [0.0, 0.0, 0.5]]
+gaussian_2_mean = [4.0, 6.0, 7.0]
+gaussian_2_cov = [[2.0, 0.0, 0.0], [0.0, 2.0, 0.0], [0.0, 0.0, 1.5]]
+
+def test_PointSet():
+    info_text = trait_types.PointSet.info_text
+    assert(info_text.find('point set') != -1)
+
+def test_numpy_array_to_point_set():
+    number_of_points = 10
+    point_set_array = np.random.multivariate_normal(gaussian_1_mean, gaussian_1_cov,
+            number_of_points)
+
+    # 3D
+    point_set = to_point_set(point_set_array)
+    assert(point_set['vtkClass'] == 'vtkPolyData')
+    assert(point_set['points']['vtkClass'] == 'vtkPoints')
+    assert(point_set['points']['numberOfComponents'] == 3)
+    assert(point_set['points']['dataType'] == 'Float32Array')
+    assert(np.array_equal(point_set['points']['values'],
+        point_set_array.astype(np.float32)))
+
+    # 2D
+    point_set_array.resize((number_of_points, 2))
+    print(point_set_array)
+    point_set = to_point_set(point_set_array)
+    assert(point_set['vtkClass'] == 'vtkPolyData')
+    assert(point_set['points']['vtkClass'] == 'vtkPoints')
+    assert(point_set['points']['numberOfComponents'] == 3)
+    assert(point_set['points']['dataType'] == 'Float32Array')
+
+    point_set_array.resize((number_of_points, 3))
+    point_set_array[:,2] = 0.0
+    assert(np.alltrue(point_set['points']['values'] ==
+        point_set_array.astype(np.float32)))
+
+# def test_numpy_array_to_point_set():
+    # number_of_points = 100
+    # point_set_array_1 = np.random.multivariate_normal(gaussian_1_mean, gaussian_1_cov,
+            # number_of_points)
+    # point_set_array_2 = np.random.multivariate_normal(gaussian_2_mean, gaussian_2_cov,
+            # number_of_points)
+    # point_set_1 = to_point_set(point_set_array_1)
+    # assert(p
+    # print(point_set_1)

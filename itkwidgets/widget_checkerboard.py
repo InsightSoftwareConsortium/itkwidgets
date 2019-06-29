@@ -8,7 +8,7 @@ import numpy as np
 import ipywidgets as widgets
 from .widget_viewer import Viewer
 import itk
-from ._to_itk import to_itk_image
+from ._transform_types import to_itk_image
 
 def checkerboard(image1, image2, pattern=3, invert=False, **viewer_kwargs):
     """Compare two images with a checkerboard pattern.
