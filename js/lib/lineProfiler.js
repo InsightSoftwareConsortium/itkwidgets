@@ -30,6 +30,8 @@ const LineProfilerModel = viewer.ViewerModel.extend({
 // Custom View. Renders the widget model.
 const LineProfilerView = viewer.ViewerView.extend({
   initialize_viewer: function() {
+    this.initialize_itkVtkViewer()
+
     const viewProxy = this.model.itkVtkViewer.getViewProxy()
     const lineWidget = vtkLineWidget.newInstance()
     this.model.lineWidget = lineWidget
