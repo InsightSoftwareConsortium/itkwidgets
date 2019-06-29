@@ -14,7 +14,7 @@ import numpy as np
 import ipywidgets as widgets
 from traitlets import CBool, CFloat, Unicode, CaselessStrEnum, Tuple, List, TraitError, validate
 from ipydatawidgets import NDArray, array_serialization, shape_constraints
-from .trait_types import ITKImage, itkimage_serialization, polydata_serialization
+from .trait_types import ITKImage, itkimage_serialization, polydata_list_serialization
 try:
     import ipywebrtc
     ViewerParent = ipywebrtc.MediaStream
@@ -203,7 +203,7 @@ class Viewer(ViewerParent):
     rotate = CBool(default_value=False, help="Rotate the camera around the scene.").tag(sync=True)
     annotations = CBool(default_value=True, help="Show annotations.").tag(sync=True)
     mode = CaselessStrEnum(('x', 'y', 'z', 'v'), default_value='v', help="View mode: x: x plane, y: y plane, z: z plane, v: volume rendering").tag(sync=True)
-    point_sets = List(default_value=[], help="Point sets to visualize").tag(sync=True, **polydata_serialization)
+    point_sets = List(default_value=[], help="Point sets to visualize").tag(sync=True, **polydata_list_serialization)
 
 
     def __init__(self, **kwargs):
