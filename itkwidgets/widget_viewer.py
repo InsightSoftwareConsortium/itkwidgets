@@ -12,9 +12,9 @@ import time
 import itk
 import numpy as np
 import ipywidgets as widgets
-from traitlets import CBool, CFloat, Unicode, CaselessStrEnum, Tuple, List, TraitError, validate
+from traitlets import CBool, CFloat, Unicode, CaselessStrEnum, TraitError, validate
 from ipydatawidgets import NDArray, array_serialization, shape_constraints
-from .trait_types import ITKImage, itkimage_serialization, polydata_list_serialization
+from .trait_types import ITKImage, PointSetList, itkimage_serialization, polydata_list_serialization
 try:
     import ipywebrtc
     ViewerParent = ipywebrtc.MediaStream
@@ -199,15 +199,18 @@ class Viewer(ViewerParent):
             help="We are downsampling the image to meet the size limits.").tag(sync=True)
     _reset_crop_requested = CBool(default_value=False,
             help="The user requested a reset of the roi.").tag(sync=True)
+    point_sets = PointSetList(default_value=None, allow_none=True, help="Point sets to visualize").tag(sync=True, **polydata_list_serialization)
     ui_collapsed = CBool(default_value=False, help="Collapse the built in user interface.").tag(sync=True)
     rotate = CBool(default_value=False, help="Rotate the camera around the scene.").tag(sync=True)
     annotations = CBool(default_value=True, help="Show annotations.").tag(sync=True)
     mode = CaselessStrEnum(('x', 'y', 'z', 'v'), default_value='v', help="View mode: x: x plane, y: y plane, z: z plane, v: volume rendering").tag(sync=True)
-    point_sets = List(default_value=[], help="Point sets to visualize").tag(sync=True, **polydata_list_serialization)
 
 
     def __init__(self, **kwargs):
         super(Viewer, self).__init__(**kwargs)
+
+        if not self.image:
+            return
         dimension = self.image.GetImageDimension()
         largest_region = self.image.GetLargestPossibleRegion()
         size = largest_region.GetSize()
@@ -375,10 +378,10 @@ class Viewer(ViewerParent):
         return tuple(slices)
 
 
-def view(image,
+def view(image=None,
         gradient_opacity=0.22, cmap=cm.viridis, slicing_planes=False,
         select_roi=False, shadow=True, interpolation=True,
-        point_sets=None, point_set_colors=None, point_set_opacities=None, point_set_sizes=None,
+        point_sets=[], point_set_colors=[], point_set_opacities=[], point_set_sizes=[],
         ui_collapsed=False, rotate=False, annotations=True, mode='v',
         **kwargs):
     """View the image and / or point set.
@@ -466,8 +469,6 @@ def view(image,
         the visualization or retrieve values created by interacting with the
         widget.
     """
-    if not isinstance(point_sets, collections.Sequence):
-        point_sets = [point_sets]
 
     viewer = Viewer(image=image, interpolation=interpolation, cmap=cmap, shadow=shadow,
             select_roi=select_roi, slicing_planes=slicing_planes, gradient_opacity=gradient_opacity,

@@ -1,6 +1,6 @@
 import os
 import six
-import copy
+import collections
 
 import traitlets
 import itk
@@ -13,6 +13,8 @@ try:
     from functools import reduce
 except ImportError:
     pass
+
+from IPython.core.debugger import set_trace
 
 from ._transform_types import to_itk_image, to_point_set
 
@@ -245,8 +247,8 @@ itkimage_serialization = {
     'to_json': itkimage_to_json
 }
 
-class PolyData(traitlets.TraitType):
-    """A trait type holding an Python data structure compatible with vtk.js.
+class PolyDataList(traitlets.TraitType):
+    """A trait type holding a list of Python data structures compatible with vtk.js.
 
     See: https://kitware.github.io/vtk-js/docs/structures_PolyData.html"""
 
@@ -348,11 +350,11 @@ polydata_list_serialization = {
     'to_json': polydata_list_to_json
 }
 
-class PointSet(PolyData):
-    """A trait type holding an Python data structure compatible with vtk.js that
+class PointSetList(PolyDataList):
+    """A trait type holding a list of Python data structures compatible with vtk.js that
     is coerced from point set-like data structures."""
 
-    info_text = 'A point set representation for rendering geometry in vtk.js.'
+    info_text = 'Point set representation for rendering geometry in vtk.js.'
 
     # Hold a reference to the source object to use with shallow views
     _source_object = None
@@ -360,8 +362,16 @@ class PointSet(PolyData):
     def validate(self, obj, value):
         self._source_object = value
 
-        # coerced_polydata = to_vtkjs_polydata(value)
-        # if coerced_polydata:
-            # return coerced_polydata
+        # For convenience, support assigning a single point set instead of a
+        # list
+        point_sets = value
+        if not isinstance(point_sets, collections.Sequence) and not point_sets is None:
+            point_sets = [point_sets]
 
-        self.error(obj, value)
+        try:
+            for index, point_set in enumerate(point_sets):
+                if not isinstance(point_set, dict) or not 'vtkClass' in point_set:
+                    point_sets[index] = to_point_set(point_set)
+            return point_sets
+        except:
+            self.error(obj, value)

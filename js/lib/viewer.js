@@ -32,6 +32,23 @@ const deserialize_itkimage = (jsonitkimage) => {
   }
 }
 
+const serialize_polydata_list = (polydata_list) => {
+  if (polydata_list === null) {
+    return null
+  } else {
+    polydata_list.data = null
+    return polydata_list
+  }
+}
+
+const deserialize_polydata_list = (jsonpolydata_list) => {
+  if (jsonpolydata_list === null) {
+    return null
+  } else {
+    return jsonpolydata_list
+  }
+}
+
 const ViewerModel = widgets.DOMWidgetModel.extend({
   defaults: function() {
     return Object.assign(widgets.DOMWidgetModel.prototype.defaults(), {
@@ -43,10 +60,6 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       _view_module_version: '0.16.3',
       rendered_image: null,
       _rendering_image: false,
-      ui_collapsed: false,
-      rotate: false,
-      annotations: true,
-      mode: 'v',
       interpolation: true,
       cmap: 'Viridis (matplotlib)',
       shadow: true,
@@ -57,10 +70,16 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       select_roi: false,
       _reset_crop_requested: false,
       _scale_factors: new Uint8Array([1, 1, 1]),
+      point_sets: null,
+      ui_collapsed: false,
+      rotate: false,
+      annotations: true,
+      mode: 'v',
     })
   }}, {
   serializers: Object.assign({
     rendered_image: { serialize: serialize_itkimage, deserialize: deserialize_itkimage },
+    point_sets: { serialize: serialize_polydata_list, deserialize: deserialize_polydata_list },
     roi: fixed_shape_serialization([2, 3]),
     _largest_roi: fixed_shape_serialization([2, 3]),
     _scale_factors: fixed_shape_serialization([3,]),
