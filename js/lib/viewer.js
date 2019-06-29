@@ -5,6 +5,7 @@ import {
 } from "jupyter-dataserializers"
 import vtkITKHelper from 'vtk.js/Sources/Common/DataModel/ITKHelper'
 import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate'
+import vtk from 'vtk.js/Sources/vtk'
 import createViewer from 'itk-vtk-viewer/src/createViewer'
 import IntTypes from 'itk/IntTypes'
 import FloatTypes from 'itk/FloatTypes'
@@ -87,7 +88,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
 })
 
 
-const createRenderingPipeline = (domWidgetView, rendered_image) => {
+const createRenderingPipeline = (domWidgetView, { rendered_image, point_sets }) => {
   const containerStyle = {
     position: 'relative',
     width: '100%',
@@ -105,137 +106,164 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
     backgroundColor: [1.0, 1.0, 1.0],
     containerStyle: containerStyle,
   };
-  const imageData = vtkITKHelper.convertItkToVtkImage(rendered_image)
-  const is3D = rendered_image.imageType.dimension === 3
+  let is3D = true
+  let imageData = null
+  if (rendered_image) {
+    imageData = vtkITKHelper.convertItkToVtkImage(rendered_image)
+    is3D = rendered_image.imageType.dimension === 3
+  }
+  let pointSets = null
+  if (point_sets) {
+    pointSets = point_sets.map((point_set) => vtk(point_set))
+  }
+  console.log('pointSets!!!')
+  console.log(pointSets)
   domWidgetView.model.use2D = !is3D
   domWidgetView.model.skipOnCroppingPlanesChanged = false
-  if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
-    domWidgetView.model.skipOnCroppingPlanesChanged = true
-    console.log('Updating existing image')
-    domWidgetView.model.itkVtkViewer.setImage(imageData)
+  domWidgetView.model.itkVtkViewer = createViewer(domWidgetView.el, {
+    viewerStyle: viewerStyle,
+    image: imageData,
+    pointSets,
+    use2D: !is3D,
+    rotate: false,
+  })
+  const viewProxy = domWidgetView.model.itkVtkViewer.getViewProxy()
+  const renderWindow = viewProxy.getRenderWindow()
+  // Firefox requires calling .getContext on the canvas, which is
+  // performed by .initialize()
+  renderWindow.getViews()[0].initialize()
+  const viewCanvas = renderWindow.getViews()[0].getCanvas()
+  const stream  = viewCanvas.captureStream(30000./1001.)
 
-    // Why is this necessary?
-    const viewProxy = domWidgetView.model.itkVtkViewer.getViewProxy()
-    const shadow = domWidgetView.model.get('shadow')
-    const representation = viewProxy.getRepresentations()[0];
-    representation.setUseShadow(shadow);
-    const gradientOpacity = domWidgetView.model.get('gradient_opacity')
-    // Todo: Fix this in vtk.js
-    representation.setEdgeGradient(representation.getEdgeGradient() + 1e-7)
-    if (viewProxy.getViewMode() === 'VolumeRendering') {
-      viewProxy.resetCamera()
+  const renderer = viewProxy.getRenderer()
+  const viewportPosition = vtkCoordinate.newInstance()
+  viewportPosition.setCoordinateSystemToNormalizedViewport()
+
+  // Used by ipywebrtc
+  domWidgetView.model.stream = Promise.resolve(stream)
+  domWidgetView.initialize_viewer()
+
+  const cropROIByViewport = (event) => {
+    if (domWidgetView.model.get('select_roi')) {
+      return
     }
-  } else {
-    domWidgetView.model.itkVtkViewer = createViewer(domWidgetView.el, {
-      viewerStyle: viewerStyle,
-      image: imageData,
-      use2D: !is3D,
-      rotate: false,
-    })
-    const viewProxy = domWidgetView.model.itkVtkViewer.getViewProxy()
-    const renderWindow = viewProxy.getRenderWindow()
-    // Firefox requires calling .getContext on the canvas, which is
-    // performed by .initialize()
-    renderWindow.getViews()[0].initialize()
-    const viewCanvas = renderWindow.getViews()[0].getCanvas()
-    const stream  = viewCanvas.captureStream(30000./1001.)
 
-    const renderer = viewProxy.getRenderer()
-    const viewportPosition = vtkCoordinate.newInstance()
-    viewportPosition.setCoordinateSystemToNormalizedViewport()
-    const cropROIByViewport = (event) => {
-      if (domWidgetView.model.get('select_roi')) {
+    let mode = domWidgetView.model.get('mode')
+    if (mode === 'v') {
+      if (domWidgetView.model.use2D) {
+        mode = 'z'
+      } else {
         return
       }
-
-      let mode = domWidgetView.model.get('mode')
-      if (mode === 'v') {
-        if (domWidgetView.model.use2D) {
-          mode = 'z'
-        } else {
-          return
-        }
-      }
-      viewportPosition.setValue(0.0, 0.0, 0.0)
-      const lowerLeft = viewportPosition.getComputedWorldValue(renderer)
-      viewportPosition.setValue(1.0, 1.0, 0.0)
-      const upperRight = viewportPosition.getComputedWorldValue(renderer)
-      const roi = domWidgetView.model.get('roi').slice()
-      const largestRoi = domWidgetView.model.get('_largest_roi')
-      const padFactor = 0.5
-      const xPadding = (upperRight[0] - lowerLeft[0]) * padFactor
-      let yPadding = (upperRight[1] - lowerLeft[1]) * padFactor
-      if (mode === 'z') {
-        yPadding = (lowerLeft[1] - upperRight[1]) * padFactor
-      }
-      const zPadding = (upperRight[2] - lowerLeft[2]) * padFactor
-      switch (mode) {
-      case 'x':
-        roi[1] = lowerLeft[1] - yPadding
-        roi[4] = upperRight[1] + yPadding
-        roi[2] = lowerLeft[2] - zPadding
-        roi[5] = upperRight[2] + zPadding
-        // Zoom all the way out
-        if(roi[2] < largestRoi[2] &&
-           roi[1] < largestRoi[1] &&
-           roi[5] > largestRoi[5] &&
-           roi[4] > largestRoi[4]) {
-          roi[2] = largestRoi[2]
-          roi[1] = largestRoi[1]
-          roi[5] = largestRoi[5]
-          roi[4] = largestRoi[4]
-          break
-        }
-        break
-      case 'y':
-        roi[0] = lowerLeft[0] - xPadding
-        roi[3] = upperRight[0] + xPadding
-        roi[2] = lowerLeft[2] - zPadding
-        roi[5] = upperRight[2] + zPadding
-        // Zoom all the way out
-        if(roi[2] < largestRoi[2] &&
-           roi[0] < largestRoi[0] &&
-           roi[5] > largestRoi[5] &&
-           roi[3] > largestRoi[3]) {
-          roi[2] = largestRoi[2]
-          roi[0] = largestRoi[0]
-          roi[5] = largestRoi[5]
-          roi[3] = largestRoi[3]
-          break
-        }
-        break
-      case 'z':
-        roi[0] = lowerLeft[0] - xPadding
-        roi[3] = upperRight[0] + xPadding
-        roi[1] = upperRight[1] - yPadding
-        roi[4] = lowerLeft[1] + yPadding
-        // Zoom all the way out
-        if(roi[0] < largestRoi[0] &&
-           roi[1] < largestRoi[1] &&
-           roi[3] > largestRoi[3] &&
-           roi[4] > largestRoi[4]) {
-          roi[0] = largestRoi[0]
-          roi[1] = largestRoi[1]
-          roi[3] = largestRoi[3]
-          roi[4] = largestRoi[4]
-          break
-        }
-        break
-      default:
-        throw new Error('Unexpected view mode')
-      }
-      domWidgetView.model.set('roi', roi)
-      domWidgetView.model.save_changes()
     }
+    viewportPosition.setValue(0.0, 0.0, 0.0)
+    const lowerLeft = viewportPosition.getComputedWorldValue(renderer)
+    viewportPosition.setValue(1.0, 1.0, 0.0)
+    const upperRight = viewportPosition.getComputedWorldValue(renderer)
+    const roi = domWidgetView.model.get('roi').slice()
+    const largestRoi = domWidgetView.model.get('_largest_roi')
+    const padFactor = 0.5
+    const xPadding = (upperRight[0] - lowerLeft[0]) * padFactor
+    let yPadding = (upperRight[1] - lowerLeft[1]) * padFactor
+    if (mode === 'z') {
+      yPadding = (lowerLeft[1] - upperRight[1]) * padFactor
+    }
+    const zPadding = (upperRight[2] - lowerLeft[2]) * padFactor
+    switch (mode) {
+    case 'x':
+      roi[1] = lowerLeft[1] - yPadding
+      roi[4] = upperRight[1] + yPadding
+      roi[2] = lowerLeft[2] - zPadding
+      roi[5] = upperRight[2] + zPadding
+      // Zoom all the way out
+      if(roi[2] < largestRoi[2] &&
+         roi[1] < largestRoi[1] &&
+         roi[5] > largestRoi[5] &&
+         roi[4] > largestRoi[4]) {
+        roi[2] = largestRoi[2]
+        roi[1] = largestRoi[1]
+        roi[5] = largestRoi[5]
+        roi[4] = largestRoi[4]
+        break
+      }
+      break
+    case 'y':
+      roi[0] = lowerLeft[0] - xPadding
+      roi[3] = upperRight[0] + xPadding
+      roi[2] = lowerLeft[2] - zPadding
+      roi[5] = upperRight[2] + zPadding
+      // Zoom all the way out
+      if(roi[2] < largestRoi[2] &&
+         roi[0] < largestRoi[0] &&
+         roi[5] > largestRoi[5] &&
+         roi[3] > largestRoi[3]) {
+        roi[2] = largestRoi[2]
+        roi[0] = largestRoi[0]
+        roi[5] = largestRoi[5]
+        roi[3] = largestRoi[3]
+        break
+      }
+      break
+    case 'z':
+      roi[0] = lowerLeft[0] - xPadding
+      roi[3] = upperRight[0] + xPadding
+      roi[1] = upperRight[1] - yPadding
+      roi[4] = lowerLeft[1] + yPadding
+      // Zoom all the way out
+      if(roi[0] < largestRoi[0] &&
+         roi[1] < largestRoi[1] &&
+         roi[3] > largestRoi[3] &&
+         roi[4] > largestRoi[4]) {
+        roi[0] = largestRoi[0]
+        roi[1] = largestRoi[1]
+        roi[3] = largestRoi[3]
+        roi[4] = largestRoi[4]
+        break
+      }
+      break
+    default:
+      throw new Error('Unexpected view mode')
+    }
+    domWidgetView.model.set('roi', roi)
+    domWidgetView.model.save_changes()
+  }
+
+  if (rendered_image) {
     const interactor = viewProxy.getInteractor()
     interactor.onEndMouseWheel(cropROIByViewport)
     interactor.onEndPan(cropROIByViewport)
     interactor.onEndPinch(cropROIByViewport)
-    // Used by ipywebrtc
-    domWidgetView.model.stream = Promise.resolve(stream)
-    domWidgetView.initialize_viewer()
 
+    const dataArray = imageData.getPointData().getScalars()
+    if (dataArray.getNumberOfComponents() > 1) {
+      domWidgetView.model.itkVtkViewer.setColorMap('Grayscale')
+      domWidgetView.model.set('cmap', 'Grayscale')
+      domWidgetView.model.save_changes()
+    }
+    domWidgetView.model.set('_rendering_image', false)
+    domWidgetView.model.save_changes()
   }
+}
+
+
+function replaceRenderedImage(domWidgetView, rendered_image) {
+  const imageData = vtkITKHelper.convertItkToVtkImage(rendered_image)
+
+  domWidgetView.model.skipOnCroppingPlanesChanged = true
+  domWidgetView.model.itkVtkViewer.setImage(imageData)
+
+  // Why is this necessary?
+  const viewProxy = domWidgetView.model.itkVtkViewer.getViewProxy()
+  const shadow = domWidgetView.model.get('shadow')
+  const representation = viewProxy.getRepresentations()[0];
+  representation.setUseShadow(shadow);
+  const gradientOpacity = domWidgetView.model.get('gradient_opacity')
+  // Todo: Fix this in vtk.js
+  representation.setEdgeGradient(representation.getEdgeGradient() + 1e-7)
+  if (viewProxy.getViewMode() === 'VolumeRendering') {
+    viewProxy.resetCamera()
+  }
+
   const dataArray = imageData.getPointData().getScalars()
   if (dataArray.getNumberOfComponents() > 1) {
     domWidgetView.model.itkVtkViewer.setColorMap('Grayscale')
@@ -249,20 +277,7 @@ const createRenderingPipeline = (domWidgetView, rendered_image) => {
 
 // Custom View. Renders the widget model.
 const ViewerView = widgets.DOMWidgetView.extend({
-  render: function() {
-    this.model.on('change:rendered_image', this.rendered_image_changed, this)
-    this.model.on('change:ui_collapsed', this.ui_collapsed_changed, this)
-    this.model.on('change:rotate', this.rotate_changed, this)
-    this.model.on('change:annotations', this.annotations_changed, this)
-    this.model.on('change:mode', this.mode_changed, this)
-    this.model.on('change:interpolation', this.interpolation_changed, this)
-    this.model.on('change:cmap', this.cmap_changed, this)
-    this.model.on('change:shadow', this.shadow_changed, this)
-    this.model.on('change:slicing_planes', this.slicing_planes_changed, this)
-    this.model.on('change:gradient_opacity', this.gradient_opacity_changed, this)
-    this.model.on('change:select_roi', this.select_roi_changed, this)
-    this.model.on('change:_scale_factors', this.scale_factors_changed, this)
-    this.rendered_image_changed().then(() => {
+  initialize_itkVtkViewer: function() {
       this.annotations_changed()
       this.interpolation_changed()
       this.cmap_changed()
@@ -392,7 +407,23 @@ const ViewerView = widgets.DOMWidgetView.extend({
         }
         this.model.itkVtkViewer.subscribeGradientOpacityChanged(onGradientOpacityChange)
       }
-    }).catch(error => { console.error('View caught unexpected error:', error); });
+  },
+
+  render: function() {
+    this.model.on('change:rendered_image', this.rendered_image_changed, this)
+    this.model.on('change:cmap', this.cmap_changed, this)
+    this.model.on('change:shadow', this.shadow_changed, this)
+    this.model.on('change:slicing_planes', this.slicing_planes_changed, this)
+    this.model.on('change:gradient_opacity', this.gradient_opacity_changed, this)
+    this.model.on('change:select_roi', this.select_roi_changed, this)
+    this.model.on('change:_scale_factors', this.scale_factors_changed, this)
+    this.model.on('change:point_sets', this.point_sets_changed, this)
+    this.model.on('change:interpolation', this.interpolation_changed, this)
+    this.model.on('change:ui_collapsed', this.ui_collapsed_changed, this)
+    this.model.on('change:rotate', this.rotate_changed, this)
+    this.model.on('change:annotations', this.annotations_changed, this)
+    this.model.on('change:mode', this.mode_changed, this)
+    this.rendered_image_changed()
   },
 
   rendered_image_changed: function() {
@@ -493,10 +524,18 @@ const ViewerView = widgets.DOMWidgetView.extend({
               default:
                 console.error('Unexpected component type: ' + rendered_image.imageType.componentType)
             }
-            return createRenderingPipeline(domWidgetView, rendered_image)
+            if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
+              return Promise.resolve(replaceRenderedImage(domWidgetView, rendered_image))
+            } else {
+              return createRenderingPipeline(domWidgetView, { rendered_image })
+            }
           })
       } else {
-        return Promise.resolve(createRenderingPipeline(this, rendered_image))
+        if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
+          return Promise.resolve(replaceRenderedImage(this, rendered_image))
+        } else {
+          return Promise.resolve(createRenderingPipeline(this, { rendered_image }))
+        }
       }
     }
   },
@@ -593,9 +632,12 @@ const ViewerView = widgets.DOMWidgetView.extend({
   },
 
   scale_factors_changed: function() {
-    const scaleFactors = this.model.get('_scale_factors')
+    let scaleFactors = this.model.get('_scale_factors')
     if (this.model.hasOwnProperty('itkVtkViewer')) {
       const viewProxy = this.model.itkVtkViewer.getViewProxy()
+      if (typeof scaleFactors[0] === 'undefined') {
+        scaleFactors = new Uint8Array(scaleFactors.buffer.buffer)
+      }
       if (scaleFactors[0] === 1 && scaleFactors[1] === 1 && scaleFactors[2] === 1) {
         viewProxy.setCornerAnnotation('se',
           `${ANNOTATION_DEFAULT}`)
@@ -623,6 +665,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
   },
 
   initialize_viewer: function() {
+    this.initialize_itkVtkViewer()
     // possible to override in extensions
   },
 
