@@ -1,5 +1,6 @@
 import os
 import six
+import copy
 
 import traitlets
 import itk
@@ -252,45 +253,31 @@ class PolyData(traitlets.TraitType):
     'consisting of points, verts (vertices), lines, polys (polygons), ' + \
     'triangle strips, point data, and cell data.'
 
-def polydata_to_json(polydata, manager=None):
-    """Serialize a Python object that represents vtk.js PolyData.
+def polydata_list_to_json(polydata_list, manager=None):
+    """Serialize a list of a Python object that represents vtk.js PolyData.
 
-    Attributes of this dictionary are to be passed to the JavaScript itkimage
-    constructor.
+    The returned data is compatibile with vtk.js PolyData with compressed data
+    buffers.
     """
-    if polydata is None:
+    if polydata_list is None:
         return None
     else:
-        direction = itkimage.GetDirection()
-        directionMatrix = direction.GetVnlMatrix()
-        directionList = []
-        dimension = itkimage.GetImageDimension()
-        pixelArr = itk.array_view_from_image(itkimage)
         compressor = zstd.ZstdCompressor(level=3)
-        compressed = compressor.compress(pixelArr.data)
-        pixelArrCompressed = memoryview(compressed)
-        for col in range(dimension):
-            for row in range(dimension):
-                directionList.append(directionMatrix.get(row, col))
-        componentType, pixelType = _image_to_type(itkimage)
-        imageType = dict(
-                dimension=dimension,
-                componentType=componentType,
-                pixelType=pixelType,
-                components=itkimage.GetNumberOfComponentsPerPixel()
-                )
-        return dict(
-            imageType=imageType,
-            origin=tuple(itkimage.GetOrigin()),
-            spacing=tuple(itkimage.GetSpacing()),
-            size=tuple(itkimage.GetBufferedRegion().GetSize()),
-            direction={'data': directionList,
-                'rows': dimension,
-                'columns': dimension},
-            compressedData=pixelArrCompressed
-        )
 
-def polydata_from_json(js, manager=None):
+        json = []
+        for polydata in polydata_list:
+            json_polydata = copy.deepcopy(polydata)
+            if 'points' in json_polydata:
+                point_values = json_polydata['points']['values']
+                compressed = compressor.compress(point_values.data)
+                compressedView = memoryview(compressed)
+                json_polydata['points'].pop('values')
+                json_polydata['points']['compressedValues'] = compressedView
+
+            json.append(json_polydata)
+        return json
+
+def polydata_list_from_json(js, manager=None):
     """Deserialize a Javascript vtk.js PolyData object."""
     if js is None:
         return None
@@ -325,9 +312,9 @@ def polydata_from_json(js, manager=None):
                 directionMatrix.put(row, col, directionJs[col + row * Dimension])
         return image
 
-polydata_serialization = {
-    'from_json': polydata_from_json,
-    'to_json': polydata_to_json
+polydata_list_serialization = {
+    'from_json': polydata_list_from_json,
+    'to_json': polydata_list_to_json
 }
 
 class PointSet(PolyData):
