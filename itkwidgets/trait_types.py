@@ -13,7 +13,7 @@ try:
 except ImportError:
     pass
 
-from ._to_itk import to_itk_image
+from ._transform_types import to_itk_image, to_point_set
 
 class ITKImage(traitlets.TraitType):
     """A trait type holding an itk.Image object"""
@@ -243,14 +243,98 @@ itkimage_serialization = {
     'to_json': itkimage_to_json
 }
 
-class VTKPolyData(traitlets.TraitType):
-    """A trait type holding a Python data structure compatible with vtk.js.
+class PolyData(traitlets.TraitType):
+    """A trait type holding an Python data structure compatible with vtk.js.
 
     See: https://kitware.github.io/vtk-js/docs/structures_PolyData.html"""
 
     info_text = 'A data structure for rendering geometry in vtk.js ' + \
     'consisting of points, verts (vertices), lines, polys (polygons), ' + \
     'triangle strips, point data, and cell data.'
+
+def polydata_to_json(polydata, manager=None):
+    """Serialize a Python object that represents vtk.js PolyData.
+
+    Attributes of this dictionary are to be passed to the JavaScript itkimage
+    constructor.
+    """
+    if polydata is None:
+        return None
+    else:
+        direction = itkimage.GetDirection()
+        directionMatrix = direction.GetVnlMatrix()
+        directionList = []
+        dimension = itkimage.GetImageDimension()
+        pixelArr = itk.array_view_from_image(itkimage)
+        compressor = zstd.ZstdCompressor(level=3)
+        compressed = compressor.compress(pixelArr.data)
+        pixelArrCompressed = memoryview(compressed)
+        for col in range(dimension):
+            for row in range(dimension):
+                directionList.append(directionMatrix.get(row, col))
+        componentType, pixelType = _image_to_type(itkimage)
+        imageType = dict(
+                dimension=dimension,
+                componentType=componentType,
+                pixelType=pixelType,
+                components=itkimage.GetNumberOfComponentsPerPixel()
+                )
+        return dict(
+            imageType=imageType,
+            origin=tuple(itkimage.GetOrigin()),
+            spacing=tuple(itkimage.GetSpacing()),
+            size=tuple(itkimage.GetBufferedRegion().GetSize()),
+            direction={'data': directionList,
+                'rows': dimension,
+                'columns': dimension},
+            compressedData=pixelArrCompressed
+        )
+
+def polydata_from_json(js, manager=None):
+    """Deserialize a Javascript vtk.js PolyData object."""
+    if js is None:
+        return None
+    else:
+        ImageType, dtype = _type_to_image(js['imageType'])
+        decompressor = zstd.ZstdDecompressor()
+        if six.PY2:
+            asBytes = js['compressedData'].tobytes()
+            pixelBufferArrayCompressed = np.frombuffer(asBytes, dtype=dtype)
+        else:
+            pixelBufferArrayCompressed = np.frombuffer(js['compressedData'], dtype=dtype)
+        pixelCount = reduce(lambda x, y: x*y, js['size'], 1)
+        numberOfBytes = pixelCount * js['imageType']['components'] * np.dtype(dtype).itemsize
+        pixelBufferArray = \
+            np.frombuffer(decompressor.decompress(pixelBufferArrayCompressed,
+                numberOfBytes),
+                    dtype=dtype)
+        pixelBufferArray.shape = js['size'][::-1]
+        # Workaround for GetImageFromArray required until 5.0.1
+        # and https://github.com/numpy/numpy/pull/11739
+        pixelBufferArrayCopyToBeRemoved = pixelBufferArray.copy()
+        # image = itk.PyBuffer[ImageType].GetImageFromArray(pixelBufferArray)
+        image = itk.PyBuffer[ImageType].GetImageFromArray(pixelBufferArrayCopyToBeRemoved)
+        Dimension = image.GetImageDimension()
+        image.SetOrigin(js['origin'])
+        image.SetSpacing(js['spacing'])
+        direction = image.GetDirection()
+        directionMatrix = direction.GetVnlMatrix()
+        directionJs = js['direction']['data']
+        for col in range(Dimension):
+            for row in range(Dimension):
+                directionMatrix.put(row, col, directionJs[col + row * Dimension])
+        return image
+
+polydata_serialization = {
+    'from_json': polydata_from_json,
+    'to_json': polydata_to_json
+}
+
+class PointSet(PolyData):
+    """A trait type holding an Python data structure compatible with vtk.js that
+    is coerced from point set-like data structures."""
+
+    info_text = 'A point set representation for rendering geometry in vtk.js.'
 
     # Hold a reference to the source object to use with shallow views
     _source_object = None

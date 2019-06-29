@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import IPython
 import itk
-from ._to_itk import to_itk_image
+from ._transform_types import to_itk_image
 
 @widgets.register
 class LineProfiler(Viewer):
