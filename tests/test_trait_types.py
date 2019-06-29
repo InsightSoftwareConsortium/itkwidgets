@@ -60,8 +60,8 @@ def test_itkimage_from_json():
     assert(asimage.GetPixel((5,3)) == 87)
     assert(asimage.GetPixel((3,3)) == 22)
 
-def test_PolyData():
-    info_text = trait_types.PolyData.info_text
+def test_PolyDataList():
+    info_text = trait_types.PolyDataList.info_text
     assert(info_text.find('vtk.js') != -1)
 
 gaussian_1_mean = [0.0, 0.0, 0.0]
@@ -69,9 +69,9 @@ gaussian_1_cov = [[1.0, 0.0, 0.0], [0.0, 2.0, 0.0], [0.0, 0.0, 0.5]]
 gaussian_2_mean = [4.0, 6.0, 7.0]
 gaussian_2_cov = [[2.0, 0.0, 0.0], [0.0, 2.0, 0.0], [0.0, 0.0, 1.5]]
 
-def test_PointSet():
-    info_text = trait_types.PointSet.info_text
-    assert(info_text.find('point set') != -1)
+def test_PointSetList():
+    info_text = trait_types.PointSetList.info_text
+    assert(info_text.find('Point set') != -1)
 
 def test_numpy_array_to_point_set():
     number_of_points = 10

@@ -62,7 +62,7 @@
     "itk": "^9.6.1",
     "itk-vtk-viewer": "^7.4.0",
     "jupyter-dataserializers": "^2.0.1",
-    "vtk.js": "^8.10.1"
+    "vtk.js": "^8.11.1"
   },
   "jupyterlab": {
     "extension": "dist/labextension"
