@@ -6,6 +6,7 @@ import {
 import vtkITKHelper from 'vtk.js/Sources/Common/DataModel/ITKHelper'
 import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate'
 import vtk from 'vtk.js/Sources/vtk'
+import { DataTypeByteSize } from 'vtk.js/Sources/Common/Core/DataArray/Constants'
 import createViewer from 'itk-vtk-viewer/src/createViewer'
 import IntTypes from 'itk/IntTypes'
 import FloatTypes from 'itk/FloatTypes'
@@ -116,8 +117,6 @@ const createRenderingPipeline = (domWidgetView, { rendered_image, point_sets }) 
   if (point_sets) {
     pointSets = point_sets.map((point_set) => vtk(point_set))
   }
-  console.log('pointSets!!!')
-  console.log(pointSets)
   domWidgetView.model.use2D = !is3D
   domWidgetView.model.skipOnCroppingPlanesChanged = false
   domWidgetView.model.itkVtkViewer = createViewer(domWidgetView.el, {
@@ -275,20 +274,156 @@ function replaceRenderedImage(domWidgetView, rendered_image) {
 }
 
 
+function decompressImage(image) {
+  const byteArray = new Uint8Array(image.compressedData.buffer)
+  const reducer = (accumulator, currentValue) => accumulator * currentValue
+  const pixelCount = image.size.reduce(reducer, 1)
+  let componentSize = null
+  switch (image.imageType.componentType) {
+    case IntTypes.Int8:
+      componentSize = 1
+      break
+    case IntTypes.UInt8:
+      componentSize = 1
+      break
+    case IntTypes.Int16:
+      componentSize = 2
+      break
+    case IntTypes.UInt16:
+      componentSize = 2
+      break
+    case IntTypes.Int32:
+      componentSize = 4
+      break
+    case IntTypes.UInt32:
+      componentSize = 4
+      break
+    case IntTypes.Int64:
+      componentSize = 8
+      break
+    case IntTypes.UInt64:
+      componentSize = 8
+      break
+    case FloatTypes.Float32:
+      componentSize = 4
+      break
+    case FloatTypes.Float64:
+      componentSize = 8
+      break
+    default:
+      console.error('Unexpected component type: ' + image.imageType.componentType)
+  }
+  const numberOfBytes = pixelCount * image.imageType.components * componentSize
+  const pipelinePath = 'ZstdDecompress'
+  const args = ['input.bin', 'output.bin', String(numberOfBytes)]
+  const desiredOutputs = [
+    { path: 'output.bin', type: IOTypes.Binary }
+  ]
+  const inputs = [
+    { path: 'input.bin', type: IOTypes.Binary, data: byteArray }
+  ]
+  console.log(`input MB: ${byteArray.length / 1000 / 1000}`)
+  console.log(`output MB: ${numberOfBytes / 1000 / 1000 }`)
+  const compressionAmount = byteArray.length / numberOfBytes
+  console.log(`compression amount: ${compressionAmount}`)
+  const t0 = performance.now()
+  return runPipelineBrowser(null, pipelinePath, args, desiredOutputs, inputs)
+    .then(function ({stdout, stderr, outputs, webWorker}) {
+      webWorker.terminate()
+      const t1 = performance.now();
+      const duration = Number(t1 - t0).toFixed(1).toString()
+      console.log("decompression took " + duration + " milliseconds.")
+
+      switch (image.imageType.componentType) {
+        case IntTypes.Int8:
+          image.data = new Int8Array(outputs[0].data.buffer)
+          break
+        case IntTypes.UInt8:
+          image.data = outputs[0].data
+          break
+        case IntTypes.Int16:
+          image.data = new Int16Array(outputs[0].data.buffer)
+          break
+        case IntTypes.UInt16:
+          image.data = new Uint16Array(outputs[0].data.buffer)
+          break
+        case IntTypes.Int32:
+          image.data = new Int32Array(outputs[0].data.buffer)
+          break
+        case IntTypes.UInt32:
+          image.data = new Uint32Array(outputs[0].data.buffer)
+          break
+        case IntTypes.Int64:
+          image.data = new BigUint64Array(outputs[0].data.buffer)
+          break
+        case IntTypes.UInt64:
+          image.data = new BigUint64Array(outputs[0].data.buffer)
+          break
+        case FloatTypes.Float32:
+          image.data = new Float32Array(outputs[0].data.buffer)
+          break
+        case FloatTypes.Float64:
+          image.data = new Float64Array(outputs[0].data.buffer)
+          break
+        default:
+          console.error('Unexpected component type: ' + image.imageType.componentType)
+      }
+      return image
+    })
+}
+
+
+function decompressPolyData(polyData) {
+  const byteArray = new Uint8Array(polyData.points.compressedValues.buffer)
+  const elementSize = DataTypeByteSize[polyData.points.dataType]
+  const numberOfBytes = polyData.points.size * elementSize
+  const pipelinePath = 'ZstdDecompress'
+  const args = ['input.bin', 'output.bin', String(numberOfBytes)]
+  const desiredOutputs = [
+    { path: 'output.bin', type: IOTypes.Binary }
+  ]
+  const inputs = [
+    { path: 'input.bin', type: IOTypes.Binary, data: byteArray }
+  ]
+  console.log(`input MB: ${byteArray.length / 1000 / 1000}`)
+  console.log(`output MB: ${numberOfBytes / 1000 / 1000 }`)
+  const compressionAmount = byteArray.length / numberOfBytes
+  console.log(`compression amount: ${compressionAmount}`)
+  const t0 = performance.now()
+  return runPipelineBrowser(null, pipelinePath, args, desiredOutputs, inputs)
+    .then(function ({stdout, stderr, outputs, webWorker}) {
+      webWorker.terminate()
+      const t1 = performance.now();
+      const duration = Number(t1 - t0).toFixed(1).toString()
+      console.log("decompression took " + duration + " milliseconds.")
+      polyData.points['values'] = new window[polyData.points.dataType](outputs[0].data.buffer)
+
+      return polyData
+    })
+}
+
+
 // Custom View. Renders the widget model.
 const ViewerView = widgets.DOMWidgetView.extend({
   initialize_itkVtkViewer: function() {
+      const rendered_image = this.model.get('rendered_image')
       this.annotations_changed()
-      this.interpolation_changed()
-      this.cmap_changed()
+      if (rendered_image) {
+        this.interpolation_changed()
+        this.cmap_changed()
+      }
       this.mode_changed()
-      this.shadow_changed()
-      this.slicing_planes_changed()
-      this.gradient_opacity_changed()
+      if (rendered_image) {
+        this.shadow_changed()
+        this.slicing_planes_changed()
+        this.gradient_opacity_changed()
+      }
       this.ui_collapsed_changed()
       this.rotate_changed()
-      this.select_roi_changed()
-      this.scale_factors_changed()
+      if (rendered_image) {
+        this.select_roi_changed()
+        this.scale_factors_changed()
+      }
 
       const onUserInterfaceCollapsedToggle = (collapsed) => {
         if (collapsed !== this.model.get('ui_collapsed')) {
@@ -423,107 +558,17 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:rotate', this.rotate_changed, this)
     this.model.on('change:annotations', this.annotations_changed, this)
     this.model.on('change:mode', this.mode_changed, this)
-    this.rendered_image_changed()
+    this.rendered_image_changed().then(() => {
+      this.point_sets_changed()
+    })
   },
 
   rendered_image_changed: function() {
     const rendered_image = this.model.get('rendered_image')
     if(rendered_image) {
       if (!rendered_image.data) {
-        const byteArray = new Uint8Array(rendered_image.compressedData.buffer)
-        const reducer = (accumulator, currentValue) => accumulator * currentValue
-        const pixelCount = rendered_image.size.reduce(reducer, 1)
-        let componentSize = null
-        switch (rendered_image.imageType.componentType) {
-          case IntTypes.Int8:
-            componentSize = 1
-            break
-          case IntTypes.UInt8:
-            componentSize = 1
-            break
-          case IntTypes.Int16:
-            componentSize = 2
-            break
-          case IntTypes.UInt16:
-            componentSize = 2
-            break
-          case IntTypes.Int32:
-            componentSize = 4
-            break
-          case IntTypes.UInt32:
-            componentSize = 4
-            break
-          // not currently defined in JavaScript
-          //case IntTypes.Int64:
-            //byteArray = new Int64Array(byteArray)
-            //break
-          //case IntTypes.UInt64:
-            //byteArray = new Uint64Array(byteArray)
-            //break
-          case FloatTypes.Float32:
-            componentSize = 4
-            break
-          case FloatTypes.Float64:
-            componentSize = 8
-            break
-          default:
-            console.error('Unexpected component type: ' + rendered_image.imageType.componentType)
-        }
-        const numberOfBytes = pixelCount * rendered_image.imageType.components * componentSize
-        const pipelinePath = 'ZstdDecompress'
-        const args = ['input.bin', 'output.bin', String(numberOfBytes)]
-        const desiredOutputs = [
-          { path: 'output.bin', type: IOTypes.Binary }
-        ]
-        const inputs = [
-          { path: 'input.bin', type: IOTypes.Binary, data: byteArray }
-        ]
-        console.log(`input MB: ${byteArray.length / 1000 / 1000}`)
-        console.log(`output MB: ${numberOfBytes / 1000 / 1000 }`)
-        const compressionAmount = byteArray.length / numberOfBytes
-        console.log(`compression amount: ${compressionAmount}`)
         const domWidgetView = this
-        const t0 = performance.now()
-        return runPipelineBrowser(null, pipelinePath, args, desiredOutputs, inputs)
-          .then(function ({stdout, stderr, outputs, webWorker}) {
-            webWorker.terminate()
-            const t1 = performance.now();
-            const duration = Number(t1 - t0).toFixed(1).toString()
-            console.log("decompression took " + duration + " milliseconds.")
-
-            switch (rendered_image.imageType.componentType) {
-              case IntTypes.Int8:
-                rendered_image.data = new Int8Array(outputs[0].data.buffer)
-                break
-              case IntTypes.UInt8:
-                rendered_image.data = outputs[0].data
-                break
-              case IntTypes.Int16:
-                rendered_image.data = new Int16Array(outputs[0].data.buffer)
-                break
-              case IntTypes.UInt16:
-                rendered_image.data = new Uint16Array(outputs[0].data.buffer)
-                break
-              case IntTypes.Int32:
-                rendered_image.data = new Int32Array(outputs[0].data.buffer)
-                break
-              case IntTypes.UInt32:
-                rendered_image.data = new Uint32Array(outputs[0].data.buffer)
-                break
-              // not currently defined in JavaScript
-              //case IntTypes.Int64:
-                //break
-              //case IntTypes.UInt64:
-                //break
-              case FloatTypes.Float32:
-                rendered_image.data = new Float32Array(outputs[0].data.buffer)
-                break
-              case FloatTypes.Float64:
-                rendered_image.data = new Float64Array(outputs[0].data.buffer)
-                break
-              default:
-                console.error('Unexpected component type: ' + rendered_image.imageType.componentType)
-            }
+        decompressImage(rendered_image).then((rendered_image) => {
             if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
               return Promise.resolve(replaceRenderedImage(domWidgetView, rendered_image))
             } else {
@@ -538,6 +583,30 @@ const ViewerView = widgets.DOMWidgetView.extend({
         }
       }
     }
+    return Promise.resolve(null)
+  },
+
+  point_sets_changed: function() {
+    const point_sets = this.model.get('point_sets')
+    if(point_sets) {
+      if (!point_sets[0].points.values) {
+        const domWidgetView = this
+        Promise.all(point_sets.map(decompressPolyData)).then((point_sets) => {
+          if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
+            return Promise.resolve(replacePointSets(domWidgetView, point_sets))
+          } else {
+            return createRenderingPipeline(domWidgetView, { point_sets })
+          }
+        })
+      } else {
+        if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
+          return Promise.resolve(replacePointSets(this, point_sets))
+        } else {
+          return Promise.resolve(createRenderingPipeline(this, { point_sets }))
+        }
+      }
+    }
+    return Promise.resolve(null)
   },
 
   ui_collapsed_changed: function() {
