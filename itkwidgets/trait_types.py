@@ -1,5 +1,6 @@
 import os
 import six
+import collections
 
 import traitlets
 import itk
@@ -13,7 +14,9 @@ try:
 except ImportError:
     pass
 
-from ._to_itk import to_itk_image
+from IPython.core.debugger import set_trace
+
+from ._transform_types import to_itk_image, to_point_set
 
 class ITKImage(traitlets.TraitType):
     """A trait type holding an itk.Image object"""
@@ -212,9 +215,10 @@ def itkimage_from_json(js, manager=None):
         decompressor = zstd.ZstdDecompressor()
         if six.PY2:
             asBytes = js['compressedData'].tobytes()
-            pixelBufferArrayCompressed = np.frombuffer(asBytes, dtype=dtype)
+            pixelBufferArrayCompressed = np.frombuffer(asBytes, dtype=np.uint8)
         else:
-            pixelBufferArrayCompressed = np.frombuffer(js['compressedData'], dtype=dtype)
+            pixelBufferArrayCompressed = np.frombuffer(js['compressedData'],
+                    dtype=np.uint8)
         pixelCount = reduce(lambda x, y: x*y, js['size'], 1)
         numberOfBytes = pixelCount * js['imageType']['components'] * np.dtype(dtype).itemsize
         pixelBufferArray = \
@@ -243,8 +247,8 @@ itkimage_serialization = {
     'to_json': itkimage_to_json
 }
 
-class VTKPolyData(traitlets.TraitType):
-    """A trait type holding a Python data structure compatible with vtk.js.
+class PolyDataList(traitlets.TraitType):
+    """A trait type holding a list of Python data structures compatible with vtk.js.
 
     See: https://kitware.github.io/vtk-js/docs/structures_PolyData.html"""
 
@@ -252,14 +256,122 @@ class VTKPolyData(traitlets.TraitType):
     'consisting of points, verts (vertices), lines, polys (polygons), ' + \
     'triangle strips, point data, and cell data.'
 
+def polydata_list_to_json(polydata_list, manager=None):
+    """Serialize a list of a Python object that represents vtk.js PolyData.
+
+    The returned data is compatibile with vtk.js PolyData with compressed data
+    buffers.
+    """
+    if polydata_list is None:
+        return None
+    else:
+        compressor = zstd.ZstdCompressor(level=3)
+
+        json = []
+        for polydata in polydata_list:
+            json_polydata = dict()
+            for top_key, top_value in polydata.items():
+                if isinstance(top_value, dict):
+                    nested_value_copy = dict()
+                    for nested_key, nested_value in top_value.items():
+                        if not nested_key == 'values':
+                            nested_value_copy[nested_key] = nested_value
+                    json_polydata[top_key] = nested_value_copy
+                else:
+                    json_polydata[top_key] = top_value
+            if 'points' in json_polydata:
+                point_values = polydata['points']['values']
+                compressed = compressor.compress(point_values.data)
+                compressedView = memoryview(compressed)
+                json_polydata['points']['compressedValues'] = compressedView
+
+            json.append(json_polydata)
+        return json
+
+def _type_to_numpy(jstype):
+    _js_to_numpy_dtype = {
+            'Int8Array': np.int8,
+            'Uint8Array': np.uint8,
+            'Int16Array': np.int16,
+            'Uint16Array': np.uint16,
+            'Int32Array': np.int32,
+            'Uint32Array': np.uint32,
+            'BigInt64Array': np.int64,
+            'BigUint64Array': np.uint64,
+            'Float32Array': np.float32,
+            'Float64Array': np.float64
+            }
+    return _js_to_numpy_dtype[jstype]
+
+def polydata_list_from_json(js, manager=None):
+    """Deserialize a Javascript vtk.js PolyData object.
+
+    Decompresses data buffers.
+    """
+    if js is None:
+        return None
+    else:
+        decompressor = zstd.ZstdDecompressor()
+
+        polydata_list = []
+        for json_polydata in js:
+            polydata = dict()
+            for top_key, top_value in json_polydata.items():
+                if isinstance(top_value, dict):
+                    nested_value_copy = dict()
+                    for nested_key, nested_value in top_value.items():
+                        if not nested_key == 'compressedValues':
+                            nested_value_copy[nested_key] = nested_value
+                    polydata[top_key] = nested_value_copy
+                else:
+                    polydata[top_key] = top_value
+
+            if 'points' in polydata:
+                dtype = _type_to_numpy(polydata['points']['dataType'])
+                if six.PY2:
+                    asBytes = json_polydata['points']['compressedData'].tobytes()
+                    valuesBufferArrayCompressed = np.frombuffer(asBytes, dtype=np.uint8)
+                else:
+                    valuesBufferArrayCompressed = np.frombuffer(json_polydata['points']['compressedValues'],
+                            dtype=np.uint8)
+                numberOfBytes = json_polydata['points']['size'] * np.dtype(dtype).itemsize
+                valuesBufferArray = \
+                    np.frombuffer(decompressor.decompress(valuesBufferArrayCompressed,
+                        numberOfBytes),
+                            dtype=dtype)
+                valuesBufferArray.shape = (int(json_polydata['points']['size'] / 3), 3)
+                polydata['points']['values'] = valuesBufferArray
+
+            polydata_list.append(polydata)
+        return polydata_list
+
+polydata_list_serialization = {
+    'from_json': polydata_list_from_json,
+    'to_json': polydata_list_to_json
+}
+
+class PointSetList(PolyDataList):
+    """A trait type holding a list of Python data structures compatible with vtk.js that
+    is coerced from point set-like data structures."""
+
+    info_text = 'Point set representation for rendering geometry in vtk.js.'
+
     # Hold a reference to the source object to use with shallow views
     _source_object = None
 
     def validate(self, obj, value):
         self._source_object = value
 
-        # coerced_polydata = to_vtkjs_polydata(value)
-        # if coerced_polydata:
-            # return coerced_polydata
+        # For convenience, support assigning a single point set instead of a
+        # list
+        point_sets = value
+        if not isinstance(point_sets, collections.Sequence) and not point_sets is None:
+            point_sets = [point_sets]
 
-        self.error(obj, value)
+        try:
+            for index, point_set in enumerate(point_sets):
+                if not isinstance(point_set, dict) or not 'vtkClass' in point_set:
+                    point_sets[index] = to_point_set(point_set)
+            return point_sets
+        except:
+            self.error(obj, value)

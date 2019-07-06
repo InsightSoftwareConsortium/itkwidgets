@@ -2,6 +2,8 @@ import itk
 import itkwidgets.trait_types as trait_types
 import numpy as np
 
+from itkwidgets._transform_types import to_point_set
+
 def test_ITKImage():
     info_text = trait_types.ITKImage.info_text
     assert(info_text.find('image') != -1)
@@ -41,7 +43,6 @@ def test_itkimage_to_json():
     assert(asjson['direction']['columns'] == 2)
     baseline = np.array([40,181,47,253,32,36,157,0,0,88,4,0,0,0,
         0,66,0,22,0,87,0,2,0,192,32,50,48,2], dtype=np.uint8)
-    print(np.array(asjson['compressedData'], dtype=np.uint8))
     assert((np.array(asjson['compressedData'], dtype=np.uint8) == baseline).all())
 
 def test_itkimage_from_json():
@@ -59,6 +60,86 @@ def test_itkimage_from_json():
     assert(asimage.GetPixel((5,3)) == 87)
     assert(asimage.GetPixel((3,3)) == 22)
 
-def test_VTKPolyData():
-    info_text = trait_types.VTKPolyData.info_text
+def test_PolyDataList():
+    info_text = trait_types.PolyDataList.info_text
     assert(info_text.find('vtk.js') != -1)
+
+gaussian_1_mean = [0.0, 0.0, 0.0]
+gaussian_1_cov = [[1.0, 0.0, 0.0], [0.0, 2.0, 0.0], [0.0, 0.0, 0.5]]
+gaussian_2_mean = [4.0, 6.0, 7.0]
+gaussian_2_cov = [[2.0, 0.0, 0.0], [0.0, 2.0, 0.0], [0.0, 0.0, 1.5]]
+
+def test_PointSetList():
+    info_text = trait_types.PointSetList.info_text
+    assert(info_text.find('Point set') != -1)
+
+def test_numpy_array_to_point_set():
+    number_of_points = 10
+    point_set_array = np.random.multivariate_normal(gaussian_1_mean, gaussian_1_cov,
+            number_of_points)
+
+    # 3D
+    point_set = to_point_set(point_set_array)
+    assert(point_set['vtkClass'] == 'vtkPolyData')
+    assert(point_set['points']['vtkClass'] == 'vtkPoints')
+    assert(point_set['points']['numberOfComponents'] == 3)
+    assert(point_set['points']['dataType'] == 'Float32Array')
+    assert(point_set['points']['size'] == number_of_points * 3)
+    assert(np.array_equal(point_set['points']['values'],
+        point_set_array.astype(np.float32)))
+
+    # 2D
+    point_set_array.resize((number_of_points, 2))
+    point_set = to_point_set(point_set_array)
+    assert(point_set['vtkClass'] == 'vtkPolyData')
+    assert(point_set['points']['vtkClass'] == 'vtkPoints')
+    assert(point_set['points']['numberOfComponents'] == 3)
+    assert(point_set['points']['dataType'] == 'Float32Array')
+    assert(point_set['points']['size'] == number_of_points * 3)
+
+    point_set_array.resize((number_of_points, 3))
+    point_set_array[:,2] = 0.0
+    assert(np.alltrue(point_set['points']['values'] ==
+        point_set_array.astype(np.float32)))
+
+def test_polydata_list_to_json():
+    number_of_points = 10
+    point_set_array_1 = np.random.multivariate_normal(gaussian_1_mean, gaussian_1_cov,
+            number_of_points)
+    point_set_array_2 = np.random.multivariate_normal(gaussian_2_mean, gaussian_2_cov,
+            number_of_points)
+
+    point_set_1 = to_point_set(point_set_array_1)
+    point_set_2 = to_point_set(point_set_array_2)
+    polydata_list = [point_set_1, point_set_2]
+
+    asjson = trait_types.polydata_list_to_json(polydata_list)
+    assert(len(asjson) == 2)
+    polydata_1 = asjson[0]
+    assert(polydata_1['vtkClass'] == 'vtkPolyData')
+    assert(polydata_1['points']['vtkClass'] == 'vtkPoints')
+    assert(polydata_1['points']['numberOfComponents'] == 3)
+    assert(polydata_1['points']['dataType'] == 'Float32Array')
+    assert(len(polydata_1['points']['compressedValues']) == 129)
+
+def test_polydata_list_from_json():
+    number_of_points = 10
+    point_set_array_1 = np.random.multivariate_normal(gaussian_1_mean, gaussian_1_cov,
+            number_of_points)
+    point_set_array_2 = np.random.multivariate_normal(gaussian_2_mean, gaussian_2_cov,
+            number_of_points)
+
+    point_set_1 = to_point_set(point_set_array_1)
+    point_set_2 = to_point_set(point_set_array_2)
+    polydata_list = [point_set_1, point_set_2]
+
+    asjson = trait_types.polydata_list_to_json(polydata_list)
+    polydata_list_from_json = trait_types.polydata_list_from_json(asjson)
+    assert(len(polydata_list_from_json) == 2)
+    polydata_1 = polydata_list_from_json[0]
+    assert(polydata_1['vtkClass'] == 'vtkPolyData')
+    assert(polydata_1['points']['vtkClass'] == 'vtkPoints')
+    assert(polydata_1['points']['numberOfComponents'] == 3)
+    assert(polydata_1['points']['dataType'] == 'Float32Array')
+    assert(np.array_equal(polydata_1['points']['values'],
+        point_set_array_1.astype(np.float32)))

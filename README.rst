@@ -64,8 +64,8 @@ Data types:
 - `Binder: 3D ITK Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples%2F3DImage.ipynb>`_
 - `Binder: Dask Array images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/DaskArray.ipynb>`_
 - `Binder: Large volumes <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/LargeVolumes.ipynb>`_
-- `Binder: NumPy array images (processed with SciPy) <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/NumPyArray.ipynb>`_
-- `Binder: NumPy array images  (processed with scikit-image) <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/scikit-image.ipynb>`_
+- `Binder: NumPy array images (processed with SciPy) <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/NumPyArrayImage.ipynb>`_
+- `Binder: NumPy array images (processed with scikit-image) <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/scikit-image.ipynb>`_
 
 Tasks:
 
@@ -191,7 +191,7 @@ After installation, try the following examples that demonstrate how to visualize
 - `Dask Array images <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/DaskArray.ipynb>`_
 - `Large volumes <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/LargeVolumes.ipynb>`_
 - `ImageJ ImgLib2 images <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/ImageJImgLib2.ipynb>`_ (requires `conda <https://conda.io/>`_ and a local `Fiji <https://fiji.sc/>`_ installation)
-- `NumPy array images (processed with SciPy) <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/NumPyArray.ipynb>`_
+- `NumPy array images (processed with SciPy) <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/NumPyArrayImage.ipynb>`_
 - `NumPy array images (processed with scikit-image) <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/scikit-image.ipynb>`_
 - `VTK vtkImageData <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/vtkImageData.ipynb>`_
 - `pyvista UniformGrid <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/pyvista.UniformGrid.ipynb>`_

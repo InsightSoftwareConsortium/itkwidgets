@@ -12,9 +12,9 @@ import time
 import itk
 import numpy as np
 import ipywidgets as widgets
-from traitlets import CBool, CFloat, Unicode, CaselessStrEnum, Tuple, List, TraitError, validate
+from traitlets import CBool, CFloat, Unicode, CaselessStrEnum, TraitError, validate
 from ipydatawidgets import NDArray, array_serialization, shape_constraints
-from .trait_types import ITKImage, itkimage_serialization
+from .trait_types import ITKImage, PointSetList, itkimage_serialization, polydata_list_serialization
 try:
     import ipywebrtc
     ViewerParent = ipywebrtc.MediaStream
@@ -175,10 +175,6 @@ class Viewer(ViewerParent):
     image = ITKImage(default_value=None, allow_none=True, help="Image to visualize.").tag(sync=False, **itkimage_serialization)
     rendered_image = ITKImage(default_value=None, allow_none=True).tag(sync=True, **itkimage_serialization)
     _rendering_image = CBool(default_value=False, help="We are currently volume rendering the image.").tag(sync=True)
-    ui_collapsed = CBool(default_value=False, help="Collapse the built in user interface.").tag(sync=True)
-    rotate = CBool(default_value=False, help="Rotate the camera around the scene.").tag(sync=True)
-    annotations = CBool(default_value=True, help="Show annotations.").tag(sync=True)
-    mode = CaselessStrEnum(('x', 'y', 'z', 'v'), default_value='v', help="View mode: x: x plane, y: y plane, z: z plane, v: volume rendering").tag(sync=True)
     interpolation = CBool(default_value=True, help="Use linear interpolation in slicing planes.").tag(sync=True)
     cmap = Unicode('Viridis (matplotlib)').tag(sync=True)
     shadow = CBool(default_value=True, help="Use shadowing in the volume rendering.").tag(sync=True)
@@ -203,10 +199,18 @@ class Viewer(ViewerParent):
             help="We are downsampling the image to meet the size limits.").tag(sync=True)
     _reset_crop_requested = CBool(default_value=False,
             help="The user requested a reset of the roi.").tag(sync=True)
+    point_sets = PointSetList(default_value=None, allow_none=True, help="Point sets to visualize").tag(sync=True, **polydata_list_serialization)
+    ui_collapsed = CBool(default_value=False, help="Collapse the built in user interface.").tag(sync=True)
+    rotate = CBool(default_value=False, help="Rotate the camera around the scene.").tag(sync=True)
+    annotations = CBool(default_value=True, help="Show annotations.").tag(sync=True)
+    mode = CaselessStrEnum(('x', 'y', 'z', 'v'), default_value='v', help="View mode: x: x plane, y: y plane, z: z plane, v: volume rendering").tag(sync=True)
 
 
     def __init__(self, **kwargs):
         super(Viewer, self).__init__(**kwargs)
+
+        if not self.image:
+            return
         dimension = self.image.GetImageDimension()
         largest_region = self.image.GetLargestPossibleRegion()
         size = largest_region.GetSize()
@@ -374,23 +378,57 @@ class Viewer(ViewerParent):
         return tuple(slices)
 
 
-def view(image, rotate=False, ui_collapsed=False, annotations=True, interpolation=True,
-        cmap=cm.viridis, mode='v', shadow=True, slicing_planes=False,
-        gradient_opacity=0.22, **kwargs):
-    """View the image.
+def view(image=None,
+        gradient_opacity=0.22, cmap=cm.viridis, slicing_planes=False,
+        select_roi=False, shadow=True, interpolation=True,
+        point_sets=[], point_set_colors=[], point_set_opacities=[], point_set_sizes=[],
+        ui_collapsed=False, rotate=False, annotations=True, mode='v',
+        **kwargs):
+    """View the image and / or point set.
 
-    Creates and returns an ipywidget to visualize the image.
+    Creates and returns an ipywidget to visualize an image, and / or point sets.
 
     The image can be 2D or 3D.
 
     The type of the image can be an numpy.array, itk.Image,
     vtk.vtkImageData, imglyb.ReferenceGuardingRandomAccessibleInterval, or
-    something that is NumPy array-like, e.g. a Dask array.
+    a NumPy array-like, e.g. a Dask array.
 
     Parameters
     ----------
+
+    Images
+    ^^^^^^
+
     image : array_like, itk.Image, or vtk.vtkImageData
         The 2D or 3D image to visualize.
+
+    gradient_opacity: float, optional, default: 0.22
+        Gradient opacity for the volume rendering, in the range (0.0, 1.0].
+
+    cmap: string, optional, default: 'Viridis (matplotlib)'
+        Colormap. Some valid values available at itkwidgets.cm.*
+
+    slicing_planes: bool, optional, default: False
+        Enable slicing planes on the volume rendering.
+
+    select_roi: bool, optional, default: False
+        Enable an interactive region of interest widget for the image.
+
+    interpolation: bool, optional, default: True
+        Linear as opposed to nearest neighbor interpolation for image slices.
+
+    shadow: bool, optional, default: True
+        Use shadowing in the volume rendering.
+
+    Point Sets
+    ^^^^^^^^^^
+
+    point_sets: point set, or sequence of point sets, optional
+        The point set(s) to visualize.
+
+    General Interface
+    ^^^^^^^^^^^^^^^^^
 
     ui_collapsed : bool, optional, default: False
         Collapse the native widget user interface.
@@ -403,12 +441,6 @@ def view(image, rotate=False, ui_collapsed=False, annotations=True, interpolatio
         Display annotations describing orientation and the value of a
         mouse-position-based data probe.
 
-    interpolation: bool, optional, default: True
-        Linear as opposed to nearest neighbor interpolation for image slices.
-
-    cmap: string, optional, default: 'Viridis (matplotlib)'
-        Colormap. Some valid values available at itkwidgets.cm.*
-
     mode: 'x', 'y', 'z', or 'v', optional, default: 'v'
         Only relevant for 3D images.
         Viewing mode:
@@ -417,17 +449,6 @@ def view(image, rotate=False, ui_collapsed=False, annotations=True, interpolatio
             'z': z-plane
             'v': volume rendering
 
-    shadow: bool, optional, default: True
-        Use shadowing in the volume rendering.
-
-    slicing_planes: bool, optional, default: False
-        Enable slicing planes on the volume rendering.
-
-    gradient_opacity: float, optional, default: 0.2
-        Gradient opacity for the volume rendering, in the range (0.0, 1.0].
-
-    select_roi: bool, optional, default: False
-        Enable an interactive region of interest widget for the image.
 
     Other Parameters
     ----------------
@@ -448,8 +469,10 @@ def view(image, rotate=False, ui_collapsed=False, annotations=True, interpolatio
         the visualization or retrieve values created by interacting with the
         widget.
     """
-    viewer = Viewer(image=image, rotate=rotate, ui_collapsed=ui_collapsed,
-            annotations=annotations, interpolation=interpolation, cmap=cmap,
-            mode=mode, shadow=shadow, slicing_planes=slicing_planes,
-            gradient_opacity=gradient_opacity, **kwargs)
+
+    viewer = Viewer(image=image, interpolation=interpolation, cmap=cmap, shadow=shadow,
+            select_roi=select_roi, slicing_planes=slicing_planes, gradient_opacity=gradient_opacity,
+            point_sets=point_sets,
+            rotate=rotate, ui_collapsed=ui_collapsed, annotations=annotations, mode=mode,
+             **kwargs)
     return viewer
