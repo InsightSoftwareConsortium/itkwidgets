@@ -22,6 +22,8 @@ examples/widget_video.webm
 examples/emdata_janelia_822252/
 examples/emdata_janelia_822252.zip
 examples/General_EduRes_Heart_BloodVessels_0.jpg
+examples/cow.vtk
+examples/Bunny.vtp
 
 js/lib/ZstdDecompress/web-build/
 .pytest_cache/
