@@ -14,9 +14,7 @@ try:
 except ImportError:
     pass
 
-from IPython.core.debugger import set_trace
-
-from ._transform_types import to_itk_image, to_point_set
+from ._transform_types import to_itk_image, to_point_set, to_geometry
 
 class ITKImage(traitlets.TraitType):
     """A trait type holding an itk.Image object"""
@@ -256,6 +254,26 @@ class PolyDataList(traitlets.TraitType):
     'consisting of points, verts (vertices), lines, polys (polygons), ' + \
     'triangle strips, point data, and cell data.'
 
+    # Hold a reference to the source object to use with shallow views
+    _source_object = None
+
+    def validate(self, obj, value):
+        self._source_object = value
+
+        # For convenience, support assigning a single geometry instead of a
+        # list
+        geometries = value
+        if not isinstance(geometries, collections.Sequence) and not geometries is None:
+            geometries = [geometries]
+
+        try:
+            for index, geometry in enumerate(geometries):
+                if not isinstance(geometry, dict) or not 'vtkClass' in geometry:
+                    geometries[index] = to_geometry(geometry)
+            return geometries
+        except:
+            self.error(obj, value)
+
 def polydata_list_to_json(polydata_list, manager=None):
     """Serialize a list of a Python object that represents vtk.js PolyData.
 
@@ -279,11 +297,19 @@ def polydata_list_to_json(polydata_list, manager=None):
                     json_polydata[top_key] = nested_value_copy
                 else:
                     json_polydata[top_key] = top_value
+
             if 'points' in json_polydata:
                 point_values = polydata['points']['values']
                 compressed = compressor.compress(point_values.data)
                 compressedView = memoryview(compressed)
                 json_polydata['points']['compressedValues'] = compressedView
+
+            for cell_type in ['verts', 'lines', 'polys', 'strips']:
+                if cell_type in json_polydata:
+                    point_values = polydata[cell_type]['values']
+                    compressed = compressor.compress(point_values.data)
+                    compressedView = memoryview(compressed)
+                    json_polydata[cell_type]['compressedValues'] = compressedView
 
             json.append(json_polydata)
         return json
@@ -341,6 +367,23 @@ def polydata_list_from_json(js, manager=None):
                             dtype=dtype)
                 valuesBufferArray.shape = (int(json_polydata['points']['size'] / 3), 3)
                 polydata['points']['values'] = valuesBufferArray
+
+            for cell_type in ['verts', 'lines', 'polys', 'strips']:
+                if cell_type in polydata:
+                    dtype = _type_to_numpy(polydata[cell_type]['dataType'])
+                    if six.PY2:
+                        asBytes = json_polydata[cell_type]['compressedData'].tobytes()
+                        valuesBufferArrayCompressed = np.frombuffer(asBytes, dtype=np.uint8)
+                    else:
+                        valuesBufferArrayCompressed = np.frombuffer(json_polydata[cell_type]['compressedValues'],
+                                dtype=np.uint8)
+                    numberOfBytes = json_polydata[cell_type]['size'] * np.dtype(dtype).itemsize
+                    valuesBufferArray = \
+                        np.frombuffer(decompressor.decompress(valuesBufferArrayCompressed,
+                            numberOfBytes),
+                                dtype=dtype)
+                    valuesBufferArray.shape = (json_polydata[cell_type]['size'],)
+                    polydata[cell_type]['values'] = valuesBufferArray
 
             polydata_list.append(polydata)
         return polydata_list

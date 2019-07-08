@@ -73,6 +73,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       _reset_crop_requested: false,
       _scale_factors: new Uint8Array([1, 1, 1]),
       point_sets: null,
+      geometries: null,
       ui_collapsed: false,
       rotate: false,
       annotations: true,
@@ -82,6 +83,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
   serializers: Object.assign({
     rendered_image: { serialize: serialize_itkimage, deserialize: deserialize_itkimage },
     point_sets: { serialize: serialize_polydata_list, deserialize: deserialize_polydata_list },
+    geometries: { serialize: serialize_polydata_list, deserialize: deserialize_polydata_list },
     roi: fixed_shape_serialization([2, 3]),
     _largest_roi: fixed_shape_serialization([2, 3]),
     _scale_factors: fixed_shape_serialization([3,]),
@@ -89,7 +91,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
 })
 
 
-const createRenderingPipeline = (domWidgetView, { rendered_image, point_sets }) => {
+const createRenderingPipeline = (domWidgetView, { rendered_image, point_sets, geometries }) => {
   const containerStyle = {
     position: 'relative',
     width: '100%',
@@ -117,12 +119,17 @@ const createRenderingPipeline = (domWidgetView, { rendered_image, point_sets }) 
   if (point_sets) {
     pointSets = point_sets.map((point_set) => vtk(point_set))
   }
+  let vtkGeometries = null
+  if (geometries) {
+    vtkGeometries = geometries.map((geometry) => vtk(geometry))
+  }
   domWidgetView.model.use2D = !is3D
   domWidgetView.model.skipOnCroppingPlanesChanged = false
   domWidgetView.model.itkVtkViewer = createViewer(domWidgetView.el, {
     viewerStyle: viewerStyle,
     image: imageData,
     pointSets,
+    geometries: vtkGeometries,
     use2D: !is3D,
     rotate: false,
   })
@@ -373,10 +380,13 @@ function decompressImage(image) {
 }
 
 
-function decompressPolyData(polyData) {
-  const byteArray = new Uint8Array(polyData.points.compressedValues.buffer)
-  const elementSize = DataTypeByteSize[polyData.points.dataType]
-  const numberOfBytes = polyData.points.size * elementSize
+function decompressDataValue(polyData, prop) {
+  if (!polyData.hasOwnProperty(prop)) {
+    return Promise.resolve(polyData)
+  }
+  const byteArray = new Uint8Array(polyData[prop].compressedValues.buffer)
+  const elementSize = DataTypeByteSize[polyData[prop].dataType]
+  const numberOfBytes = polyData[prop].size * elementSize
   const pipelinePath = 'ZstdDecompress'
   const args = ['input.bin', 'output.bin', String(numberOfBytes)]
   const desiredOutputs = [
@@ -385,20 +395,28 @@ function decompressPolyData(polyData) {
   const inputs = [
     { path: 'input.bin', type: IOTypes.Binary, data: byteArray }
   ]
-  console.log(`input MB: ${byteArray.length / 1000 / 1000}`)
-  console.log(`output MB: ${numberOfBytes / 1000 / 1000 }`)
+  console.log(`${prop} input MB: ${byteArray.length / 1000 / 1000}`)
+  console.log(`${prop} output MB: ${numberOfBytes / 1000 / 1000 }`)
   const compressionAmount = byteArray.length / numberOfBytes
-  console.log(`compression amount: ${compressionAmount}`)
+  console.log(`${prop} compression amount: ${compressionAmount}`)
   const t0 = performance.now()
   return runPipelineBrowser(null, pipelinePath, args, desiredOutputs, inputs)
     .then(function ({stdout, stderr, outputs, webWorker}) {
       webWorker.terminate()
       const t1 = performance.now();
       const duration = Number(t1 - t0).toFixed(1).toString()
-      console.log("decompression took " + duration + " milliseconds.")
-      polyData.points['values'] = new window[polyData.points.dataType](outputs[0].data.buffer)
+      console.log(`${prop} decompression took ${duration} milliseconds.`)
+      polyData[prop]['values'] = new window[polyData[prop].dataType](outputs[0].data.buffer)
 
       return polyData
+    })
+}
+
+function decompressPolyData(polyData) {
+  const props = ['points', 'verts', 'lines', 'polys', 'strips']
+  return Promise.all(props.map((prop) => decompressDataValue(polyData, prop)))
+    .then((result) => {
+      return result[0]
     })
 }
 
@@ -553,13 +571,17 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:select_roi', this.select_roi_changed, this)
     this.model.on('change:_scale_factors', this.scale_factors_changed, this)
     this.model.on('change:point_sets', this.point_sets_changed, this)
+    this.model.on('change:geometries', this.geometries_changed, this)
     this.model.on('change:interpolation', this.interpolation_changed, this)
     this.model.on('change:ui_collapsed', this.ui_collapsed_changed, this)
     this.model.on('change:rotate', this.rotate_changed, this)
     this.model.on('change:annotations', this.annotations_changed, this)
     this.model.on('change:mode', this.mode_changed, this)
+    // todo: decompress all at the same time (Promise.all), and createViewer
     this.rendered_image_changed().then(() => {
-      this.point_sets_changed()
+      return this.point_sets_changed()
+    }).then(() => {
+      return this.geometries_changed()
     })
   },
 
@@ -588,7 +610,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
 
   point_sets_changed: function() {
     const point_sets = this.model.get('point_sets')
-    if(point_sets) {
+    if(point_sets && !!point_sets.length) {
       if (!point_sets[0].points.values) {
         const domWidgetView = this
         Promise.all(point_sets.map(decompressPolyData)).then((point_sets) => {
@@ -603,6 +625,29 @@ const ViewerView = widgets.DOMWidgetView.extend({
           return Promise.resolve(replacePointSets(this, point_sets))
         } else {
           return Promise.resolve(createRenderingPipeline(this, { point_sets }))
+        }
+      }
+    }
+    return Promise.resolve(null)
+  },
+
+  geometries_changed: function() {
+    const geometries = this.model.get('geometries')
+    if(geometries && !!geometries.length) {
+      if (!geometries[0].points.values) {
+        const domWidgetView = this
+        Promise.all(geometries.map(decompressPolyData)).then((geometries) => {
+          if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
+            return Promise.resolve(replaceGeometries(domWidgetView, geometries))
+          } else {
+            return createRenderingPipeline(domWidgetView, { geometries })
+          }
+        })
+      } else {
+        if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
+          return Promise.resolve(replaceGeometries(this, geometries))
+        } else {
+          return Promise.resolve(createRenderingPipeline(this, { geometries }))
         }
       }
     }
