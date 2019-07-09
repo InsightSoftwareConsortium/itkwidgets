@@ -204,9 +204,13 @@ class Viewer(ViewerParent):
     _reset_crop_requested = CBool(default_value=False,
             help="The user requested a reset of the roi.").tag(sync=True)
     point_sets = PointSetList(default_value=None, allow_none=True, help="Point sets to visualize").tag(sync=True, **polydata_list_serialization)
+    point_set_colors = NDArray(dtype=np.float32, default_value=np.zeros((0, 3), dtype=np.float64),
+                    help="RGB colors for the points sets")\
+                .tag(sync=True, **array_serialization)\
+                .valid(shape_constraints(None, 3))
     geometries = PolyDataList(default_value=None, allow_none=True, help="Geometries to visualize").tag(sync=True, **polydata_list_serialization)
     geometry_colors = NDArray(dtype=np.float32, default_value=np.zeros((0, 3), dtype=np.float64),
-                    help="Region of interest: ((lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z))")\
+                    help="RGB colors for the geometries")\
                 .tag(sync=True, **array_serialization)\
                 .valid(shape_constraints(None, 3))
     ui_collapsed = CBool(default_value=False, help="Collapse the built in user interface.").tag(sync=True)
@@ -221,6 +225,11 @@ class Viewer(ViewerParent):
             color_array = self._validate_geometry_colors(proposal)
             kwargs['geometry_colors'] = color_array
         self.observe(self._on_geometries_changed, ['geometries'])
+        if 'point_set_colors' in kwargs:
+            proposal = { 'value': kwargs['point_set_colors'] }
+            color_array = self._validate_point_set_colors(proposal)
+            kwargs['point_set_colors'] = color_array
+        self.observe(self._on_point_sets_changed, ['point_sets'])
 
         super(Viewer, self).__init__(**kwargs)
 
@@ -387,6 +396,26 @@ class Viewer(ViewerParent):
         old_colors = self.geometry_colors
         self.geometry_colors = old_colors
 
+    @validate('point_set_colors')
+    def _validate_point_set_colors(self, proposal):
+        value = proposal['value']
+        n_colors = 0
+        if self.point_sets:
+            n_colors = len(self.point_sets)
+        result = np.zeros((n_colors, 3), dtype=np.float32)
+        for index, color in enumerate(value):
+            result[index,:] = matplotlib.colors.to_rgb(color)
+        if len(value) < n_colors:
+            for index in range(len(value), n_colors):
+                color = colorcet.glasbey[index % len(colorcet.glasbey)]
+                result[index,:] = matplotlib.colors.to_rgb(color)
+        return result
+
+    def _on_point_sets_changed(self, change=None):
+        # Make sure we have a sufficient number of colors
+        old_colors = self.point_set_colors
+        self.point_set_colors = old_colors
+
     def roi_region(self):
         """Return the itk.ImageRegion corresponding to the roi."""
         dimension = self.image.GetImageDimension()
@@ -416,7 +445,7 @@ class Viewer(ViewerParent):
 def view(image=None,
         gradient_opacity=0.22, cmap=cm.viridis, slicing_planes=False,
         select_roi=False, shadow=True, interpolation=True,
-        point_sets=[], point_set_colors=[], point_set_opacities=[], point_set_sizes=[],
+        point_sets=[], point_set_colors=[], #point_set_opacities=[], point_set_sizes=[],
         geometries=[], geometry_colors=[],
         ui_collapsed=False, rotate=False, annotations=True, mode='v',
         **kwargs):
@@ -469,6 +498,10 @@ def view(image=None,
 
     point_sets: point set, or sequence of point sets, optional
         The point sets to visualize.
+
+    point_set_colors: list of RGB colors, optional
+        Colors for the N geometries. See help(matplotlib.colors) for
+        specification. Defaults to the Glasbey series of categorical colors.
 
     Geometries
     ^^^^^^^^^^
@@ -525,7 +558,7 @@ def view(image=None,
 
     viewer = Viewer(image=image, interpolation=interpolation, cmap=cmap, shadow=shadow,
             select_roi=select_roi, slicing_planes=slicing_planes, gradient_opacity=gradient_opacity,
-            point_sets=point_sets,
+            point_sets=point_sets, point_set_colors=point_set_colors,
             geometries=geometries, geometry_colors=geometry_colors,
             rotate=rotate, ui_collapsed=ui_collapsed, annotations=annotations, mode=mode,
              **kwargs)
