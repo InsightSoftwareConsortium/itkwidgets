@@ -16,7 +16,8 @@ itk-jupyter-widgets
 .. image:: https://mybinder.org/badge.svg
     :target: https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples%2F3DImage.ipynb
 
-Interactive `Jupyter <https://jupyter.org/>`_ widgets to visualize images in 2D and 3D.
+Interactive `Jupyter <https://jupyter.org/>`_ widgets to visualize images,
+point sets, and meshes.
 
 .. image:: https://i.imgur.com/d8aXycW.png
     :width: 800px
@@ -24,23 +25,30 @@ Interactive `Jupyter <https://jupyter.org/>`_ widgets to visualize images in 2D 
 
 **Key Features**:
 
+- Visualize 2D and 3D images, point sets, and geometry, e.g. meshes, in Jupyter
+- Support for
+
+  - NumPy array images
+  - itk.Image
+  - vtk.vtkImageData
+  - pyvista.UniformGrid
+  - Dask array images
+  - ImageJ / Fiji / ImageJ2 images
+  - Additional NumPy array-like objects
+
+  - NumPy array point sets
+
+  - itk.Mesh
+  - vtk.vtkPolyData
+  - pyvista.PolyData
+
 - Exquisite volume rendering
 - Tri-plane volume slicing
 - Innovative, powerful opacity transfer function / window / level widget
-- Support for
-
-  - NumPy Arrays
-  - itk.Image
-  - vtk.vtkImageData, pyvista.UniformGrid
-  - Dask Arrays
-  - ImageJ / Fiji / ImageJ2 images
-  - Additional NumPy Array-like objects
-
 - Anisotropic voxel spacing supported
-- 3D and 2D image support
-- Line profiles
-- Combine with other *ipywidgets* to quickly create graphical interfaces to
-  algorithms
+- Image line profile widget
+- Combine with other *ipywidgets* to quickly create graphical interfaces
+  that interactively provide insights into data algorithms
 
 .. image:: https://thumbs.gfycat.com/ShyFelineBeetle-size_restricted.gif
     :width: 640px
@@ -66,6 +74,8 @@ Data types:
 - `Binder: Large volumes <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/LargeVolumes.ipynb>`_
 - `Binder: NumPy array images (processed with SciPy) <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/NumPyArrayImage.ipynb>`_
 - `Binder: NumPy array images (processed with scikit-image) <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/scikit-image.ipynb>`_
+- `Binder: NumPy array point sets <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/NumPyArrayPointSet.ipynb>`_
+- `Binder: ITK Mesh <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/Mesh.ipynb>`_
 
 Tasks:
 
@@ -195,6 +205,9 @@ After installation, try the following examples that demonstrate how to visualize
 - `NumPy array images (processed with scikit-image) <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/scikit-image.ipynb>`_
 - `VTK vtkImageData <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/vtkImageData.ipynb>`_
 - `pyvista UniformGrid <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/pyvista.UniformGrid.ipynb>`_
+- `NumPy array point sets <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/NumPyArrayPointSet.ipynb>`_
+- `ITK Mesh <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/Mesh.ipynb>`_
+- `VTK vtkPolyData <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/vtkPolyData.ipynb>`_
 
 or how to:
 

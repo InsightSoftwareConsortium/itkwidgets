@@ -21,7 +21,7 @@ jobs:
             python -m pip install jupyterlab
             jupyter labextension install @jupyter-widgets/jupyterlab-manager
             jupyter labextension install ./js
-            python -m pytest --tb=long --verbose
+            python -m pytest --tb=long --verbose --deselect tests/test_transform_types.py::test_vtkpolydata_to_geometry
 
       - run:
           name: Package

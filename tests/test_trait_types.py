@@ -73,35 +73,6 @@ def test_PointSetList():
     info_text = trait_types.PointSetList.info_text
     assert(info_text.find('Point set') != -1)
 
-def test_numpy_array_to_point_set():
-    number_of_points = 10
-    point_set_array = np.random.multivariate_normal(gaussian_1_mean, gaussian_1_cov,
-            number_of_points)
-
-    # 3D
-    point_set = to_point_set(point_set_array)
-    assert(point_set['vtkClass'] == 'vtkPolyData')
-    assert(point_set['points']['vtkClass'] == 'vtkPoints')
-    assert(point_set['points']['numberOfComponents'] == 3)
-    assert(point_set['points']['dataType'] == 'Float32Array')
-    assert(point_set['points']['size'] == number_of_points * 3)
-    assert(np.array_equal(point_set['points']['values'],
-        point_set_array.astype(np.float32)))
-
-    # 2D
-    point_set_array.resize((number_of_points, 2))
-    point_set = to_point_set(point_set_array)
-    assert(point_set['vtkClass'] == 'vtkPolyData')
-    assert(point_set['points']['vtkClass'] == 'vtkPoints')
-    assert(point_set['points']['numberOfComponents'] == 3)
-    assert(point_set['points']['dataType'] == 'Float32Array')
-    assert(point_set['points']['size'] == number_of_points * 3)
-
-    point_set_array.resize((number_of_points, 3))
-    point_set_array[:,2] = 0.0
-    assert(np.alltrue(point_set['points']['values'] ==
-        point_set_array.astype(np.float32)))
-
 def test_polydata_list_to_json():
     number_of_points = 10
     point_set_array_1 = np.random.multivariate_normal(gaussian_1_mean, gaussian_1_cov,
