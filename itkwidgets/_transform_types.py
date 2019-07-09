@@ -71,6 +71,15 @@ def to_point_set(point_set_like):
                        'size': point_values.size,
                        'values': point_values }
             point_set['points'] = points
+            vert_values = np.ones((point_values.size * 2,), dtype=np.uint32)
+            vert_values[1::2] = np.arange(point_values.size)
+            verts = { 'vtkClass': 'vtkCellArray',
+                       'name': '_verts',
+                       'numberOfComponents': 1,
+                       'dataType': 'Uint32Array',
+                       'size': vert_values.size,
+                       'values': vert_values }
+            point_set['verts'] = verts
             return point_set
         else:
             return None
