@@ -1,7 +1,6 @@
 import itk
-import vtk
-from vtk.util.numpy_support import vtk_to_numpy
 import numpy as np
+import pytest
 
 from itkwidgets._transform_types import to_point_set, to_geometry
 
@@ -63,6 +62,9 @@ def test_mesh_to_geometry():
         # geometry_array.astype(np.float32)))
 
 def test_vtkpolydata_to_geometry():
+    vtk = pytest.importorskip("vtk")
+    from vtk.util.numpy_support import vtk_to_numpy
+
     cone_source = vtk.vtkConeSource()
     cone_source.Update()
     cone = cone_source.GetOutput()
