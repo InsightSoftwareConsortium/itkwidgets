@@ -107,18 +107,17 @@ def to_geometry(geometry_like):
         itk_lines = itk_polydata.GetLines()
         itk_polys = itk_polydata.GetPolygons()
         itk_strips = itk_polydata.GetTriangleStrips()
-        # for cell_type, itk_cells in [('verts', itk_verts), ('lines', itk_lines),
-                # ('polys', itk_polys), ('strips', itk_strips)]:
-            # if itk_cells.Size():
-                # print(itk_cells)
-                # data = itk.PyVectorContainer[itk.UI].array_from_vector_container(itk_cells)
-                # cells = { 'vtkClass': 'vtkCellArray',
-                          # 'name': '_' + cell_type,
-                          # 'numberOfComponents': 1,
-                          # 'size': data.size,
-                          # 'dataType': 'Uint32Array',
-                          # 'values': data }
-                # geometry[cell_type] = cells
+        for cell_type, itk_cells in [('verts', itk_verts), ('lines', itk_lines),
+                ('polys', itk_polys), ('strips', itk_strips)]:
+            if itk_cells.Size():
+                data = itk.PyVectorContainer[itk.UI].array_from_vector_container(itk_cells)
+                cells = { 'vtkClass': 'vtkCellArray',
+                          'name': '_' + cell_type,
+                          'numberOfComponents': 1,
+                          'size': data.size,
+                          'dataType': 'Uint32Array',
+                          'values': data }
+                geometry[cell_type] = cells
 
         return geometry
     elif have_vtk and isinstance(geometry_like, vtk.vtkPolyData):
