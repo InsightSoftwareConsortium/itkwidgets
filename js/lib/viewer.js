@@ -1,7 +1,8 @@
 import '@babel/polyfill'
 const widgets = require('@jupyter-widgets/base')
 import {
-    fixed_shape_serialization
+  fixed_shape_serialization,
+  simplearray_serialization,
 } from "jupyter-dataserializers"
 import vtkITKHelper from 'vtk.js/Sources/Common/DataModel/ITKHelper'
 import vtkCoordinate from 'vtk.js/Sources/Rendering/Core/Coordinate'
@@ -74,6 +75,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       _scale_factors: new Uint8Array([1, 1, 1]),
       point_sets: null,
       geometries: null,
+      geometry_colors: new Float32Array([0., 0., 0.]),
       ui_collapsed: false,
       rotate: false,
       annotations: true,
@@ -87,6 +89,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
     roi: fixed_shape_serialization([2, 3]),
     _largest_roi: fixed_shape_serialization([2, 3]),
     _scale_factors: fixed_shape_serialization([3,]),
+    geometry_colors: simplearray_serialization,
   }, widgets.DOMWidgetModel.serializers)
 })
 
@@ -560,6 +563,11 @@ const ViewerView = widgets.DOMWidgetView.extend({
         }
         this.model.itkVtkViewer.subscribeGradientOpacityChanged(onGradientOpacityChange)
       }
+
+      const geometries = this.model.get('geometries')
+      if(geometries) {
+        this.geometry_colors_changed()
+      }
   },
 
   render: function() {
@@ -572,6 +580,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:_scale_factors', this.scale_factors_changed, this)
     this.model.on('change:point_sets', this.point_sets_changed, this)
     this.model.on('change:geometries', this.geometries_changed, this)
+    this.model.on('change:geometry_colors', this.geometry_colors_changed, this)
     this.model.on('change:interpolation', this.interpolation_changed, this)
     this.model.on('change:ui_collapsed', this.ui_collapsed_changed, this)
     this.model.on('change:rotate', this.rotate_changed, this)
@@ -652,6 +661,26 @@ const ViewerView = widgets.DOMWidgetView.extend({
       }
     }
     return Promise.resolve(null)
+  },
+
+  geometry_colors_changed: function() {
+    const geometryColors = this.model.get('geometry_colors').array
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      console.log("GEOMETRY COLORS")
+      console.log(geometryColors)
+      //const geometryRepresentationProxies = this.model.itkVtkViewer.getGeometryRepresentationProxies()
+      const geometries = this.model.get('geometries')
+      if(geometries && !!geometries.length) {
+        geometries.forEach((geometry, index) => {
+          const color = geometryColors.slice(index * 3, (index+1)*3)
+          console.log('color to set')
+          console.log(color)
+          this.model.itkVtkViewer.setGeometryColor(index, color)
+        })
+      }
+      //geometryRepresentationProxies.forEach(
+      //this.model.itkVtkViewer.setUserInterfaceCollapsed(uiCollapsed)
+    }
   },
 
   ui_collapsed_changed: function() {
