@@ -208,6 +208,7 @@ After installation, try the following examples that demonstrate how to visualize
 - `NumPy array point sets <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/NumPyArrayPointSet.ipynb>`_
 - `ITK Mesh <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/Mesh.ipynb>`_
 - `VTK vtkPolyData <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/vtkPolyData.ipynb>`_
+- `pyvista PolyData <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/pyvista.PolyData.ipynb>`_
 
 or how to:
 
