@@ -10,7 +10,7 @@ git diff
 pip install docutils
 git add -- itkwidgets/ js/
 git commit -m "ENH: Bump itk-jupyter-widgets to $version"
-cd js && npm install && npm run build && cd -
+cd js && npm ci && npm run build && cd -
 python setup.py sdist
 python setup.py bdist_wheel
 pip install --upgrade twine
