@@ -34,6 +34,7 @@ def to_itk_image(image_like):
         case_use_view = array.flags['OWNDATA']
         if have_dask and isinstance(image_like, dask.array.core.Array):
             case_use_view = False
+        array = np.ascontiguousarray(array)
         if case_use_view:
             image_from_array = itk.image_view_from_array(array)
         else:
