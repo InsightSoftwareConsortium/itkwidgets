@@ -74,6 +74,7 @@ Data types:
 - `Binder: Large volumes <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/LargeVolumes.ipynb>`_
 - `Binder: NumPy array images (processed with SciPy) <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/NumPyArrayImage.ipynb>`_
 - `Binder: NumPy array images (processed with scikit-image) <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/scikit-image.ipynb>`_
+- `Binder: NumPy array for image with anisotropic spacing <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/ImageWithAnisotropicPixelSpacing.ipynb>`_
 - `Binder: NumPy array point sets <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/NumPyArrayPointSet.ipynb>`_
 - `Binder: ITK Mesh <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itk-jupyter-widgets/master?filepath=examples/Mesh.ipynb>`_
 
@@ -203,6 +204,7 @@ After installation, try the following examples that demonstrate how to visualize
 - `ImageJ ImgLib2 images <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/ImageJImgLib2.ipynb>`_ (requires `conda <https://conda.io/>`_ and a local `Fiji <https://fiji.sc/>`_ installation)
 - `NumPy array images (processed with SciPy) <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/NumPyArrayImage.ipynb>`_
 - `NumPy array images (processed with scikit-image) <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/scikit-image.ipynb>`_
+- `NumPy array for image with anisotropic spacing <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/ImageWithAnisotropicPixelSpacing.ipynb>`_
 - `VTK vtkImageData <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/vtkImageData.ipynb>`_
 - `pyvista UniformGrid <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/pyvista.UniformGrid.ipynb>`_
 - `NumPy array point sets <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/NumPyArrayPointSet.ipynb>`_
