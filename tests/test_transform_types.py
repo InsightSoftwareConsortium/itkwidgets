@@ -2,7 +2,7 @@ import itk
 import numpy as np
 import pytest
 
-from itkwidgets._transform_types import to_point_set, to_geometry
+from itkwidgets._transform_types import to_point_set, to_geometry, to_itk_image
 
 def test_mesh_to_geometry():
     # 3D
@@ -122,3 +122,11 @@ def test_numpy_array_to_point_set():
     point_set_array[:,2] = 0.0
     assert(np.alltrue(point_set['points']['values'] ==
         point_set_array.astype(np.float32)))
+
+def test_non_contiguous_array():
+    "Check that a non-contiguous array raises the appropriate error"
+
+    data = np.random.random((10, 10, 10))
+    data = data[..., 0]   # slicing the array makes it non-contiguous
+    output = to_itk_image(data)
+    assert isinstance(output, itk.Image)
