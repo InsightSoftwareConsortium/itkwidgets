@@ -153,7 +153,7 @@ setup_args = {
         'colorcet',
         'itk-core>=5.0.0.post1',
         'itk-filtering>=5.0.0.post1',
-        'ipydatawidgets>=3.2.0',
+        'ipydatawidgets>=4.0.1',
         'ipywidgets>=7.4.0',
         'ipympl',
         'matplotlib',
