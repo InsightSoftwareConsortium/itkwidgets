@@ -60,7 +60,7 @@
     "copy-webpack-plugin": "^4.5.1",
     "css-element-queries": "^1.0.2",
     "itk": "^9.6.1",
-    "itk-vtk-viewer": "^7.6.0",
+    "itk-vtk-viewer": "^7.7.0",
     "jupyter-dataserializers": "^2.1.0",
     "vtk.js": "^8.11.1"
   },
