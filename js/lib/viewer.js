@@ -286,6 +286,18 @@ function replaceRenderedImage(domWidgetView, rendered_image) {
 }
 
 
+function replacePointSets(domWidgetView, pointSets) {
+  const vtkPointSets = pointSets.map((pointSet) => vtk(pointSet))
+  domWidgetView.model.itkVtkViewer.setPointSets(vtkPointSets)
+}
+
+
+function replaceGeometries(domWidgetView, geometries) {
+  const vtkGeometries = geometries.map((geometry) => vtk(geometry))
+  domWidgetView.model.itkVtkViewer.setGeometries(vtkGeometries)
+}
+
+
 function decompressImage(image) {
   const byteArray = new Uint8Array(image.compressedData.buffer)
   const reducer = (accumulator, currentValue) => accumulator * currentValue
@@ -593,11 +605,43 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:rotate', this.rotate_changed, this)
     this.model.on('change:annotations', this.annotations_changed, this)
     this.model.on('change:mode', this.mode_changed, this)
-    // todo: decompress all at the same time (Promise.all), and createViewer
-    this.rendered_image_changed().then(() => {
-      return this.point_sets_changed()
-    }).then(() => {
-      return this.geometries_changed()
+
+    let toDecompress = []
+    const rendered_image = this.model.get('rendered_image')
+    if (rendered_image) {
+      toDecompress.push(decompressImage(rendered_image))
+    }
+    const point_sets = this.model.get('point_sets')
+    if(point_sets && !!point_sets.length) {
+      toDecompress = toDecompress.concat(point_sets.map(decompressPolyData))
+    }
+    const geometries = this.model.get('geometries')
+    if(geometries && !!geometries.length) {
+      toDecompress = toDecompress.concat(geometries.map(decompressPolyData))
+    }
+    const domWidgetView = this
+    Promise.all(toDecompress).then((decompressedData) => {
+      let index = 0;
+      let decompressedRenderedImage = null
+      if (rendered_image) {
+        decompressedRenderedImage = decompressedData[0]
+        index++
+      }
+      let decompressedPointSets = null
+      if(point_sets && !!point_sets.length) {
+        decompressedPointSets = decompressedData.slice(index, index+point_sets.length)
+        index += point_sets.length
+      }
+      let decompressedGeometries = null
+      if(geometries && !!geometries.length) {
+        decompressedGeometries = decompressedData.slice(index, index+geometries.length)
+        index += geometries.length
+      }
+
+      return createRenderingPipeline(domWidgetView, { rendered_image: decompressedRenderedImage,
+        point_sets: decompressedPointSets,
+        geometries: decompressedGeometries
+      })
     })
   },
 
