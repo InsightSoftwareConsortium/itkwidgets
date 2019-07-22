@@ -75,8 +75,10 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       _scale_factors: new Uint8Array([1, 1, 1]),
       point_sets: null,
       point_set_colors: new Float32Array([0., 0., 0.]),
+      point_set_opacities: new Float32Array([1.0]),
       geometries: null,
       geometry_colors: new Float32Array([0., 0., 0.]),
+      geometry_opacities: new Float32Array([1.0]),
       ui_collapsed: false,
       rotate: false,
       annotations: true,
@@ -91,7 +93,9 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
     _largest_roi: fixed_shape_serialization([2, 3]),
     _scale_factors: fixed_shape_serialization([3,]),
     point_set_colors: simplearray_serialization,
+    point_set_opacities: simplearray_serialization,
     geometry_colors: simplearray_serialization,
+    geometry_opacities: simplearray_serialization,
   }, widgets.DOMWidgetModel.serializers)
 })
 
@@ -581,10 +585,12 @@ const ViewerView = widgets.DOMWidgetView.extend({
       const point_sets = this.model.get('point_sets')
       if(point_sets) {
         this.point_set_colors_changed()
+        this.point_set_opacities_changed()
       }
       const geometries = this.model.get('geometries')
       if(geometries) {
         this.geometry_colors_changed()
+        this.geometry_opacities_changed()
       }
   },
 
@@ -598,8 +604,10 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:_scale_factors', this.scale_factors_changed, this)
     this.model.on('change:point_sets', this.point_sets_changed, this)
     this.model.on('change:point_set_colors', this.point_set_colors_changed, this)
+    this.model.on('change:point_set_opacities', this.point_set_opacities_changed, this)
     this.model.on('change:geometries', this.geometries_changed, this)
     this.model.on('change:geometry_colors', this.geometry_colors_changed, this)
+    this.model.on('change:geometry_opacities', this.geometry_opacities_changed, this)
     this.model.on('change:interpolation', this.interpolation_changed, this)
     this.model.on('change:ui_collapsed', this.ui_collapsed_changed, this)
     this.model.on('change:rotate', this.rotate_changed, this)
@@ -704,6 +712,18 @@ const ViewerView = widgets.DOMWidgetView.extend({
     }
   },
 
+  point_set_opacities_changed: function() {
+    const point_setOpacities = this.model.get('point_set_opacities').array
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      const point_sets = this.model.get('point_sets')
+      if(point_sets && !!point_sets.length) {
+        point_sets.forEach((point_set, index) => {
+          this.model.itkVtkViewer.setPointSetOpacity(index, point_setOpacities[index])
+        })
+      }
+    }
+  },
+
   geometries_changed: function() {
     const geometries = this.model.get('geometries')
     if(geometries && !!geometries.length) {
@@ -735,6 +755,19 @@ const ViewerView = widgets.DOMWidgetView.extend({
         geometries.forEach((geometry, index) => {
           const color = geometryColors.slice(index * 3, (index+1)*3)
           this.model.itkVtkViewer.setGeometryColor(index, color)
+        })
+      }
+    }
+  },
+
+  geometry_opacities_changed: function() {
+    const geometryOpacities = this.model.get('geometry_opacities').array
+    console.log(geometryOpacities)
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      const geometries = this.model.get('geometries')
+      if(geometries && !!geometries.length) {
+        geometries.forEach((geometry, index) => {
+          this.model.itkVtkViewer.setGeometryOpacity(index, geometryOpacities[index])
         })
       }
     }
