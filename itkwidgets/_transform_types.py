@@ -28,6 +28,17 @@ try:
 except ImportError:
     pass
 
+_itk_pixel_to_vtkjs_type_components = {
+    itk.SC: ('Int8Array', 1),
+    itk.UC: ('Uint8Array', 1),
+    itk.SS: ('Int16Array', 1),
+    itk.US: ('Uint16Array', 1),
+    itk.SI: ('Int32Array', 1),
+    itk.UI: ('Uint32Array', 1),
+    itk.F: ('Float32Array', 1),
+    itk.D: ('Float64Array', 1),
+    }
+
 def to_itk_image(image_like):
     if is_arraylike(image_like):
         array = np.asarray(image_like)
@@ -128,6 +139,43 @@ def to_geometry(geometry_like):
                           'dataType': 'Uint32Array',
                           'values': data }
                 geometry[cell_type] = cells
+
+        itk_point_data = itk_polydata.GetPointData()
+        if itk_point_data and itk_point_data.Size():
+            pixel_type = itk.template(itk_polydata)[1][0]
+            data_type, number_of_components = _itk_pixel_to_vtkjs_type_components[pixel_type]
+            data = itk.PyVectorContainer[pixel_type].array_from_vector_container(itk_point_data)
+            point_data = {
+                "vtkClass": "vtkDataSetAttributes",
+                "arrays": [
+                    { "data": {
+                        'vtkClass': 'vtkDataArray',
+                        'name': 'Point Data',
+                        'numberOfComponents': number_of_components,
+                        'size': data.size,
+                        'dataType': data_type,
+                        'values': data }
+                    } ],
+                  }
+            geometry['pointData'] = point_data
+        itk_cell_data = itk_polydata.GetCellData()
+        if itk_cell_data and itk_cell_data.Size():
+            pixel_type = itk.template(itk_polydata)[1][0]
+            data_type, number_of_components = _itk_pixel_to_vtkjs_type_components[pixel_type]
+            data = itk.PyVectorContainer[pixel_type].array_from_vector_container(itk_cell_data)
+            cell_data = {
+                "vtkClass": "vtkDataSetAttributes",
+                "arrays": [
+                    { "data": {
+                        'vtkClass': 'vtkDataArray',
+                        'name': 'Cell Data',
+                        'numberOfComponents': number_of_components,
+                        'size': data.size,
+                        'dataType': data_type,
+                        'values': data }
+                    } ],
+                  }
+            geometry['cellData'] = cell_data
 
         return geometry
     elif have_vtk and isinstance(geometry_like, vtk.vtkPolyData):
