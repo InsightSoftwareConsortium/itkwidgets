@@ -204,15 +204,23 @@ class Viewer(ViewerParent):
     _reset_crop_requested = CBool(default_value=False,
             help="The user requested a reset of the roi.").tag(sync=True)
     point_sets = PointSetList(default_value=None, allow_none=True, help="Point sets to visualize").tag(sync=True, **polydata_list_serialization)
-    point_set_colors = NDArray(dtype=np.float32, default_value=np.zeros((0, 3), dtype=np.float64),
+    point_set_colors = NDArray(dtype=np.float32, default_value=np.zeros((0, 3), dtype=np.float32),
                     help="RGB colors for the points sets")\
                 .tag(sync=True, **array_serialization)\
                 .valid(shape_constraints(None, 3))
+    point_set_opacities = NDArray(dtype=np.float32, default_value=np.zeros((0,), dtype=np.float32),
+                    help="Opacities for the points sets")\
+                .tag(sync=True, **array_serialization)\
+                .valid(shape_constraints(None,))
     geometries = PolyDataList(default_value=None, allow_none=True, help="Geometries to visualize").tag(sync=True, **polydata_list_serialization)
-    geometry_colors = NDArray(dtype=np.float32, default_value=np.zeros((0, 3), dtype=np.float64),
+    geometry_colors = NDArray(dtype=np.float32, default_value=np.zeros((0, 3), dtype=np.float32),
                     help="RGB colors for the geometries")\
                 .tag(sync=True, **array_serialization)\
                 .valid(shape_constraints(None, 3))
+    geometry_opacities = NDArray(dtype=np.float32, default_value=np.zeros((0,), dtype=np.float32),
+                    help="Opacities for the geometries")\
+                .tag(sync=True, **array_serialization)\
+                .valid(shape_constraints(None,))
     ui_collapsed = CBool(default_value=False, help="Collapse the built in user interface.").tag(sync=True)
     rotate = CBool(default_value=False, help="Rotate the camera around the scene.").tag(sync=True)
     annotations = CBool(default_value=True, help="Show annotations.").tag(sync=True)
@@ -220,16 +228,24 @@ class Viewer(ViewerParent):
 
 
     def __init__(self, **kwargs):
-        if 'geometry_colors' in kwargs:
-            proposal = { 'value': kwargs['geometry_colors'] }
-            color_array = self._validate_geometry_colors(proposal)
-            kwargs['geometry_colors'] = color_array
-        self.observe(self._on_geometries_changed, ['geometries'])
         if 'point_set_colors' in kwargs:
             proposal = { 'value': kwargs['point_set_colors'] }
             color_array = self._validate_point_set_colors(proposal)
             kwargs['point_set_colors'] = color_array
+        if 'point_set_opacities' in kwargs:
+            proposal = { 'value': kwargs['point_set_opacities'] }
+            opacities_array = self._validate_point_set_opacities(proposal)
+            kwargs['point_set_opacities'] = opacities_array
         self.observe(self._on_point_sets_changed, ['point_sets'])
+        if 'geometry_colors' in kwargs:
+            proposal = { 'value': kwargs['geometry_colors'] }
+            color_array = self._validate_geometry_colors(proposal)
+            kwargs['geometry_colors'] = color_array
+        if 'geometry_opacities' in kwargs:
+            proposal = { 'value': kwargs['geometry_opacities'] }
+            opacities_array = self._validate_geometry_opacities(proposal)
+            kwargs['geometry_opacities'] = opacities_array
+        self.observe(self._on_geometries_changed, ['geometries'])
 
         super(Viewer, self).__init__(**kwargs)
 
@@ -376,30 +392,10 @@ class Viewer(ViewerParent):
             raise TraitError('Invalid colormap')
         return value
 
-    @validate('geometry_colors')
-    def _validate_geometry_colors(self, proposal):
-        value = proposal['value']
-        n_colors = 0
-        if self.geometries:
-            n_colors = len(self.geometries)
-        result = np.zeros((n_colors, 3), dtype=np.float32)
-        for index, color in enumerate(value):
-            result[index,:] = matplotlib.colors.to_rgb(color)
-        if len(value) < n_colors:
-            for index in range(len(value), n_colors):
-                color = colorcet.glasbey[index % len(colorcet.glasbey)]
-                result[index,:] = matplotlib.colors.to_rgb(color)
-        return result
-
-    def _on_geometries_changed(self, change=None):
-        # Make sure we have a sufficient number of colors
-        old_colors = self.geometry_colors
-        self.geometry_colors = old_colors
-
     @validate('point_set_colors')
     def _validate_point_set_colors(self, proposal):
         value = proposal['value']
-        n_colors = 0
+        n_colors = len(value)
         if self.point_sets:
             n_colors = len(self.point_sets)
         result = np.zeros((n_colors, 3), dtype=np.float32)
@@ -411,10 +407,66 @@ class Viewer(ViewerParent):
                 result[index,:] = matplotlib.colors.to_rgb(color)
         return result
 
+    @validate('point_set_opacities')
+    def _validate_point_set_opacities(self, proposal):
+        value = proposal['value']
+        n_values = 0
+        if isinstance(value, float):
+            n_values = 1
+        else:
+            n_values = len(value)
+        n_opacities = n_values
+        if self.point_sets:
+            n_opacities = len(self.point_sets)
+        result = np.ones((n_opacities,), dtype=np.float32)
+        result[:n_values] = value
+        return result
+
     def _on_point_sets_changed(self, change=None):
         # Make sure we have a sufficient number of colors
         old_colors = self.point_set_colors
         self.point_set_colors = old_colors
+        # Make sure we have a sufficient number of opacities
+        old_opacities = self.point_set_opacities
+        self.point_set_opacities = old_opacities
+
+    @validate('geometry_colors')
+    def _validate_geometry_colors(self, proposal):
+        value = proposal['value']
+        n_colors = len(value)
+        if self.geometries:
+            n_colors = len(self.geometries)
+        result = np.zeros((n_colors, 3), dtype=np.float32)
+        for index, color in enumerate(value):
+            result[index,:] = matplotlib.colors.to_rgb(color)
+        if len(value) < n_colors:
+            for index in range(len(value), n_colors):
+                color = colorcet.glasbey[index % len(colorcet.glasbey)]
+                result[index,:] = matplotlib.colors.to_rgb(color)
+        return result
+
+    @validate('geometry_opacities')
+    def _validate_geometry_opacities(self, proposal):
+        value = proposal['value']
+        n_values = 0
+        if isinstance(value, float):
+            n_values = 1
+        else:
+            n_values = len(value)
+        n_opacities = n_values
+        if self.geometries:
+            n_opacities = len(self.geometries)
+        result = np.ones((n_opacities,), dtype=np.float32)
+        result[:n_values] = value
+        return result
+
+    def _on_geometries_changed(self, change=None):
+        # Make sure we have a sufficient number of colors
+        old_colors = self.geometry_colors
+        self.geometry_colors = old_colors
+        # Make sure we have a sufficient number of opacities
+        old_opacities = self.geometry_opacities
+        self.geometry_opacities = old_opacities
 
     def roi_region(self):
         """Return the itk.ImageRegion corresponding to the roi."""
@@ -445,8 +497,8 @@ class Viewer(ViewerParent):
 def view(image=None,
         gradient_opacity=0.22, cmap=cm.viridis, slicing_planes=False,
         select_roi=False, shadow=True, interpolation=True,
-        point_sets=[], point_set_colors=[], #point_set_opacities=[], point_set_sizes=[],
-        geometries=[], geometry_colors=[],
+        point_sets=[], point_set_colors=[], point_set_opacities=[], # point_set_sizes=[],
+        geometries=[], geometry_colors=[], geometry_opacities=[],
         ui_collapsed=False, rotate=False, annotations=True, mode='v',
         **kwargs):
     """View the image and/or point sets and/or geometries.
@@ -503,6 +555,9 @@ def view(image=None,
         Colors for the N geometries. See help(matplotlib.colors) for
         specification. Defaults to the Glasbey series of categorical colors.
 
+    point_set_opacities: list of floats, optional, default: [0.5,]*n
+        Opacity for the point sets, in the range (0.0, 1.0].
+
     Geometries
     ^^^^^^^^^^
 
@@ -512,6 +567,9 @@ def view(image=None,
     geometry_colors: list of RGB colors, optional
         Colors for the N geometries. See help(matplotlib.colors) for
         specification. Defaults to the Glasbey series of categorical colors.
+
+    geometry_opacities: list of floats, optional, default: [1.0,]*n
+        Opacity for the point sets, in the range (0.0, 1.0].
 
     General Interface
     ^^^^^^^^^^^^^^^^^
@@ -558,8 +616,8 @@ def view(image=None,
 
     viewer = Viewer(image=image, interpolation=interpolation, cmap=cmap, shadow=shadow,
             select_roi=select_roi, slicing_planes=slicing_planes, gradient_opacity=gradient_opacity,
-            point_sets=point_sets, point_set_colors=point_set_colors,
-            geometries=geometries, geometry_colors=geometry_colors,
+            point_sets=point_sets, point_set_colors=point_set_colors, point_set_opacities=point_set_opacities,
+            geometries=geometries, geometry_colors=geometry_colors, geometry_opacities=geometry_opacities,
             rotate=rotate, ui_collapsed=ui_collapsed, annotations=annotations, mode=mode,
              **kwargs)
     return viewer
