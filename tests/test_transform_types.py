@@ -16,21 +16,25 @@ def test_mesh_to_geometry():
     point0[1] = -1
     point0[2] = 0
     mesh.SetPoint(0, point0)
+    mesh.SetPointData(0, 8.0)
     point1 = PointType()
     point1[0] = 1
     point1[1] = -1
     point1[2] = 0
+    mesh.SetPointData(1, 9.0)
     mesh.SetPoint(1, point1)
     point2 = PointType()
     point2[0] = 1
     point2[1] = 1
     point2[2] = 0
     mesh.SetPoint(2, point2)
+    mesh.SetPointData(2, 19.0)
     point3 = PointType()
     point3[0] = 1
     point3[1] = 1
     point3[2] = 0
     mesh.SetPoint(3, point3)
+    mesh.SetPointData(3, 24.0)
 
     geometry = to_geometry(mesh)
 
@@ -46,6 +50,14 @@ def test_mesh_to_geometry():
     assert(geometry['points']['size'] == 4 * 3)
     assert(np.array_equal(geometry['points']['values'],
         point_values.astype(np.float32)))
+    assert(geometry['pointData']['vtkClass'] == 'vtkDataSetAttributes')
+    assert(geometry['pointData']['arrays'][0]['data']['vtkClass'] == 'vtkDataArray')
+    assert(geometry['pointData']['arrays'][0]['data']['name'] == 'Point Data')
+    assert(geometry['pointData']['arrays'][0]['data']['numberOfComponents'] == 1)
+    assert(geometry['pointData']['arrays'][0]['data']['size'] == 4)
+    assert(geometry['pointData']['arrays'][0]['data']['dataType'] == 'Float64Array')
+    assert(np.array_equal(geometry['pointData']['arrays'][0]['data']['values'],
+        np.array([8.0, 9.0, 19.0, 24.0], dtype=np.float64)))
 
     # todo: 2D test
     # geometry_array.resize((number_of_points, 2))
@@ -69,11 +81,21 @@ def test_vtkpolydata_to_geometry():
     cone_source.Update()
     cone = cone_source.GetOutput()
 
+    points = cone.GetPoints()
+    point_scalars = vtk.vtkFloatArray()
+    for ii in range(points.GetNumberOfPoints()):
+        point_scalars.InsertTuple1(ii, ii)
+    cone.GetPointData().SetScalars(point_scalars)
+
+    cell_scalars = vtk.vtkFloatArray()
+    for ii in range(cone.GetNumberOfCells()):
+        cell_scalars.InsertTuple1(ii, ii)
+    cone.GetCellData().SetScalars(cell_scalars)
+
     geometry = to_geometry(cone)
 
     assert(geometry['vtkClass'] == 'vtkPolyData')
 
-    points = cone.GetPoints()
     assert(geometry['points']['vtkClass'] == 'vtkPoints')
     assert(geometry['points']['numberOfComponents'] == 3)
     assert(geometry['points']['dataType'] == 'Float32Array')
@@ -88,6 +110,23 @@ def test_vtkpolydata_to_geometry():
     assert(geometry['polys']['size'] == polys.GetData().GetNumberOfValues())
     assert(np.array_equal(geometry['polys']['values'],
         vtk_to_numpy(polys.GetData()).astype(np.uint32).ravel()))
+
+    assert(geometry['pointData']['vtkClass'] == 'vtkDataSetAttributes')
+    assert(geometry['pointData']['arrays'][0]['data']['vtkClass'] == 'vtkDataArray')
+    assert(geometry['pointData']['arrays'][0]['data']['numberOfComponents'] == 1)
+    assert(geometry['pointData']['arrays'][0]['data']['size'] == 7)
+    assert(geometry['pointData']['arrays'][0]['data']['dataType'] == 'Float32Array')
+    assert(np.array_equal(geometry['pointData']['arrays'][0]['data']['values'],
+        np.arange(points.GetNumberOfPoints(), dtype=np.float32)))
+
+    assert(geometry['cellData']['vtkClass'] == 'vtkDataSetAttributes')
+    assert(geometry['cellData']['arrays'][0]['data']['vtkClass'] == 'vtkDataArray')
+    assert(geometry['cellData']['arrays'][0]['data']['numberOfComponents'] == 1)
+    assert(geometry['cellData']['arrays'][0]['data']['size'] == 7)
+    assert(geometry['cellData']['arrays'][0]['data']['dataType'] == 'Float32Array')
+    assert(np.array_equal(geometry['cellData']['arrays'][0]['data']['values'],
+        np.arange(cone.GetNumberOfCells(), dtype=np.float32)))
+
 
 gaussian_1_mean = [0.0, 0.0, 0.0]
 gaussian_1_cov = [[1.0, 0.0, 0.0], [0.0, 2.0, 0.0], [0.0, 0.0, 0.5]]
