@@ -294,5 +294,11 @@ def to_geometry(geometry_like):
             geometry['cellData'] = cell_data
 
         return geometry
+    elif have_vtk and isinstance(geometry_like, vtk.vtkUnstructuredGrid):
+        geometry_filter = vtk.vtkGeometryFilter()
+        geometry_filter.SetInputData(geometry_like)
+        geometry_filter.Update()
+        geometry = to_geometry(geometry_filter.GetOutput())
+        return geometry
 
     return None
