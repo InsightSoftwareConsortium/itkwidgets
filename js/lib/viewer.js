@@ -433,7 +433,24 @@ function decompressPolyData(polyData) {
   const props = ['points', 'verts', 'lines', 'polys', 'strips']
   return Promise.all(props.map((prop) => decompressDataValue(polyData, prop)))
     .then((result) => {
-      return result[0]
+      const decompressedGeometry = result[0]
+      let dataPromises = []
+      if (decompressedGeometry.hasOwnProperty('pointData')) {
+        const pointDataArrays = decompressedGeometry.pointData.arrays
+        dataPromises = pointDataArrays.map((array) => decompressDataValue(array, 'data'))
+      }
+      if (decompressedGeometry.hasOwnProperty('cellData')) {
+        const cellDataArrays = decompressedGeometry.cellData.arrays
+        dataPromises = dataPromises.concat(cellDataArrays.map((array) => decompressDataValue(array, 'data')))
+      }
+      if(dataPromises.length) {
+        return Promise.all(dataPromises).then((resolved) => {
+          console.log(decompressedGeometry)
+          return decompressedGeometry
+        })
+      } else {
+        return decompressedGeometry
+      }
     })
 }
 
