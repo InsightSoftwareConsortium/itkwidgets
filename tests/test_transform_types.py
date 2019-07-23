@@ -81,11 +81,21 @@ def test_vtkpolydata_to_geometry():
     cone_source.Update()
     cone = cone_source.GetOutput()
 
+    points = cone.GetPoints()
+    point_scalars = vtk.vtkFloatArray()
+    for ii in range(points.GetNumberOfPoints()):
+        point_scalars.InsertTuple1(ii, ii)
+    cone.GetPointData().SetScalars(point_scalars)
+
+    cell_scalars = vtk.vtkFloatArray()
+    for ii in range(cone.GetNumberOfCells()):
+        cell_scalars.InsertTuple1(ii, ii)
+    cone.GetCellData().SetScalars(cell_scalars)
+
     geometry = to_geometry(cone)
 
     assert(geometry['vtkClass'] == 'vtkPolyData')
 
-    points = cone.GetPoints()
     assert(geometry['points']['vtkClass'] == 'vtkPoints')
     assert(geometry['points']['numberOfComponents'] == 3)
     assert(geometry['points']['dataType'] == 'Float32Array')
@@ -100,6 +110,23 @@ def test_vtkpolydata_to_geometry():
     assert(geometry['polys']['size'] == polys.GetData().GetNumberOfValues())
     assert(np.array_equal(geometry['polys']['values'],
         vtk_to_numpy(polys.GetData()).astype(np.uint32).ravel()))
+
+    assert(geometry['pointData']['vtkClass'] == 'vtkDataSetAttributes')
+    assert(geometry['pointData']['arrays'][0]['data']['vtkClass'] == 'vtkDataArray')
+    assert(geometry['pointData']['arrays'][0]['data']['numberOfComponents'] == 1)
+    assert(geometry['pointData']['arrays'][0]['data']['size'] == 7)
+    assert(geometry['pointData']['arrays'][0]['data']['dataType'] == 'Float32Array')
+    assert(np.array_equal(geometry['pointData']['arrays'][0]['data']['values'],
+        np.arange(points.GetNumberOfPoints(), dtype=np.float32)))
+
+    assert(geometry['cellData']['vtkClass'] == 'vtkDataSetAttributes')
+    assert(geometry['cellData']['arrays'][0]['data']['vtkClass'] == 'vtkDataArray')
+    assert(geometry['cellData']['arrays'][0]['data']['numberOfComponents'] == 1)
+    assert(geometry['cellData']['arrays'][0]['data']['size'] == 7)
+    assert(geometry['cellData']['arrays'][0]['data']['dataType'] == 'Float32Array')
+    assert(np.array_equal(geometry['cellData']['arrays'][0]['data']['values'],
+        np.arange(cone.GetNumberOfCells(), dtype=np.float32)))
+
 
 gaussian_1_mean = [0.0, 0.0, 0.0]
 gaussian_1_cov = [[1.0, 0.0, 0.0], [0.0, 2.0, 0.0], [0.0, 0.0, 0.5]]
