@@ -40,6 +40,7 @@ point sets, and meshes.
 
   - itk.Mesh
   - vtk.vtkPolyData
+  - vtk.vtkUnstructuredGrid
   - pyvista.PolyData
 
 - Exquisite volume rendering
@@ -208,6 +209,7 @@ After installation, try the following examples that demonstrate how to visualize
 - `NumPy array point sets <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/NumPyArrayPointSet.ipynb>`_
 - `ITK Mesh <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/Mesh.ipynb>`_
 - `VTK vtkPolyData <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/vtkPolyData.ipynb>`_
+- `VTK vtkUnstructuredGrid <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/vtkUnstructuredGrid.ipynb>`_
 - `pyvista PolyData <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/pyvista.PolyData.ipynb>`_
 
 or how to:
