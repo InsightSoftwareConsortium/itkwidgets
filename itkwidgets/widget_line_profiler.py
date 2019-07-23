@@ -17,6 +17,7 @@ import IPython
 import itk
 from ._transform_types import to_itk_image
 
+
 @widgets.register
 class LineProfiler(Viewer):
     """LineProfiler widget class."""
@@ -27,16 +28,19 @@ class LineProfiler(Viewer):
     _view_module_version = Unicode('^0.17.1').tag(sync=True)
     _model_module_version = Unicode('^0.17.1').tag(sync=True)
     point1 = NDArray(dtype=np.float64, default_value=np.zeros((3,), dtype=np.float64),
-                help="First point in physical space that defines the line profile")\
-            .tag(sync=True, **array_serialization)\
-            .valid(shape_constraints(3,))
+                     help="First point in physical space that defines the line profile")\
+        .tag(sync=True, **array_serialization)\
+        .valid(shape_constraints(3,))
     point2 = NDArray(dtype=np.float64, default_value=np.ones((3,), dtype=np.float64),
-                help="First point in physical space that defines the line profile")\
-            .tag(sync=True, **array_serialization)\
-            .valid(shape_constraints(3,))
-    _select_initial_points = CBool(default_value=False, help="We will select the initial points for the line profile.").tag(sync=True)
+                     help="First point in physical space that defines the line profile")\
+        .tag(sync=True, **array_serialization)\
+        .valid(shape_constraints(3,))
+    _select_initial_points = CBool(
+        default_value=False, help="We will select the initial points for the line profile.").tag(sync=True)
 
-    def __init__(self, **kwargs):
+    def __init__(self, image, order, **kwargs):
+        self.image = image
+        self.order = order
         if 'point1' not in kwargs or 'point2' not in kwargs:
             self._select_initial_points = True
             # Default to z-plane mode instead of the 3D volume if we need to
@@ -46,6 +50,62 @@ class LineProfiler(Viewer):
         if 'ui_collapsed' not in kwargs:
             kwargs['ui_collapsed'] = True
         super(LineProfiler, self).__init__(**kwargs)
+
+    def get_profile(self, image_or_array=None, point1=None, point2=None, order=None):
+        """Calculate the line profile.
+
+        Calculate the pixel intensity values along the line that connects 
+        the given two points.
+
+        The image can be 2D or 3D. If any/all of the parameters are None, default
+        vales are assigned.
+
+        Parameters
+        ----------
+        image_or_array : array_like, itk.Image, or vtk.vtkImageData
+            The 2D or 3D image to visualize.
+
+        point1 : list of float
+            List elements represent the 2D/3D coordinate of the point1.
+
+        point2 : list of float
+            List elements represent the 2D/3D coordinate of the point2.
+
+        order : int, optional
+            Spline order for line profile interpolation. The order has to be in the
+            range 0-5.
+
+        """
+
+        if image_or_array == None:
+            image_or_array = self.image
+        if point1 == None:
+            point1 = self.point1
+        if point2 == None:
+            point2 = self.point2
+        if order == None:
+            order = self.order
+        image_from_array = to_itk_image(image_or_array)
+        if image_from_array:
+            image_ = image_from_array
+        else:
+            image_ = image_or_array
+        image_array = itk.array_view_from_image(image_)
+        dimension = image_.GetImageDimension()
+        distance = np.sqrt(
+            sum([(point1[ii] - point2[ii])**2 for ii in range(dimension)]))
+        index1 = tuple(image_.TransformPhysicalPointToIndex(
+            tuple(point1[:dimension])))
+        index2 = tuple(image_.TransformPhysicalPointToIndex(
+            tuple(point2[:dimension])))
+        num_points = int(np.round(
+            np.sqrt(sum([(index1[ii] - index2[ii])**2 for ii in range(dimension)])) * 2.1))
+        coords = [np.linspace(index1[ii], index2[ii], num_points)
+                  for ii in range(dimension)]
+        mapped = scipy.ndimage.map_coordinates(image_array, np.vstack(coords[::-1]),
+                                               order=order, mode='nearest')
+        return np.linspace(0.0, distance, num_points), mapped
+
 
 def line_profile(image, order=2, plotter=None, comparisons=None, **viewer_kwargs):
     """View the image with a line profile.
@@ -77,7 +137,7 @@ def line_profile(image, order=2, plotter=None, comparisons=None, **viewer_kwargs
 
     """
 
-    profiler = LineProfiler(image=image, **viewer_kwargs)
+    profiler = LineProfiler(image=image, order=order, **viewer_kwargs)
 
     if not plotter:
         try:
@@ -94,44 +154,28 @@ def line_profile(image, order=2, plotter=None, comparisons=None, **viewer_kwargs
     if not plotter:
         plotter = 'ipympl'
 
-
-    def get_profile(image_or_array):
-        image_from_array = to_itk_image(image_or_array)
-        if image_from_array:
-            image_ = image_from_array
-        else:
-            image_ = image_or_array
-        image_array = itk.array_view_from_image(image_)
-        dimension = image_.GetImageDimension()
-        distance = np.sqrt(sum([(profiler.point1[ii] - profiler.point2[ii])**2 for ii in range(dimension)]))
-        index1 = tuple(image_.TransformPhysicalPointToIndex(tuple(profiler.point1[:dimension])))
-        index2 = tuple(image_.TransformPhysicalPointToIndex(tuple(profiler.point2[:dimension])))
-        num_points = int(np.round(np.sqrt(sum([(index1[ii] - index2[ii])**2 for ii in range(dimension)])) * 2.1))
-        coords = [np.linspace(index1[ii], index2[ii], num_points) for ii in range(dimension)]
-        mapped = scipy.ndimage.map_coordinates(image_array, np.vstack(coords[::-1]),
-                                               order=order, mode='nearest')
-        return np.linspace(0.0, distance, num_points), mapped
-
     if plotter == 'plotly':
         import plotly.graph_objs as go
         layout = go.Layout(
             xaxis=dict(title='Distance'),
             yaxis=dict(title='Intensity')
-            )
+        )
         fig = go.FigureWidget(layout=layout)
     elif plotter == 'bqplot':
         import bqplot
         x_scale = bqplot.LinearScale()
         y_scale = bqplot.LinearScale()
-        x_axis = bqplot.Axis(scale=x_scale, grid_lines='solid', label='Distance')
-        y_axis = bqplot.Axis(scale=y_scale, orientation='vertical', grid_lines='solid', label='Intensity')
+        x_axis = bqplot.Axis(
+            scale=x_scale, grid_lines='solid', label='Distance')
+        y_axis = bqplot.Axis(scale=y_scale, orientation='vertical',
+                             grid_lines='solid', label='Intensity')
         labels = ['Reference']
         display_legend = False
         if comparisons:
-            display_legend=True
+            display_legend = True
             labels += [label for label in comparisons.keys()]
         lines = [bqplot.Lines(scales={'x': x_scale, 'y': y_scale},
-            labels=labels, display_legend=display_legend, enable_hover=True)]
+                              labels=labels, display_legend=display_legend, enable_hover=True)]
         fig = bqplot.Figure(marks=lines, axes=[x_axis, y_axis])
     elif plotter == 'ipympl':
         ipython = IPython.get_ipython()
@@ -146,32 +190,32 @@ def line_profile(image, order=2, plotter=None, comparisons=None, **viewer_kwargs
 
     def update_plot():
         if plotter == 'plotly':
-            distance, intensity = get_profile(image)
+            distance, intensity = profiler.get_profile(image)
             fig.data[0]['x'] = distance
             fig.data[0]['y'] = intensity
             if comparisons:
                 for ii, image_ in enumerate(comparisons.values()):
-                    distance, intensity = get_profile(image_)
+                    distance, intensity = profiler.get_profile(image_)
                     fig.data[ii+1]['x'] = distance
                     fig.data[ii+1]['y'] = intensity
         elif plotter == 'bqplot':
-            distance, intensity = get_profile(image)
+            distance, intensity = profiler.get_profile(image)
             if comparisons:
                 for image_ in comparisons.values():
-                    distance_, intensity_ = get_profile(image_)
+                    distance_, intensity_ = profiler.get_profile(image_)
                     distance = np.vstack((distance, distance_))
                     intensity = np.vstack((intensity, intensity_))
             fig.marks[0].x = distance
             fig.marks[0].y = intensity
         elif plotter == 'ipympl':
-            ax.plot(*get_profile(image))
+            ax.plot(*profiler.get_profile(image))
             if comparisons:
-                ax.plot(*get_profile(image), label='Reference')
+                ax.plot(*profiler.get_profile(image), label='Reference')
                 for label, image_ in comparisons.items():
-                    ax.plot(*get_profile(image_), label=label)
+                    ax.plot(*profiler.get_profile(image_), label=label)
                 ax.legend()
             else:
-                ax.plot(*get_profile(image))
+                ax.plot(*profiler.get_profile(image))
 
             ax.set_xlabel('Distance')
             ax.set_ylabel('Intensity')
@@ -191,12 +235,12 @@ def line_profile(image, order=2, plotter=None, comparisons=None, **viewer_kwargs
             matplotlib.interactive(is_interactive)
 
     if plotter == 'plotly':
-        distance, intensity = get_profile(image)
+        distance, intensity = profiler.get_profile(image)
         trace = go.Scattergl(x=distance, y=intensity, name='Reference')
         fig.add_trace(trace)
         if comparisons:
             for label, image_ in comparisons.items():
-                distance, intensity = get_profile(image_)
+                distance, intensity = profiler.get_profile(image_)
                 trace = go.Scattergl(x=distance, y=intensity, name=label)
                 fig.add_trace(trace)
         widget = widgets.VBox([profiler, fig])
