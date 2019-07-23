@@ -306,10 +306,31 @@ def polydata_list_to_json(polydata_list, manager=None):
 
             for cell_type in ['verts', 'lines', 'polys', 'strips']:
                 if cell_type in json_polydata:
-                    point_values = polydata[cell_type]['values']
-                    compressed = compressor.compress(point_values.data)
+                    values = polydata[cell_type]['values']
+                    compressed = compressor.compress(values.data)
                     compressedView = memoryview(compressed)
                     json_polydata[cell_type]['compressedValues'] = compressedView
+
+            for data_type in ['pointData', 'cellData']:
+                if data_type in json_polydata:
+                    data = polydata[data_type]
+                    compressed_data = dict()
+                    for nested_key, nested_value in data.items():
+                        if not nested_key == 'arrays':
+                            compressed_data[nested_key] = nested_value
+                    compressed_arrays = []
+                    for array in polydata[data_type]['arrays']:
+                        compressed_array = dict()
+                        for nested_key, nested_value in array['data'].items():
+                            if not nested_key == 'values':
+                                compressed_array[nested_key] = nested_value
+                        values = array['data']['values']
+                        compressed = compressor.compress(values.data)
+                        compressedView = memoryview(compressed)
+                        compressed_array['compressedValues'] = compressedView
+                        compressed_arrays.append({ 'data': compressed_array })
+                    compressed_data['arrays'] = compressed_arrays
+                    json_polydata[data_type] = compressed_data
 
             json.append(json_polydata)
         return json
@@ -355,7 +376,7 @@ def polydata_list_from_json(js, manager=None):
             if 'points' in polydata:
                 dtype = _type_to_numpy(polydata['points']['dataType'])
                 if six.PY2:
-                    asBytes = json_polydata['points']['compressedData'].tobytes()
+                    asBytes = json_polydata['points']['compressedValues'].tobytes()
                     valuesBufferArrayCompressed = np.frombuffer(asBytes, dtype=np.uint8)
                 else:
                     valuesBufferArrayCompressed = np.frombuffer(json_polydata['points']['compressedValues'],
@@ -372,7 +393,7 @@ def polydata_list_from_json(js, manager=None):
                 if cell_type in polydata:
                     dtype = _type_to_numpy(polydata[cell_type]['dataType'])
                     if six.PY2:
-                        asBytes = json_polydata[cell_type]['compressedData'].tobytes()
+                        asBytes = json_polydata[cell_type]['compressedValues'].tobytes()
                         valuesBufferArrayCompressed = np.frombuffer(asBytes, dtype=np.uint8)
                     else:
                         valuesBufferArrayCompressed = np.frombuffer(json_polydata[cell_type]['compressedValues'],
@@ -384,6 +405,37 @@ def polydata_list_from_json(js, manager=None):
                                 dtype=dtype)
                     valuesBufferArray.shape = (json_polydata[cell_type]['size'],)
                     polydata[cell_type]['values'] = valuesBufferArray
+
+            for data_type in ['pointData', 'cellData']:
+                if data_type in polydata:
+                    data = json_polydata[data_type]
+                    decompressed_data = dict()
+                    for nested_key, nested_value in data.items():
+                        if not nested_key == 'arrays':
+                            decompressed_data[nested_key] = nested_value
+                    decompressed_arrays = []
+                    for array in json_polydata[data_type]['arrays']:
+                        decompressed_array = dict()
+                        for nested_key, nested_value in array['data'].items():
+                            if not nested_key == 'compressedValues':
+                                decompressed_array[nested_key] = nested_value
+                        dtype = _type_to_numpy(decompressed_array['dataType'])
+                        if six.PY2:
+                            asBytes = array['data']['compressedValues'].tobytes()
+                            valuesBufferArrayCompressed = np.frombuffer(asBytes, dtype=np.uint8)
+                        else:
+                            valuesBufferArrayCompressed = np.frombuffer(array['data']['compressedValues'],
+                                    dtype=np.uint8)
+                        numberOfBytes = decompressed_array['size'] * np.dtype(dtype).itemsize
+                        valuesBufferArray = \
+                            np.frombuffer(decompressor.decompress(valuesBufferArrayCompressed,
+                                numberOfBytes),
+                                    dtype=dtype)
+                        valuesBufferArray.shape = (decompressed_array['size'],)
+                        decompressed_array['values'] = valuesBufferArray
+                        decompressed_arrays.append({ 'data': decompressed_array })
+                    decompressed_data['arrays'] = decompressed_arrays
+                    polydata[data_type] = decompressed_data
 
             polydata_list.append(polydata)
         return polydata_list
