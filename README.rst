@@ -42,6 +42,7 @@ point sets, and meshes.
   - vtk.vtkPolyData
   - vtk.vtkUnstructuredGrid
   - pyvista.PolyData
+  - pyvista.UnstructuredGrid
 
 - Exquisite volume rendering
 - Tri-plane volume slicing
@@ -213,6 +214,7 @@ After installation, try the following examples that demonstrate how to visualize
 - `VTK vtkPolyData <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/vtkPolyData.ipynb>`_
 - `VTK vtkUnstructuredGrid <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/vtkUnstructuredGrid.ipynb>`_
 - `pyvista PolyData <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/pyvista.PolyData.ipynb>`_
+- `pyvista UnstructuredGrid <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/pyvista.UnstructuredGrid.ipynb>`_
 
 or how to:
 
