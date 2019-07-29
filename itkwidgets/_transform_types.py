@@ -49,6 +49,8 @@ def _vtk_to_vtkjs(data_array):
         5: 'Uint16Array',
         6: 'Int32Array',
         7: 'Uint32Array',
+        8: 'BigInt64Array',
+        9: 'BigUint64Array',
         10: 'Float32Array',
         11: 'Float64Array',
         16: 'BigInt64Array',
@@ -57,14 +59,14 @@ def _vtk_to_vtkjs(data_array):
     vtk_data_type = data_array.GetDataType()
     data_type = _vtk_data_type_to_vtkjs_type[vtk_data_type]
     numpy_array = vtk_to_numpy(data_array)
-    if vtk_data_type == 16:
+    if vtk_data_type == 8 or vtk_data_type == 16:
         ii32 = np.iinfo(np.int32)
         value_range = data_array.GetValueRange()
         if value_range[0] < ii32.min or value_range[1] > ii32.max:
             raise ValueError('64 integers are not supported yet by WebGL / vtk.js')
         numpy_array = numpy_array.astype(np.int32)
         data_type = 'Int32Array'
-    elif vtk_data_type == 17:
+    elif vtk_data_type == 9 or vtk_data_type == 17:
         ui32 = np.iinfo(np.uint32)
         value_range = data_array.GetValueRange()
         if value_range[0] < ui32.min or value_range[1] > ui32.max:
