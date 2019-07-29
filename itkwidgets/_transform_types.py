@@ -167,6 +167,42 @@ def to_point_set(point_set_like):
             return point_set
         else:
             return None
+    elif have_vtk and isinstance(point_set_like, vtk.vtkPolyData):
+        from vtk.util.numpy_support import vtk_to_numpy
+        point_set = { 'vtkClass': 'vtkPolyData' }
+
+        points_data = vtk_to_numpy(point_set_like.GetPoints().GetData())
+        points_data = points_data.astype(np.float32).ravel()
+        points = { 'vtkClass': 'vtkPoints',
+                   'name': '_points',
+                   'numberOfComponents': 3,
+                   'dataType': 'Float32Array',
+                   'size': points_data.size,
+                   'values': points_data }
+        point_set['points'] = points
+
+        vtk_verts = point_set_like.GetVerts()
+        if vtk_verts.GetNumberOfCells():
+            data = vtk_to_numpy(vtk_verts.GetData())
+            data = data.astype(np.uint32).ravel()
+            cells = { 'vtkClass': 'vtkCellArray',
+                      'name': '_' + 'verts',
+                      'numberOfComponents': 1,
+                      'size': data.size,
+                      'dataType': 'Uint32Array',
+                      'values': data }
+            point_set['verts'] = cells
+        vtk_point_data = point_set_like.GetPointData()
+        if vtk_point_data and vtk_point_data.GetNumberOfArrays():
+            vtkjs_point_data = _vtk_data_attributes_to_vtkjs(vtk_point_data)
+            point_set['pointData'] = vtkjs_point_data
+
+        vtk_cell_data = point_set_like.GetCellData()
+        if vtk_cell_data and vtk_cell_data.GetNumberOfArrays():
+            vtkjs_cell_data = _vtk_data_attributes_to_vtkjs(vtk_cell_data)
+            point_set['cellData'] = vtkjs_cell_data
+
+        return point_set
 
     return None
 
@@ -294,8 +330,8 @@ def to_geometry(geometry_like):
             geometry['cellData'] = vtkjs_cell_data
 
         return geometry
-    elif have_vtk and isinstance(geometry_like, (vtk.vtkUnstructuredGrid, 
-                                                 vtk.vtkStructuredGrid, 
+    elif have_vtk and isinstance(geometry_like, (vtk.vtkUnstructuredGrid,
+                                                 vtk.vtkStructuredGrid,
                                                  vtk.vtkRectilinearGrid,
                                                  vtk.vtkImageData)):
         geometry_filter = vtk.vtkGeometryFilter()
