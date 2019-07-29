@@ -38,18 +38,43 @@ _itk_pixel_to_vtkjs_type_components = {
     itk.F: ('Float32Array', 1),
     itk.D: ('Float64Array', 1),
     }
-# From vtkType.h
-_vtk_data_type_to_vtkjs_type = {
-    2: 'Int8Array',
-    15: 'Int8Array',
-    3: 'Uint8Array',
-    4: 'Int16Array',
-    5: 'Uint16Array',
-    6: 'Int32Array',
-    7: 'Uint32Array',
-    10: 'Float32Array',
-    11: 'Float64Array',
-    }
+def _vtk_to_vtkjs(data_array):
+    from vtk.util.numpy_support import vtk_to_numpy
+    # From vtkType.h
+    _vtk_data_type_to_vtkjs_type = {
+        2: 'Int8Array',
+        15: 'Int8Array',
+        3: 'Uint8Array',
+        4: 'Int16Array',
+        5: 'Uint16Array',
+        6: 'Int32Array',
+        7: 'Uint32Array',
+        8: 'BigInt64Array',
+        9: 'BigUint64Array',
+        10: 'Float32Array',
+        11: 'Float64Array',
+        16: 'BigInt64Array',
+        17: 'BigUint64Array',
+        }
+    vtk_data_type = data_array.GetDataType()
+    data_type = _vtk_data_type_to_vtkjs_type[vtk_data_type]
+    numpy_array = vtk_to_numpy(data_array)
+    if vtk_data_type == 8 or vtk_data_type == 16:
+        ii32 = np.iinfo(np.int32)
+        value_range = data_array.GetValueRange()
+        if value_range[0] < ii32.min or value_range[1] > ii32.max:
+            raise ValueError('64 integers are not supported yet by WebGL / vtk.js')
+        numpy_array = numpy_array.astype(np.int32)
+        data_type = 'Int32Array'
+    elif vtk_data_type == 9 or vtk_data_type == 17:
+        ui32 = np.iinfo(np.uint32)
+        value_range = data_array.GetValueRange()
+        if value_range[0] < ui32.min or value_range[1] > ui32.max:
+            raise ValueError('64 integers are not supported by WebGL / vtk.js yet')
+        numpy_array = numpy_array.astype(np.uint32)
+        data_type = 'Uint32Array'
+
+    return data_type, numpy_array
 
 def to_itk_image(image_like):
     if is_arraylike(image_like):
@@ -229,13 +254,14 @@ def to_geometry(geometry_like):
             arrays = []
             for array_index in range(vtk_point_data.GetNumberOfArrays()):
                 vtk_array = vtk_point_data.GetArray(array_index)
+                data_type, values = _vtk_to_vtkjs(vtk_array)
                 array = { "data": {
                     'vtkClass': 'vtkDataArray',
                     'name': vtk_array.GetName(),
                     'numberOfComponents': vtk_array.GetNumberOfComponents(),
                     'size': vtk_array.GetSize(),
-                    'dataType': _vtk_data_type_to_vtkjs_type[vtk_array.GetDataType()],
-                    'values': vtk_to_numpy(vtk_array) } }
+                    'dataType': data_type,
+                    'values': values } }
                 scalars = vtk_point_data.GetScalars()
                 if scalars and scalars.GetName() == vtk_array.GetName():
                     point_data['activeScalars'] = array_index
@@ -264,13 +290,14 @@ def to_geometry(geometry_like):
             arrays = []
             for array_index in range(vtk_cell_data.GetNumberOfArrays()):
                 vtk_array = vtk_cell_data.GetArray(array_index)
+                data_type, values = _vtk_to_vtkjs(vtk_array)
                 array = { "data": {
                     'vtkClass': 'vtkDataArray',
                     'name': vtk_array.GetName(),
                     'numberOfComponents': vtk_array.GetNumberOfComponents(),
                     'size': vtk_array.GetSize(),
-                    'dataType': _vtk_data_type_to_vtkjs_type[vtk_array.GetDataType()],
-                    'values': vtk_to_numpy(vtk_array) } }
+                    'dataType': data_type,
+                    'values': values } }
                 scalars = vtk_cell_data.GetScalars()
                 if scalars and scalars.GetName() == vtk_array.GetName():
                     cell_data['activeScalars'] = array_index
