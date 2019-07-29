@@ -288,6 +288,7 @@ def to_geometry(geometry_like):
             arrays = []
             for array_index in range(vtk_cell_data.GetNumberOfArrays()):
                 vtk_array = vtk_cell_data.GetArray(array_index)
+                data_type, values = _vtk_to_vtkjs(vtk_array)
                 array = { "data": {
                     'vtkClass': 'vtkDataArray',
                     'name': vtk_array.GetName(),
