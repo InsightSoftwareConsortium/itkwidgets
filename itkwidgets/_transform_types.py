@@ -323,7 +323,8 @@ def to_geometry(geometry_like):
         return geometry
     elif have_vtk and isinstance(geometry_like, (vtk.vtkUnstructuredGrid, 
                                                  vtk.vtkStructuredGrid, 
-                                                 vtk.vtkRectilinearGrid)):
+                                                 vtk.vtkRectilinearGrid,
+                                                 vtk.vtkImageData)):
         geometry_filter = vtk.vtkGeometryFilter()
         geometry_filter.SetInputData(geometry_like)
         geometry_filter.Update()
