@@ -53,6 +53,10 @@ point sets, and meshes.
 - Innovative, powerful opacity transfer function / window / level widget
 - Anisotropic voxel spacing supported
 - Image line profile widget
+- Widgets to select solid colors for geometry or colormaps when point data or
+  cell data is availble
+- Visualize point sets as points or spheres and interactively adjust the point
+  size
 - Combine with other *ipywidgets* to quickly create graphical interfaces
   that interactively provide insights into data algorithms
 
@@ -61,8 +65,8 @@ point sets, and meshes.
     :alt: itkwidgets demo
     :align: center
 
-These widgets are designed to support image analysis with the `Insight Toolkit
-(ITK) <https://itk.org/>`_, but they also work with other spatial analysis tools
+These widgets are designed to support spatial analysis with the `Insight Toolkit
+(ITK) <https://itk.org/>`_, but they work equally well with other spatial analysis tools
 in the scientific Python ecosystem.
 
 These widgets are built on
