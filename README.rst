@@ -37,6 +37,8 @@ point sets, and meshes.
   - Additional NumPy array-like objects
 
   - NumPy array point sets
+  - vtk.vtkPolyData point sets
+  - pyvista.PolyData point sets
 
   - itk.Mesh
   - vtk.vtkPolyData
@@ -218,6 +220,7 @@ After installation, try the following examples that demonstrate how to visualize
 - `pyvista PolyData <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/pyvista.PolyData.ipynb>`_
 - `pyvista StructuredGrid <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/pyvista.StructuredGrid.ipynb>`_
 - `pyvista UnstructuredGrid <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/pyvista.UnstructuredGrid.ipynb>`_
+- `pyvista LiDAR <https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets/blob/master/examples/pyvistaLiDAR.ipynb>`_
 
 or how to:
 

@@ -76,6 +76,41 @@ def _vtk_to_vtkjs(data_array):
 
     return data_type, numpy_array
 
+def _vtk_data_attributes_to_vtkjs(attributes):
+    vtkjs_attributes = { "vtkClass": "vtkDataSetAttributes" }
+    arrays = []
+    for array_index in range(attributes.GetNumberOfArrays()):
+        vtk_array = attributes.GetArray(array_index)
+        data_type, values = _vtk_to_vtkjs(vtk_array)
+        array = { "data": {
+            'vtkClass': 'vtkDataArray',
+            'name': vtk_array.GetName(),
+            'numberOfComponents': vtk_array.GetNumberOfComponents(),
+            'size': vtk_array.GetSize(),
+            'dataType': data_type,
+            'values': values } }
+        scalars = attributes.GetScalars()
+        if scalars and scalars.GetName() == vtk_array.GetName():
+            vtkjs_attributes['activeScalars'] = array_index
+        globalIds = attributes.GetGlobalIds()
+        if globalIds and globalIds.GetName() == vtk_array.GetName():
+            vtkjs_attributes['activeGlobalIds'] = array_index
+        normals = attributes.GetNormals()
+        if normals and normals.GetName() == vtk_array.GetName():
+            vtkjs_attributes['activeNormals'] = array_index
+        pedigreeIds = attributes.GetPedigreeIds()
+        if pedigreeIds and pedigreeIds.GetName() == vtk_array.GetName():
+            vtkjs_attributes['activePedigreeIds'] = array_index
+        tCoords = attributes.GetTCoords()
+        if tCoords and tCoords.GetName() == vtk_array.GetName():
+            vtkjs_attributes['activeTCoords'] = array_index
+        vectors = attributes.GetVectors()
+        if vectors and vectors.GetName() == vtk_array.GetName():
+            vtkjs_attributes['activeVectors'] = array_index
+        arrays.append(array)
+    vtkjs_attributes["arrays"] = arrays
+    return vtkjs_attributes
+
 def to_itk_image(image_like):
     if is_arraylike(image_like):
         array = np.asarray(image_like)
@@ -132,6 +167,42 @@ def to_point_set(point_set_like):
             return point_set
         else:
             return None
+    elif have_vtk and isinstance(point_set_like, vtk.vtkPolyData):
+        from vtk.util.numpy_support import vtk_to_numpy
+        point_set = { 'vtkClass': 'vtkPolyData' }
+
+        points_data = vtk_to_numpy(point_set_like.GetPoints().GetData())
+        points_data = points_data.astype(np.float32).ravel()
+        points = { 'vtkClass': 'vtkPoints',
+                   'name': '_points',
+                   'numberOfComponents': 3,
+                   'dataType': 'Float32Array',
+                   'size': points_data.size,
+                   'values': points_data }
+        point_set['points'] = points
+
+        vtk_verts = point_set_like.GetVerts()
+        if vtk_verts.GetNumberOfCells():
+            data = vtk_to_numpy(vtk_verts.GetData())
+            data = data.astype(np.uint32).ravel()
+            cells = { 'vtkClass': 'vtkCellArray',
+                      'name': '_' + 'verts',
+                      'numberOfComponents': 1,
+                      'size': data.size,
+                      'dataType': 'Uint32Array',
+                      'values': data }
+            point_set['verts'] = cells
+        vtk_point_data = point_set_like.GetPointData()
+        if vtk_point_data and vtk_point_data.GetNumberOfArrays():
+            vtkjs_point_data = _vtk_data_attributes_to_vtkjs(vtk_point_data)
+            point_set['pointData'] = vtkjs_point_data
+
+        vtk_cell_data = point_set_like.GetCellData()
+        if vtk_cell_data and vtk_cell_data.GetNumberOfArrays():
+            vtkjs_cell_data = _vtk_data_attributes_to_vtkjs(vtk_cell_data)
+            point_set['cellData'] = vtkjs_cell_data
+
+        return point_set
 
     return None
 
@@ -250,79 +321,17 @@ def to_geometry(geometry_like):
                 geometry[cell_type] = cells
         vtk_point_data = geometry_like.GetPointData()
         if vtk_point_data and vtk_point_data.GetNumberOfArrays():
-            point_data = { "vtkClass": "vtkDataSetAttributes" }
-            arrays = []
-            for array_index in range(vtk_point_data.GetNumberOfArrays()):
-                vtk_array = vtk_point_data.GetArray(array_index)
-                data_type, values = _vtk_to_vtkjs(vtk_array)
-                array = { "data": {
-                    'vtkClass': 'vtkDataArray',
-                    'name': vtk_array.GetName(),
-                    'numberOfComponents': vtk_array.GetNumberOfComponents(),
-                    'size': vtk_array.GetSize(),
-                    'dataType': data_type,
-                    'values': values } }
-                scalars = vtk_point_data.GetScalars()
-                if scalars and scalars.GetName() == vtk_array.GetName():
-                    point_data['activeScalars'] = array_index
-                globalIds = vtk_point_data.GetGlobalIds()
-                if globalIds and globalIds.GetName() == vtk_array.GetName():
-                    point_data['activeGlobalIds'] = array_index
-                normals = vtk_point_data.GetNormals()
-                if normals and normals.GetName() == vtk_array.GetName():
-                    point_data['activeNormals'] = array_index
-                pedigreeIds = vtk_point_data.GetPedigreeIds()
-                if pedigreeIds and pedigreeIds.GetName() == vtk_array.GetName():
-                    point_data['activePedigreeIds'] = array_index
-                tCoords = vtk_point_data.GetTCoords()
-                if tCoords and tCoords.GetName() == vtk_array.GetName():
-                    point_data['activeTCoords'] = array_index
-                vectors = vtk_point_data.GetVectors()
-                if vectors and vectors.GetName() == vtk_array.GetName():
-                    point_data['activeVectors'] = array_index
-                arrays.append(array)
-            point_data["arrays"] = arrays
-            geometry['pointData'] = point_data
+            vtkjs_point_data = _vtk_data_attributes_to_vtkjs(vtk_point_data)
+            geometry['pointData'] = vtkjs_point_data
 
         vtk_cell_data = geometry_like.GetCellData()
         if vtk_cell_data and vtk_cell_data.GetNumberOfArrays():
-            cell_data = { "vtkClass": "vtkDataSetAttributes" }
-            arrays = []
-            for array_index in range(vtk_cell_data.GetNumberOfArrays()):
-                vtk_array = vtk_cell_data.GetArray(array_index)
-                data_type, values = _vtk_to_vtkjs(vtk_array)
-                array = { "data": {
-                    'vtkClass': 'vtkDataArray',
-                    'name': vtk_array.GetName(),
-                    'numberOfComponents': vtk_array.GetNumberOfComponents(),
-                    'size': vtk_array.GetSize(),
-                    'dataType': data_type,
-                    'values': values } }
-                scalars = vtk_cell_data.GetScalars()
-                if scalars and scalars.GetName() == vtk_array.GetName():
-                    cell_data['activeScalars'] = array_index
-                globalIds = vtk_cell_data.GetGlobalIds()
-                if globalIds and globalIds.GetName() == vtk_array.GetName():
-                    cell_data['activeGlobalIds'] = array_index
-                normals = vtk_cell_data.GetNormals()
-                if normals and normals.GetName() == vtk_array.GetName():
-                    cell_data['activeNormals'] = array_index
-                pedigreeIds = vtk_cell_data.GetPedigreeIds()
-                if pedigreeIds and pedigreeIds.GetName() == vtk_array.GetName():
-                    cell_data['activePedigreeIds'] = array_index
-                tCoords = vtk_cell_data.GetTCoords()
-                if tCoords and tCoords.GetName() == vtk_array.GetName():
-                    cell_data['activeTCoords'] = array_index
-                vectors = vtk_cell_data.GetVectors()
-                if vectors and vectors.GetName() == vtk_array.GetName():
-                    cell_data['activeVectors'] = array_index
-                arrays.append(array)
-            cell_data["arrays"] = arrays
-            geometry['cellData'] = cell_data
+            vtkjs_cell_data = _vtk_data_attributes_to_vtkjs(vtk_cell_data)
+            geometry['cellData'] = vtkjs_cell_data
 
         return geometry
-    elif have_vtk and isinstance(geometry_like, (vtk.vtkUnstructuredGrid, 
-                                                 vtk.vtkStructuredGrid, 
+    elif have_vtk and isinstance(geometry_like, (vtk.vtkUnstructuredGrid,
+                                                 vtk.vtkStructuredGrid,
                                                  vtk.vtkRectilinearGrid,
                                                  vtk.vtkImageData)):
         geometry_filter = vtk.vtkGeometryFilter()
