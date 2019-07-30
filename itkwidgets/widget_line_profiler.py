@@ -23,8 +23,8 @@ class LineProfiler(Viewer):
     """LineProfiler widget class."""
     _view_name = Unicode('LineProfilerView').tag(sync=True)
     _model_name = Unicode('LineProfilerModel').tag(sync=True)
-    _view_module = Unicode('itk-jupyter-widgets').tag(sync=True)
-    _model_module = Unicode('itk-jupyter-widgets').tag(sync=True)
+    _view_module = Unicode('itkwidgets').tag(sync=True)
+    _model_module = Unicode('itkwidgets').tag(sync=True)
     _view_module_version = Unicode('^0.17.1').tag(sync=True)
     _model_module_version = Unicode('^0.17.1').tag(sync=True)
     point1 = NDArray(dtype=np.float64, default_value=np.zeros((3,), dtype=np.float64),

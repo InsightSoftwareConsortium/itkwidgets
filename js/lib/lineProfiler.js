@@ -11,8 +11,8 @@ const LineProfilerModel = viewer.ViewerModel.extend({
     return Object.assign(viewer.ViewerModel.prototype.defaults(), {
       _model_name: 'LineProfilerModel',
       _view_name: 'LineProfilerView',
-      _model_module: 'itk-jupyter-widgets',
-      _view_module: 'itk-jupyter-widgets',
+      _model_module: 'itkwidgets',
+      _view_module: 'itkwidgets',
       _model_module_version: '0.17.1',
       _view_module_version: '0.17.1',
       point1: new Float64Array([0.0, 0.0, 0.0]),

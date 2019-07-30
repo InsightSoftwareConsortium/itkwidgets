@@ -9,7 +9,7 @@ git grep -z --full-name -l '.' | xargs -0 sed -i -e "s/$old_version/$version/g"
 git diff
 pip install docutils
 git add -- itkwidgets/ js/
-git commit -m "ENH: Bump itk-jupyter-widgets to $version"
+git commit -m "ENH: Bump itkwidgets to $version"
 cd js && npm ci && npm run build && cd -
 python setup.py sdist
 python setup.py bdist_wheel
@@ -17,15 +17,15 @@ pip install --upgrade twine
 # Check the README for PyPI
 twine check dist/*
 twine upload dist/*
-git tag -a -s v$version -m "itk-jupyter-widgets $version"
+git tag -a -s v$version -m "itkwidgets $version"
 # Update _version.py (replace 'final' with 'dev' and increment minor)
 git add -- itkwidgets/_version.py
-git commit -m "ENH: Bump itk-jupyter-widgets version for development"
+git commit -m "ENH: Bump itkwidgets version for development"
 git push upstream master
 git push upstream v$version
 ```
 
-- To release a new version of itk-jupyter-widgets on NPM:
+- To release a new version of itkwidgets on NPM:
 
 ```
 # clean out the `dist` and `node_modules` directories
