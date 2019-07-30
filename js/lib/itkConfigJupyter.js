@@ -1,4 +1,4 @@
-let prefix = document.querySelector('body').getAttribute('data-base-url') + 'nbextensions/itk-jupyter-widgets/'
+let prefix = document.querySelector('body').getAttribute('data-base-url') + 'nbextensions/itkwidgets/'
 if(__webpack_public_path__) {
   prefix = __webpack_public_path__
 }

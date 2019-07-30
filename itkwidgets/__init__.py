@@ -9,6 +9,6 @@ def _jupyter_nbextension_paths():
     return [{
         'section': 'notebook',
         'src': 'static',
-        'dest': 'itk-jupyter-widgets',
-        'require': 'itk-jupyter-widgets/extension'
+        'dest': 'itkwidgets',
+        'require': 'itkwidgets/extension'
     }]

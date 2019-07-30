@@ -7,5 +7,5 @@ Package Install
 - [node](http://nodejs.org/)
 
 ```bash
-npm install --save itk-jupyter-widgets
+npm install --save itkwidgets
 ```

@@ -135,17 +135,17 @@ setup_args = {
     'long_description_content_type': 'text/x-rst',
     'include_package_data': True,
     'data_files': [
-        ('share/jupyter/nbextensions/itk-jupyter-widgets', [
+        ('share/jupyter/nbextensions/itkwidgets', [
             'itkwidgets/static/extension.js',
             'itkwidgets/static/index.js',
             'itkwidgets/static/index.js.map'
         ],),
-        ('etc/jupyter/nbconfig/notebook.d' , ['itk-jupyter-widgets.json']),
-        ('share/jupyter/nbextensions/itk-jupyter-widgets/itk/Pipelines', [
+        ('etc/jupyter/nbconfig/notebook.d' , ['itkwidgets.json']),
+        ('share/jupyter/nbextensions/itkwidgets/itk/Pipelines', [
 	    'itkwidgets/static/itk/Pipelines/ZstdDecompressWasm.js',
             'itkwidgets/static/itk/Pipelines/ZstdDecompress.js',
         ]),
-        ('share/jupyter/nbextensions/itk-jupyter-widgets/itk/WebWorkers', [
+        ('share/jupyter/nbextensions/itkwidgets/itk/WebWorkers', [
 	    'itkwidgets/static/itk/WebWorkers/Pipeline.worker.js'
         ]),
     ],
@@ -173,7 +173,7 @@ setup_args = {
 
     'author': 'Matthew McCormick',
     'author_email': 'matt.mccormick@kitware.com',
-    'url': 'https://github.com/InsightSoftwareConsortium/itk-jupyter-widgets',
+    'url': 'https://github.com/InsightSoftwareConsortium/itkwidgets',
     'keywords': [
         'ipython',
         'jupyter',

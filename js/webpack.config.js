@@ -156,7 +156,7 @@ module.exports = [
     devServer,
   },
   {
-    // Embeddable itk-jupyter-widgets bundle
+    // Embeddable itkwidgets bundle
     //
     // This bundle is generally almost identical to the notebook bundle
     // containing the custom widget views and models.
@@ -178,7 +178,7 @@ module.exports = [
       filename: 'index.js',
       path: path.resolve(__dirname, 'dist'),
       libraryTarget: 'amd',
-      publicPath: 'https://unpkg.com/itk-jupyter-widgets@' + version + '/dist',
+      publicPath: 'https://unpkg.com/itkwidgets@' + version + '/dist',
     },
     devtool: 'source-map',
     module: {
@@ -261,7 +261,7 @@ module.exports = [
       filename: 'labextension.js',
       path: path.resolve(__dirname, 'dist'),
       libraryTarget: 'amd',
-      publicPath: 'https://unpkg.com/itk-jupyter-widgets@' + version + '/dist',
+      publicPath: 'https://unpkg.com/itkwidgets@' + version + '/dist',
     },
     devtool: 'source-map',
     module: {

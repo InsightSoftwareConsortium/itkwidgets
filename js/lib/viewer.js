@@ -57,8 +57,8 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
     return Object.assign(widgets.DOMWidgetModel.prototype.defaults(), {
       _model_name: 'ViewerModel',
       _view_name: 'ViewerView',
-      _model_module: 'itk-jupyter-widgets',
-      _view_module: 'itk-jupyter-widgets',
+      _model_module: 'itkwidgets',
+      _view_module: 'itkwidgets',
       _model_module_version: '0.17.1',
       _view_module_version: '0.17.1',
       rendered_image: null,

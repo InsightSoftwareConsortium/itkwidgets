@@ -7,7 +7,7 @@ if (window.require) {
     window.require.config({
         map: {
             "*" : {
-                "itk-jupyter-widgets": "nbextensions/itk-jupyter-widgets/index",
+                "itkwidgets": "nbextensions/itkwidgets/index",
             }
         }
     });

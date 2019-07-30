@@ -5,11 +5,11 @@ var base = require('@jupyter-widgets/base');
  * Register the widget.
  */
 module.exports = {
-  id: 'itk-jupyter-widgets',
+  id: 'itkwidgets',
   requires: [base.IJupyterWidgetRegistry],
   activate: function(app, widgets) {
       widgets.registerWidget({
-          name: 'itk-jupyter-widgets',
+          name: 'itkwidgets',
           version: extension.version,
           exports: extension
       });
