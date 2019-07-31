@@ -1,12 +1,12 @@
 version: 2
 jobs:
   build-test-package:
-    working_directory: /home/jovyan/itk-jupyter-widgets
+    working_directory: /home/jovyan/itkwidgets
     docker:
       - image: jupyter/base-notebook:latest
     steps:
       - checkout:
-          path: /home/jovyan/itk-jupyter-widgets
+          path: /home/jovyan/itkwidgets
       - run:
           name: Build and Test
           no_output_timeout: 0.5h
