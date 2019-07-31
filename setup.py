@@ -130,7 +130,7 @@ with open(os.path.join(here, 'itkwidgets', '_version.py')) as f:
 setup_args = {
     'name': 'itkwidgets',
     'version': version_ns['__version__'],
-    'description': 'Jupyter widgets to visualize images in 2D and 3D',
+    'description': 'Interactive Jupyter widgets to visualize images, point sets, and meshes in 2D and 3D',
     'long_description': readme(),
     'long_description_content_type': 'text/x-rst',
     'include_package_data': True,
