@@ -185,6 +185,8 @@ setup_args = {
         'webgl',
     ],
     'classifiers': [
+        "License :: OSI Approved :: Apache Software License",
+        "Programming Language :: Python",
         'Development Status :: 4 - Beta',
         'Framework :: IPython',
         'Intended Audience :: Developers',
