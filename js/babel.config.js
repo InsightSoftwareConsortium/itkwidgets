@@ -7,6 +7,7 @@ module.exports = function (api) {
       },
       modules: 'commonjs',
     }],
+    "mobx",
   ]
   const plugins = []
 

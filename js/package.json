@@ -57,11 +57,13 @@
     "@babel/runtime": "^7.2.0",
     "@jupyter-widgets/base": "^1.1 || ^2",
     "autoprefixer": "^9.4.3",
+    "babel-preset-mobx": "^2.0.0",
     "copy-webpack-plugin": "^4.5.1",
     "css-element-queries": "^1.0.2",
     "itk": "^9.6.1",
     "itk-vtk-viewer": "^7.8.1",
     "jupyter-dataserializers": "^2.1.0",
+    "mobx": "^5.13.0",
     "vtk.js": "^8.11.1"
   },
   "jupyterlab": {
