@@ -449,7 +449,6 @@ function decompressPolyData(polyData) {
       }
       if(dataPromises.length) {
         return Promise.all(dataPromises).then((resolved) => {
-          console.log(decompressedGeometry)
           return decompressedGeometry
         })
       } else {
@@ -779,7 +778,6 @@ const ViewerView = widgets.DOMWidgetView.extend({
 
   geometry_opacities_changed: function() {
     const geometryOpacities = this.model.get('geometry_opacities').array
-    console.log(geometryOpacities)
     if (this.model.hasOwnProperty('itkVtkViewer')) {
       const geometries = this.model.get('geometries')
       if(geometries && !!geometries.length) {
