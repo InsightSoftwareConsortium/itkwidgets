@@ -44,9 +44,15 @@ point sets, and meshes.
   - vtk.vtkPolyData
   - vtk.vtkStructuredGrid
   - vtk.vtkUnstructuredGrid
+  - vtk.vtkActor
+  - vtk.vtkVolume
+  - vtk.vtkAssembly
   - pyvista.PolyData
   - pyvista.StructuredGrid
   - pyvista.UnstructuredGrid
+  - vtkplotter.Actor
+  - vtkplotter.Assembly
+  - vtkplotter.Volume
 
 - Exquisite volume rendering
 - Tri-plane volume slicing
@@ -225,6 +231,7 @@ After installation, try the following examples that demonstrate how to visualize
 - `pyvista StructuredGrid <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/pyvista.StructuredGrid.ipynb>`_
 - `pyvista UnstructuredGrid <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/pyvista.UnstructuredGrid.ipynb>`_
 - `pyvista LiDAR <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/pyvistaLiDAR.ipynb>`_
+- `vtkplotter actors and volumes <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/vtkplotter.ipynb>`_
 
 or how to:
 

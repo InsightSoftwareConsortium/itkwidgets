@@ -10,6 +10,7 @@ import functools
 import time
 
 import itk
+import vtk
 import numpy as np
 import ipywidgets as widgets
 from traitlets import CBool, CFloat, Unicode, CaselessStrEnum, TraitError, validate
@@ -25,7 +26,7 @@ import colorcet
 
 from . import cm
 
-from IPython.core.debugger import set_trace
+#from IPython.core.debugger import set_trace
 
 
 COLORMAPS = ("2hot",
@@ -606,6 +607,9 @@ def view(image=None,
 
     Other Parameters
     ----------------
+    
+    actors: vtkActor, vtkAssembly, vtkVolume, optional, default: None
+        List of standard vtk objects, colors are extracted from their properties  
 
     size_limit_2d: 2x1 numpy int64 array, optional, default: [1024, 1024]
         Size limit for 2D image visualization. If the roi is larger than this
@@ -623,6 +627,67 @@ def view(image=None,
         the visualization or retrieve values created by interacting with the
         widget.
     """
+
+    # this block allows the user to pass already formed vtkActor vtkVolume objects
+    actors = kwargs.pop("actors", None)
+    if actors is not None:
+        if not isinstance(actors, (list, tuple)): # passing the object directly, so make it a list
+            actors = [actors]
+
+        geometries, point_sets, images = [],[],[]
+        geometry_colors, geometry_opacities, point_set_colors, point_set_opacities = [],[],[],[]
+
+        for a in actors:
+
+            if isinstance(a, vtk.vtkAssembly): #unpack assemblies
+                cl = vtk.vtkPropCollection()
+                a.GetActors(cl)
+                cl.InitTraversal()
+                for i in range(a.GetNumberOfPaths()):
+                    ac = vtk.vtkActor.SafeDownCast(cl.GetNextProp())
+                    apoly = ac.GetMapper().GetInput()
+                    prop = ac.GetProperty()
+                    transform = vtk.vtkTransform()
+                    transform.SetMatrix(ac.GetMatrix())
+                    tp = vtk.vtkTransformPolyDataFilter()
+                    tp.SetTransform(transform)
+                    tp.SetInputData(apoly)
+                    tp.Update()
+                    poly = tp.GetOutput()
+                    if poly.GetNumberOfPolys():
+                        geometries.append(poly)
+                        geometry_colors.append(prop.GetColor())
+                        geometry_opacities.append(prop.GetOpacity())
+                    else:
+                        point_sets.append(poly)
+                        point_set_colors.append(prop.GetColor())
+                        point_set_opacities.append(prop.GetOpacity())
+
+            elif isinstance(a, vtk.vtkActor):
+                apoly = a.GetMapper().GetInput()
+                transform = vtk.vtkTransform()
+                transform.SetMatrix(a.GetMatrix())
+                tp = vtk.vtkTransformPolyDataFilter()
+                tp.SetTransform(transform)
+                tp.SetInputData(apoly)
+                tp.Update()
+                poly = tp.GetOutput()
+                prop = a.GetProperty()
+                if poly.GetNumberOfPolys():
+                    geometries.append(poly)
+                    geometry_colors.append(prop.GetColor())
+                    geometry_opacities.append(prop.GetOpacity())
+                else:
+                    point_sets.append(poly)
+                    point_set_colors.append(prop.GetColor())
+                    point_set_opacities.append(prop.GetOpacity())
+
+            elif isinstance(a, vtk.vtkVolume):
+                images.append(a.GetMapper().GetInput())
+
+        if image is None and len(images): #only one image is rendered
+            image = images[0]
+
 
     viewer = Viewer(image=image, interpolation=interpolation, cmap=cmap, shadow=shadow,
             select_roi=select_roi, slicing_planes=slicing_planes, gradient_opacity=gradient_opacity,
