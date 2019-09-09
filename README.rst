@@ -95,6 +95,7 @@ Tasks:
 - `Binder: Interactively explore algorithm parameters <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples/InteractiveParameterExploration.ipynb>`_
 - `Binder: Record a video <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples/RecordAVideo.ipynb>`_
 - `Binder: Select a region of interest <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples/SelectRegionOfInterest.ipynb>`_
+- `Binder: Specify camera parameters <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples/SpecifyCameraParameters.ipynb>`_
 - `Binder: Specify a colormap <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples/SpecifyAColormap.ipynb>`_
 
 Installation
@@ -233,6 +234,7 @@ or how to:
 - `Interatively explore algorithm parameters <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/InteractiveParameterExploration.ipynb>`_
 - `Record a video <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/RecordAVideo.ipynb>`_
 - `Select a region of interest <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/SelectRegionOfInterest.ipynb>`_
+- `Specify camera parameters <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/SpecifyCameraParameters.ipynb>`_
 - `Specify a colormap <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/SpecifyAColormap.ipynb>`_
 
 
