@@ -314,6 +314,9 @@ function replaceGeometries(domWidgetView, geometries) {
 
 
 function decompressImage(image) {
+  if (!!image.data) {
+    return Promise.resolve(image)
+  }
   const byteArray = new Uint8Array(image.compressedData.buffer)
   const reducer = (accumulator, currentValue) => accumulator * currentValue
   const pixelCount = image.size.reduce(reducer, 1)
