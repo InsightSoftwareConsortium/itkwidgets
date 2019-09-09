@@ -188,6 +188,8 @@ class Viewer(ViewerParent):
                 help="Region of interest: ((lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z))")\
             .tag(sync=True, **array_serialization)\
             .valid(shape_constraints(2, 3))
+    vmin = CFloat(default_value=None, allow_none=True, help="Value that maps to the minimum of image colormap.").tag(sync=True)
+    vmax = CFloat(default_value=None, allow_none=True, help="Value that maps to the maximum of image colormap.").tag(sync=True)
     _largest_roi = NDArray(dtype=np.float64, default_value=np.zeros((2, 3), dtype=np.float64),
                 help="Largest possible region of interest: ((lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z))")\
             .tag(sync=True, **array_serialization)\
@@ -425,10 +427,10 @@ class Viewer(ViewerParent):
     def _on_point_sets_changed(self, change=None):
         # Make sure we have a sufficient number of colors
         old_colors = self.point_set_colors
-        self.point_set_colors = old_colors
+        self.point_set_colors = old_colors[:len(self.point_sets)]
         # Make sure we have a sufficient number of opacities
         old_opacities = self.point_set_opacities
-        self.point_set_opacities = old_opacities
+        self.point_set_opacities = old_opacities[:len(self.point_sets)]
 
     @validate('geometry_colors')
     def _validate_geometry_colors(self, proposal):
@@ -463,10 +465,10 @@ class Viewer(ViewerParent):
     def _on_geometries_changed(self, change=None):
         # Make sure we have a sufficient number of colors
         old_colors = self.geometry_colors
-        self.geometry_colors = old_colors
+        self.geometry_colors = old_colors[:len(self.geometries)]
         # Make sure we have a sufficient number of opacities
         old_opacities = self.geometry_opacities
-        self.geometry_opacities = old_opacities
+        self.geometry_opacities = old_opacities[:len(self.geometries)]
 
     def roi_region(self):
         """Return the itk.ImageRegion corresponding to the roi."""
@@ -544,6 +546,14 @@ def view(image=None,
 
     shadow: bool, optional, default: True
         Use shadowing in the volume rendering.
+
+    vmin: float, optional, default: None
+        Value that maps to the minimum of image colormap. Defaults to minimum of
+        the image pixel buffer.
+
+    vmax: float, optional, default: None
+        Value that maps to the minimum of image colormap. Defaults to maximum of
+        the image pixel buffer.
 
     Point Sets
     ^^^^^^^^^^

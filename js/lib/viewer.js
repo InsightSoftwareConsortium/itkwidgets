@@ -13,6 +13,7 @@ import IntTypes from 'itk/IntTypes'
 import FloatTypes from 'itk/FloatTypes'
 import IOTypes from 'itk/IOTypes'
 import runPipelineBrowser from 'itk/runPipelineBrowser'
+import macro from 'vtk.js/Sources/macro'
 
 const ANNOTATION_DEFAULT = '<table style="margin-left: 0;"><tr><td style="margin-left: auto; margin-right: 0;">Index:</td><td>${iIndex},</td><td>${jIndex},</td><td>${kIndex}</td></tr><tr><td style="margin-left: auto; margin-right: 0;">Position:</td><td>${xPosition},</td><td>${yPosition},</td><td>${zPosition}</td></tr><tr><td style="margin-left: auto; margin-right: 0;"">Value:</td><td>${value}</td></tr></table>'
 const ANNOTATION_CUSTOM_PREFIX = '<table style="margin-left: 0;"><tr><td style="margin-left: auto; margin-right: 0;">Scale/Index:</td>'
@@ -65,6 +66,8 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       _rendering_image: false,
       interpolation: true,
       cmap: 'Viridis (matplotlib)',
+      vmin: null,
+      vmax: null,
       shadow: true,
       slicing_planes: false,
       gradient_opacity: 0.2,
@@ -293,12 +296,18 @@ function replaceRenderedImage(domWidgetView, rendered_image) {
 function replacePointSets(domWidgetView, pointSets) {
   const vtkPointSets = pointSets.map((pointSet) => vtk(pointSet))
   domWidgetView.model.itkVtkViewer.setPointSets(vtkPointSets)
+  domWidgetView.point_set_colors_changed()
+  domWidgetView.point_set_opacities_changed()
+  domWidgetView.model.itkVtkViewer.renderLater()
 }
 
 
 function replaceGeometries(domWidgetView, geometries) {
   const vtkGeometries = geometries.map((geometry) => vtk(geometry))
   domWidgetView.model.itkVtkViewer.setGeometries(vtkGeometries)
+  domWidgetView.geometry_colors_changed()
+  domWidgetView.geometry_opacities_changed()
+  domWidgetView.model.itkVtkViewer.renderLater()
 }
 
 
@@ -449,7 +458,6 @@ function decompressPolyData(polyData) {
       }
       if(dataPromises.length) {
         return Promise.all(dataPromises).then((resolved) => {
-          console.log(decompressedGeometry)
           return decompressedGeometry
         })
       } else {
@@ -467,6 +475,8 @@ const ViewerView = widgets.DOMWidgetView.extend({
       if (rendered_image) {
         this.interpolation_changed()
         this.cmap_changed()
+        this.vmin_changed()
+        this.vmax_changed()
       }
       this.mode_changed()
       if (rendered_image) {
@@ -520,6 +530,20 @@ const ViewerView = widgets.DOMWidgetView.extend({
         }
       }
       this.model.itkVtkViewer.subscribeSelectColorMap(onSelectColorMap)
+
+      const onChangeColorRange = (colorRange) => {
+        const vmin = this.model.get('vmin')
+        if (colorRange[0] !== vmin) {
+          this.model.set('vmin', colorRange[0])
+          this.model.save_changes()
+        }
+        const vmax = this.model.get('vmax')
+        if (colorRange[1] !== vmax) {
+          this.model.set('vmax', colorRange[1])
+          this.model.save_changes()
+        }
+      }
+      this.model.itkVtkViewer.subscribeChangeColorRange(onChangeColorRange);
 
       const onCroppingPlanesChanged = (planes, bboxCorners) => {
         if (!this.model.get('_rendering_image') && !this.model.skipOnCroppingPlanesChanged) {
@@ -614,6 +638,8 @@ const ViewerView = widgets.DOMWidgetView.extend({
   render: function() {
     this.model.on('change:rendered_image', this.rendered_image_changed, this)
     this.model.on('change:cmap', this.cmap_changed, this)
+    this.model.on('change:vmin', this.vmin_changed, this)
+    this.model.on('change:vmax', this.vmax_changed, this)
     this.model.on('change:shadow', this.shadow_changed, this)
     this.model.on('change:slicing_planes', this.slicing_planes_changed, this)
     this.model.on('change:gradient_opacity', this.gradient_opacity_changed, this)
@@ -779,7 +805,6 @@ const ViewerView = widgets.DOMWidgetView.extend({
 
   geometry_opacities_changed: function() {
     const geometryOpacities = this.model.get('geometry_opacities').array
-    console.log(geometryOpacities)
     if (this.model.hasOwnProperty('itkVtkViewer')) {
       const geometries = this.model.get('geometries')
       if(geometries && !!geometries.length) {
@@ -850,6 +875,24 @@ const ViewerView = widgets.DOMWidgetView.extend({
     const cmap = this.model.get('cmap')
     if (this.model.hasOwnProperty('itkVtkViewer')) {
       this.model.itkVtkViewer.setColorMap(cmap)
+    }
+  },
+
+  vmin_changed: function() {
+    const vmin = this.model.get('vmin')
+    if (vmin !== null && this.model.hasOwnProperty('itkVtkViewer')) {
+      let colorRange = this.model.itkVtkViewer.getColorRange().slice()
+      colorRange[0] = vmin
+      this.model.itkVtkViewer.setColorRange(colorRange)
+    }
+  },
+
+  vmax_changed: function() {
+    const vmax = this.model.get('vmax')
+    if (vmax !== null && this.model.hasOwnProperty('itkVtkViewer')) {
+      let colorRange = this.model.itkVtkViewer.getColorRange().slice()
+      colorRange[1] = vmax
+      this.model.itkVtkViewer.setColorRange(colorRange)
     }
   },
 
