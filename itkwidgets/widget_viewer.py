@@ -10,17 +10,25 @@ import functools
 import time
 
 import itk
-import vtk
 import numpy as np
 import ipywidgets as widgets
 from traitlets import CBool, CFloat, Unicode, CaselessStrEnum, TraitError, validate
 from ipydatawidgets import NDArray, array_serialization, shape_constraints
 from .trait_types import ITKImage, PointSetList, PolyDataList, itkimage_serialization, polydata_list_serialization
+
 try:
     import ipywebrtc
     ViewerParent = ipywebrtc.MediaStream
 except ImportError:
     ViewerParent = widgets.DOMWidget
+
+have_vtk = False 
+try: 
+     import vtk 
+     have_vtk = True 
+except ImportError: 
+     pass 
+
 import matplotlib
 import colorcet
 
@@ -496,7 +504,7 @@ class Viewer(ViewerParent):
             slices.insert(0, slice(index[dim], upper_index[dim] + 1))
         return tuple(slices)
 
-
+ 
 def view(image=None,
         gradient_opacity=0.22, cmap=cm.viridis, slicing_planes=False,
         select_roi=False, shadow=True, interpolation=True,
@@ -630,12 +638,11 @@ def view(image=None,
 
     # this block allows the user to pass already formed vtkActor vtkVolume objects
     actors = kwargs.pop("actors", None)
-    if actors is not None:
+    if have_vtk and actors is not None:
         if not isinstance(actors, (list, tuple)): # passing the object directly, so make it a list
             actors = [actors]
-
-        geometries, point_sets, images = [],[],[]
-        geometry_colors, geometry_opacities, point_set_colors, point_set_opacities = [],[],[],[]
+        
+        images = []
 
         for a in actors:
 
