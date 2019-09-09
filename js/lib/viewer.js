@@ -86,6 +86,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       rotate: false,
       annotations: true,
       mode: 'v',
+      camera: new Float32Array(9),
     })
   }}, {
   serializers: Object.assign({
@@ -95,6 +96,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
     roi: fixed_shape_serialization([2, 3]),
     _largest_roi: fixed_shape_serialization([2, 3]),
     _scale_factors: fixed_shape_serialization([3,]),
+    camera: fixed_shape_serialization([3, 3]),
     point_set_colors: simplearray_serialization,
     point_set_opacities: simplearray_serialization,
     geometry_colors: simplearray_serialization,
@@ -598,6 +600,25 @@ const ViewerView = widgets.DOMWidgetView.extend({
         }
         this.model.itkVtkViewer.subscribeViewModeChanged(onViewModeChanged)
 
+        const onCameraChanged = () => {
+          const camera = new Float32Array(9)
+          const viewProxy = this.model.itkVtkViewer.getViewProxy()
+          camera.set(viewProxy.getCameraPosition(), 0)
+          camera.set(viewProxy.getCameraFocalPoint(), 3)
+          camera.set(viewProxy.getCameraViewUp(), 6)
+          this.model.set('camera', camera)
+          this.model.save_changes()
+        }
+        // If view-up has not been set, set initial value to itk-vtk-viewer default
+        const viewUp = this.model.get('camera').slice(6, 9)
+        if (!!!viewUp[0] && !!!viewUp[1] && !!!viewUp[2]) {
+          onCameraChanged()
+        } else {
+          this.camera_changed()
+        }
+        const interactor = this.model.itkVtkViewer.getViewProxy().getInteractor()
+        interactor.onEndMouseMove(onCameraChanged)
+
         const onShadowToggle = (enabled) => {
           if (enabled !== this.model.get('shadow')) {
             this.model.set('shadow', enabled)
@@ -656,6 +677,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:rotate', this.rotate_changed, this)
     this.model.on('change:annotations', this.annotations_changed, this)
     this.model.on('change:mode', this.mode_changed, this)
+    this.model.on('change:camera', this.camera_changed, this)
 
     let toDecompress = []
     const rendered_image = this.model.get('rendered_image')
@@ -862,6 +884,18 @@ const ViewerView = widgets.DOMWidgetView.extend({
         throw new Error('Unknown view mode')
       }
     }
+  },
+
+  camera_changed: function() {
+    const camera = this.model.get('camera')
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      const viewProxy = this.model.itkVtkViewer.getViewProxy()
+      viewProxy.setCameraPosition(...camera.subarray(0, 3))
+      viewProxy.setCameraFocalPoint(...camera.subarray(3, 6))
+      viewProxy.setCameraViewUp(...camera.subarray(6, 9))
+      viewProxy.getCamera().computeDistance()
+      viewProxy.renderLater()
+      }
   },
 
   interpolation_changed: function() {

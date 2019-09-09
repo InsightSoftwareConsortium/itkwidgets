@@ -185,13 +185,13 @@ class Viewer(ViewerParent):
     slicing_planes = CBool(default_value=False, help="Display the slicing planes in volume rendering view mode.").tag(sync=True)
     gradient_opacity = CFloat(default_value=0.2, help="Volume rendering gradient opacity, from (0.0, 1.0]").tag(sync=True)
     roi = NDArray(dtype=np.float64, default_value=np.zeros((2, 3), dtype=np.float64),
-                help="Region of interest: ((lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z))")\
+                help="Region of interest: [[lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z]]")\
             .tag(sync=True, **array_serialization)\
             .valid(shape_constraints(2, 3))
     vmin = CFloat(default_value=None, allow_none=True, help="Value that maps to the minimum of image colormap.").tag(sync=True)
     vmax = CFloat(default_value=None, allow_none=True, help="Value that maps to the maximum of image colormap.").tag(sync=True)
     _largest_roi = NDArray(dtype=np.float64, default_value=np.zeros((2, 3), dtype=np.float64),
-                help="Largest possible region of interest: ((lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z))")\
+                help="Largest possible region of interest: [[lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z]]")\
             .tag(sync=True, **array_serialization)\
             .valid(shape_constraints(2, 3))
     select_roi = CBool(default_value=False, help="Enable an interactive region of interest widget for the image.").tag(sync=True)
@@ -227,6 +227,10 @@ class Viewer(ViewerParent):
     rotate = CBool(default_value=False, help="Rotate the camera around the scene.").tag(sync=True)
     annotations = CBool(default_value=True, help="Show annotations.").tag(sync=True)
     mode = CaselessStrEnum(('x', 'y', 'z', 'v'), default_value='v', help="View mode: x: x plane, y: y plane, z: z plane, v: volume rendering").tag(sync=True)
+    camera = NDArray(dtype=np.float32, default_value=np.zeros((3, 3), dtype=np.float32),
+                help="Camera parameters: [[position_x, position_y, position_z], [focal_point_x, focal_point_y, focal_point_z], [view_up_x, view_up_y, view_up_z]]")\
+            .tag(sync=True, **array_serialization)\
+            .valid(shape_constraints(3, 3))
 
 
     def __init__(self, **kwargs):
@@ -602,6 +606,12 @@ def view(image=None,
             'y': y-plane
             'z': z-plane
             'v': volume rendering
+
+    camera: 3x3 numpy float32 array, optional
+        Camera parameters:
+            [[position_x,    position_y,    position_z],
+             [focal_point_x, focal_point_y, focal_point_z],
+             [view_up_x,     view_up_y,     view_up_z]]
 
 
     Other Parameters
