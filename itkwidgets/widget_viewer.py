@@ -427,10 +427,10 @@ class Viewer(ViewerParent):
     def _on_point_sets_changed(self, change=None):
         # Make sure we have a sufficient number of colors
         old_colors = self.point_set_colors
-        self.point_set_colors = old_colors
+        self.point_set_colors = old_colors[:len(self.point_sets)]
         # Make sure we have a sufficient number of opacities
         old_opacities = self.point_set_opacities
-        self.point_set_opacities = old_opacities
+        self.point_set_opacities = old_opacities[:len(self.point_sets)]
 
     @validate('geometry_colors')
     def _validate_geometry_colors(self, proposal):
@@ -465,10 +465,10 @@ class Viewer(ViewerParent):
     def _on_geometries_changed(self, change=None):
         # Make sure we have a sufficient number of colors
         old_colors = self.geometry_colors
-        self.geometry_colors = old_colors
+        self.geometry_colors = old_colors[:len(self.geometries)]
         # Make sure we have a sufficient number of opacities
         old_opacities = self.geometry_opacities
-        self.geometry_opacities = old_opacities
+        self.geometry_opacities = old_opacities[:len(self.geometries)]
 
     def roi_region(self):
         """Return the itk.ImageRegion corresponding to the roi."""

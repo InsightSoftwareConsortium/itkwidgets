@@ -296,12 +296,18 @@ function replaceRenderedImage(domWidgetView, rendered_image) {
 function replacePointSets(domWidgetView, pointSets) {
   const vtkPointSets = pointSets.map((pointSet) => vtk(pointSet))
   domWidgetView.model.itkVtkViewer.setPointSets(vtkPointSets)
+  domWidgetView.point_set_colors_changed()
+  domWidgetView.point_set_opacities_changed()
+  domWidgetView.model.itkVtkViewer.renderLater()
 }
 
 
 function replaceGeometries(domWidgetView, geometries) {
   const vtkGeometries = geometries.map((geometry) => vtk(geometry))
   domWidgetView.model.itkVtkViewer.setGeometries(vtkGeometries)
+  domWidgetView.geometry_colors_changed()
+  domWidgetView.geometry_opacities_changed()
+  domWidgetView.model.itkVtkViewer.renderLater()
 }
 
 
