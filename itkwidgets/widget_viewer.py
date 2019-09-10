@@ -15,17 +15,26 @@ import ipywidgets as widgets
 from traitlets import CBool, CFloat, Unicode, CaselessStrEnum, TraitError, validate
 from ipydatawidgets import NDArray, array_serialization, shape_constraints
 from .trait_types import ITKImage, PointSetList, PolyDataList, itkimage_serialization, polydata_list_serialization
+
 try:
     import ipywebrtc
     ViewerParent = ipywebrtc.MediaStream
 except ImportError:
     ViewerParent = widgets.DOMWidget
+
+have_vtk = False 
+try: 
+     import vtk 
+     have_vtk = True 
+except ImportError: 
+     pass 
+
 import matplotlib
 import colorcet
 
 from . import cm
 
-from IPython.core.debugger import set_trace
+#from IPython.core.debugger import set_trace
 
 
 COLORMAPS = ("2hot",
@@ -499,7 +508,7 @@ class Viewer(ViewerParent):
             slices.insert(0, slice(index[dim], upper_index[dim] + 1))
         return tuple(slices)
 
-
+ 
 def view(image=None,
         gradient_opacity=0.22, cmap=cm.viridis, slicing_planes=False,
         select_roi=False, shadow=True, interpolation=True,
@@ -616,6 +625,9 @@ def view(image=None,
 
     Other Parameters
     ----------------
+    
+    actors: vtkActor, vtkAssembly, vtkVolume, optional, default: None
+        List of standard vtk objects, colors are extracted from their properties  
 
     size_limit_2d: 2x1 numpy int64 array, optional, default: [1024, 1024]
         Size limit for 2D image visualization. If the roi is larger than this
@@ -633,6 +645,66 @@ def view(image=None,
         the visualization or retrieve values created by interacting with the
         widget.
     """
+
+    # this block allows the user to pass already formed vtkActor vtkVolume objects
+    actors = kwargs.pop("actors", None)
+    if have_vtk and actors is not None:
+        if not isinstance(actors, (list, tuple)): # passing the object directly, so make it a list
+            actors = [actors]
+        
+        images = []
+
+        for a in actors:
+
+            if isinstance(a, vtk.vtkAssembly): #unpack assemblies
+                cl = vtk.vtkPropCollection()
+                a.GetActors(cl)
+                cl.InitTraversal()
+                for i in range(a.GetNumberOfPaths()):
+                    ac = vtk.vtkActor.SafeDownCast(cl.GetNextProp())
+                    apoly = ac.GetMapper().GetInput()
+                    prop = ac.GetProperty()
+                    transform = vtk.vtkTransform()
+                    transform.SetMatrix(ac.GetMatrix())
+                    tp = vtk.vtkTransformPolyDataFilter()
+                    tp.SetTransform(transform)
+                    tp.SetInputData(apoly)
+                    tp.Update()
+                    poly = tp.GetOutput()
+                    if poly.GetNumberOfPolys():
+                        geometries.insert(0, poly)
+                        geometry_colors.insert(0, prop.GetColor())
+                        geometry_opacities.insert(0, prop.GetOpacity())
+                    else:
+                        point_sets.insert(0, poly)
+                        point_set_colors.insert(0, prop.GetColor())
+                        point_set_opacities.insert(0, prop.GetOpacity())
+
+            elif isinstance(a, vtk.vtkActor):
+                apoly = a.GetMapper().GetInput()
+                transform = vtk.vtkTransform()
+                transform.SetMatrix(a.GetMatrix())
+                tp = vtk.vtkTransformPolyDataFilter()
+                tp.SetTransform(transform)
+                tp.SetInputData(apoly)
+                tp.Update()
+                poly = tp.GetOutput()
+                prop = a.GetProperty()
+                if poly.GetNumberOfPolys():
+                    geometries.insert(0, poly)
+                    geometry_colors.insert(0, prop.GetColor())
+                    geometry_opacities.insert(0, prop.GetOpacity())
+                else:
+                    point_sets.insert(0, poly)
+                    point_set_colors.insert(0, prop.GetColor())
+                    point_set_opacities.insert(0, prop.GetOpacity())
+
+            elif isinstance(a, vtk.vtkVolume):
+                images.append(a.GetMapper().GetInput())
+
+        if image is None and len(images): #only one image is rendered
+            image = images[0]
+
 
     viewer = Viewer(image=image, interpolation=interpolation, cmap=cmap, shadow=shadow,
             select_roi=select_roi, slicing_planes=slicing_planes, gradient_opacity=gradient_opacity,
