@@ -662,11 +662,11 @@ def view(image=None,
                     tp.Update()
                     poly = tp.GetOutput()
                     if poly.GetNumberOfPolys():
-                        geometries.append(poly)
+                        geometries.insert(0, poly)
                         geometry_colors.insert(0, prop.GetColor())
                         geometry_opacities.insert(0, prop.GetOpacity())
                     else:
-                        point_sets.append(poly)
+                        point_sets.insert(0, poly)
                         point_set_colors.insert(0, prop.GetColor())
                         point_set_opacities.insert(0, prop.GetOpacity())
 
@@ -681,11 +681,11 @@ def view(image=None,
                 poly = tp.GetOutput()
                 prop = a.GetProperty()
                 if poly.GetNumberOfPolys():
-                    geometries.append(poly)
+                    geometries.insert(0, poly)
                     geometry_colors.insert(0, prop.GetColor())
                     geometry_opacities.insert(0, prop.GetOpacity())
                 else:
-                    point_sets.append(poly)
+                    point_sets.insert(0, poly)
                     point_set_colors.insert(0, prop.GetColor())
                     point_set_opacities.insert(0, prop.GetOpacity())
 
