@@ -663,12 +663,12 @@ def view(image=None,
                     poly = tp.GetOutput()
                     if poly.GetNumberOfPolys():
                         geometries.append(poly)
-                        geometry_colors.append(prop.GetColor())
-                        geometry_opacities.append(prop.GetOpacity())
+                        geometry_colors.insert(0, prop.GetColor())
+                        geometry_opacities.insert(0, prop.GetOpacity())
                     else:
                         point_sets.append(poly)
-                        point_set_colors.append(prop.GetColor())
-                        point_set_opacities.append(prop.GetOpacity())
+                        point_set_colors.insert(0, prop.GetColor())
+                        point_set_opacities.insert(0, prop.GetOpacity())
 
             elif isinstance(a, vtk.vtkActor):
                 apoly = a.GetMapper().GetInput()
@@ -682,12 +682,12 @@ def view(image=None,
                 prop = a.GetProperty()
                 if poly.GetNumberOfPolys():
                     geometries.append(poly)
-                    geometry_colors.append(prop.GetColor())
-                    geometry_opacities.append(prop.GetOpacity())
+                    geometry_colors.insert(0, prop.GetColor())
+                    geometry_opacities.insert(0, prop.GetOpacity())
                 else:
                     point_sets.append(poly)
-                    point_set_colors.append(prop.GetColor())
-                    point_set_opacities.append(prop.GetOpacity())
+                    point_set_colors.insert(0, prop.GetColor())
+                    point_set_opacities.insert(0, prop.GetOpacity())
 
             elif isinstance(a, vtk.vtkVolume):
                 images.append(a.GetMapper().GetInput())
