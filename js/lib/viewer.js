@@ -483,7 +483,6 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.vmin_changed()
         this.vmax_changed()
       }
-      this.mode_changed()
       if (rendered_image) {
         this.shadow_changed()
         this.slicing_planes_changed()
@@ -657,6 +656,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.geometry_colors_changed()
         this.geometry_opacities_changed()
       }
+      this.mode_changed()
   },
 
   render: function() {
