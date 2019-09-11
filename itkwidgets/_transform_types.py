@@ -141,7 +141,53 @@ def to_itk_image(image_like):
     return None
 
 def to_point_set(point_set_like):
-    if is_arraylike(point_set_like):
+    if isinstance(point_set_like, itk.PointSet):
+        if not hasattr(itk, 'PyVectorContainer'):
+            raise ModuleNotFoundError('itk.MeshToPolyDataFilter is not available -- install the itk-meshtopolydata package')
+        itk_polydata = itk.mesh_to_poly_data_filter(point_set_like)
+
+        point_set = { 'vtkClass': 'vtkPolyData' }
+
+        points = itk_polydata.GetPoints()
+        point_template = itk.template(points)
+        element_type = point_template[1][1]
+        # todo: test array_view here and below
+        point_values = itk.PyVectorContainer[element_type].array_from_vector_container(points)
+        if len(point_values.shape) > 1 and point_values.shape[1] == 2 or point_values.shape[1] == 3:
+            if point_values.shape[1] == 2:
+                point_values.resize((point_values.shape[0], 3))
+                point_values[:,2] = 0.0
+            points = { 'vtkClass': 'vtkPoints',
+                       'numberOfComponents': 3,
+                       'dataType': 'Float32Array',
+                       'size': point_values.size,
+                       'values': point_values }
+            point_set['points'] = points
+        else:
+            return None
+
+        itk_point_data = itk_polydata.GetPointData()
+        if itk_point_data and itk_point_data.Size():
+            pixel_type = itk.template(itk_polydata)[1][0]
+            data_type, number_of_components = _itk_pixel_to_vtkjs_type_components[pixel_type]
+            data = itk.PyVectorContainer[pixel_type].array_from_vector_container(itk_point_data)
+            point_data = {
+                "vtkClass": "vtkDataSetAttributes",
+                "activeScalars": 0,
+                "arrays": [
+                    { "data": {
+                        'vtkClass': 'vtkDataArray',
+                        'name': 'Point Data',
+                        'numberOfComponents': number_of_components,
+                        'size': data.size,
+                        'dataType': data_type,
+                        'values': data }
+                    } ],
+                  }
+            point_set['pointData'] = point_data
+
+        return point_set
+    elif is_arraylike(point_set_like):
         point_values = np.asarray(point_set_like).astype(np.float32)
         if len(point_values.shape) > 1 and point_values.shape[1] == 2 or point_values.shape[1] == 3:
             if point_values.shape[1] == 2:

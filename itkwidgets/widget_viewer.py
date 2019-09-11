@@ -12,7 +12,7 @@ import time
 import itk
 import numpy as np
 import ipywidgets as widgets
-from traitlets import CBool, CFloat, Unicode, CaselessStrEnum, TraitError, validate
+from traitlets import CBool, CFloat, Unicode, CaselessStrEnum, List, TraitError, validate
 from ipydatawidgets import NDArray, array_serialization, shape_constraints
 from .trait_types import ITKImage, PointSetList, PolyDataList, itkimage_serialization, polydata_list_serialization
 
@@ -22,12 +22,12 @@ try:
 except ImportError:
     ViewerParent = widgets.DOMWidget
 
-have_vtk = False 
-try: 
-     import vtk 
-     have_vtk = True 
-except ImportError: 
-     pass 
+have_vtk = False
+try:
+     import vtk
+     have_vtk = True
+except ImportError:
+     pass
 
 import matplotlib
 import colorcet
@@ -223,6 +223,7 @@ class Viewer(ViewerParent):
                     help="Opacities for the points sets")\
                 .tag(sync=True, **array_serialization)\
                 .valid(shape_constraints(None,))
+    point_set_representations = List(trait=Unicode(), default_value=[], help="Point set representation").tag(sync=True)
     geometries = PolyDataList(default_value=None, allow_none=True, help="Geometries to visualize").tag(sync=True, **polydata_list_serialization)
     geometry_colors = NDArray(dtype=np.float32, default_value=np.zeros((0, 3), dtype=np.float32),
                     help="RGB colors for the geometries")\
@@ -251,6 +252,10 @@ class Viewer(ViewerParent):
             proposal = { 'value': kwargs['point_set_opacities'] }
             opacities_array = self._validate_point_set_opacities(proposal)
             kwargs['point_set_opacities'] = opacities_array
+        if 'point_set_representations' in kwargs:
+            proposal = { 'value': kwargs['point_set_representations'] }
+            representations_list = self._validate_point_set_representations(proposal)
+            kwargs['point_set_representations'] = representations_list
         self.observe(self._on_point_sets_changed, ['point_sets'])
         if 'geometry_colors' in kwargs:
             proposal = { 'value': kwargs['geometry_colors'] }
@@ -437,6 +442,21 @@ class Viewer(ViewerParent):
         result[:n_values] = value
         return result
 
+    @validate('point_set_representations')
+    def _validate_point_set_representations(self, proposal):
+        value = proposal['value']
+        n_values = 0
+        if isinstance(value, str):
+            n_values = 1
+        else:
+            n_values = len(value)
+        n_representations = n_values
+        if self.point_sets:
+            n_representations = len(self.point_sets)
+        result = ['points']*n_representations
+        result[:n_values] = value
+        return result
+
     def _on_point_sets_changed(self, change=None):
         # Make sure we have a sufficient number of colors
         old_colors = self.point_set_colors
@@ -444,6 +464,9 @@ class Viewer(ViewerParent):
         # Make sure we have a sufficient number of opacities
         old_opacities = self.point_set_opacities
         self.point_set_opacities = old_opacities[:len(self.point_sets)]
+        # Make sure we have a sufficient number of representations
+        old_representations = self.point_set_representations
+        self.point_set_representations = old_representations[:len(self.point_sets)]
 
     @validate('geometry_colors')
     def _validate_geometry_colors(self, proposal):
@@ -508,11 +531,11 @@ class Viewer(ViewerParent):
             slices.insert(0, slice(index[dim], upper_index[dim] + 1))
         return tuple(slices)
 
- 
+
 def view(image=None,
         gradient_opacity=0.22, cmap=cm.viridis, slicing_planes=False,
         select_roi=False, shadow=True, interpolation=True,
-        point_sets=[], point_set_colors=[], point_set_opacities=[], # point_set_sizes=[],
+        point_sets=[], point_set_colors=[], point_set_opacities=[], point_set_representations=[], # point_set_sizes=[],
         geometries=[], geometry_colors=[], geometry_opacities=[],
         ui_collapsed=False, rotate=False, annotations=True, mode='v',
         **kwargs):
@@ -581,6 +604,9 @@ def view(image=None,
     point_set_opacities: list of floats, optional, default: [0.5,]*n
         Opacity for the point sets, in the range (0.0, 1.0].
 
+    point_set_representations: list of strings, optional, default: ['points',]*n
+        How to represent the point set. One of 'hidden', 'points', or 'spheres'.
+
     Geometries
     ^^^^^^^^^^
 
@@ -625,9 +651,9 @@ def view(image=None,
 
     Other Parameters
     ----------------
-    
+
     actors: vtkActor, vtkAssembly, vtkVolume, optional, default: None
-        List of standard vtk objects, colors are extracted from their properties  
+        List of standard vtk objects, colors are extracted from their properties
 
     size_limit_2d: 2x1 numpy int64 array, optional, default: [1024, 1024]
         Size limit for 2D image visualization. If the roi is larger than this
@@ -651,7 +677,7 @@ def view(image=None,
     if have_vtk and actors is not None:
         if not isinstance(actors, (list, tuple)): # passing the object directly, so make it a list
             actors = [actors]
-        
+
         images = []
 
         for a in actors:
@@ -708,7 +734,10 @@ def view(image=None,
 
     viewer = Viewer(image=image, interpolation=interpolation, cmap=cmap, shadow=shadow,
             select_roi=select_roi, slicing_planes=slicing_planes, gradient_opacity=gradient_opacity,
-            point_sets=point_sets, point_set_colors=point_set_colors, point_set_opacities=point_set_opacities,
+            point_sets=point_sets,
+            point_set_colors=point_set_colors,
+            point_set_opacities=point_set_opacities,
+            point_set_representations=point_set_representations,
             geometries=geometries, geometry_colors=geometry_colors, geometry_opacities=geometry_opacities,
             rotate=rotate, ui_collapsed=ui_collapsed, annotations=annotations, mode=mode,
              **kwargs)
