@@ -30,13 +30,15 @@ point sets, and meshes.
 
   - NumPy array images
   - itk.Image
+  - Dask array images
   - vtk.vtkImageData
   - pyvista.UniformGrid
-  - Dask array images
+  - vtkplotter.Volume
   - ImageJ / Fiji / ImageJ2 images
   - Additional NumPy array-like objects
 
   - NumPy array point sets
+  - itk.PointSet
   - vtk.vtkPolyData point sets
   - pyvista.PolyData point sets
 
@@ -52,7 +54,6 @@ point sets, and meshes.
   - pyvista.UnstructuredGrid
   - vtkplotter.Actor
   - vtkplotter.Assembly
-  - vtkplotter.Volume
 
 - Exquisite volume rendering
 - Tri-plane volume slicing
