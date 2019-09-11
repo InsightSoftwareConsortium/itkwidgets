@@ -79,6 +79,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       point_sets: null,
       point_set_colors: new Float32Array([0., 0., 0.]),
       point_set_opacities: new Float32Array([1.0]),
+      point_set_representations: new Array(),
       geometries: null,
       geometry_colors: new Float32Array([0., 0., 0.]),
       geometry_opacities: new Float32Array([1.0]),
@@ -300,6 +301,7 @@ function replacePointSets(domWidgetView, pointSets) {
   domWidgetView.model.itkVtkViewer.setPointSets(vtkPointSets)
   domWidgetView.point_set_colors_changed()
   domWidgetView.point_set_opacities_changed()
+  domWidgetView.point_set_representations_changed()
   domWidgetView.model.itkVtkViewer.renderLater()
 }
 
@@ -650,6 +652,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       if(point_sets) {
         this.point_set_colors_changed()
         this.point_set_opacities_changed()
+        this.point_set_representations_changed()
       }
       const geometries = this.model.get('geometries')
       if(geometries) {
@@ -672,6 +675,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:point_sets', this.point_sets_changed, this)
     this.model.on('change:point_set_colors', this.point_set_colors_changed, this)
     this.model.on('change:point_set_opacities', this.point_set_opacities_changed, this)
+    this.model.on('change:point_set_representations', this.point_set_representations_changed, this)
     this.model.on('change:geometries', this.geometries_changed, this)
     this.model.on('change:geometry_colors', this.geometry_colors_changed, this)
     this.model.on('change:geometry_opacities', this.geometry_opacities_changed, this)
@@ -787,6 +791,30 @@ const ViewerView = widgets.DOMWidgetView.extend({
       if(point_sets && !!point_sets.length) {
         point_sets.forEach((point_set, index) => {
           this.model.itkVtkViewer.setPointSetOpacity(index, point_setOpacities[index])
+        })
+      }
+    }
+  },
+
+  point_set_representations_changed: function() {
+    const point_set_representations = this.model.get('point_set_representations')
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      const point_sets = this.model.get('point_sets')
+      if(point_sets && !!point_sets.length) {
+        point_set_representations.forEach((representation, index) => {
+          switch(representation.toLowerCase()) {
+          case 'hidden':
+            this.model.itkVtkViewer.setPointSetRepresentation(index, 'Hidden')
+            break;
+          case 'points':
+            this.model.itkVtkViewer.setPointSetRepresentation(index, 'Points')
+            break;
+          case 'spheres':
+            this.model.itkVtkViewer.setPointSetRepresentation(index, 'Spheres')
+            break;
+          default:
+            this.model.itkVtkViewer.setPointSetRepresentation(index, 'Points')
+          }
         })
       }
     }
