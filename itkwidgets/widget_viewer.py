@@ -22,12 +22,12 @@ try:
 except ImportError:
     ViewerParent = widgets.DOMWidget
 
-have_vtk = False 
-try: 
-     import vtk 
-     have_vtk = True 
-except ImportError: 
-     pass 
+have_vtk = False
+try:
+     import vtk
+     have_vtk = True
+except ImportError:
+     pass
 
 import matplotlib
 import colorcet
@@ -508,7 +508,7 @@ class Viewer(ViewerParent):
             slices.insert(0, slice(index[dim], upper_index[dim] + 1))
         return tuple(slices)
 
- 
+
 def view(image=None,
         gradient_opacity=0.22, cmap=cm.viridis, slicing_planes=False,
         select_roi=False, shadow=True, interpolation=True,
@@ -625,9 +625,9 @@ def view(image=None,
 
     Other Parameters
     ----------------
-    
+
     actors: vtkActor, vtkAssembly, vtkVolume, optional, default: None
-        List of standard vtk objects, colors are extracted from their properties  
+        List of standard vtk objects, colors are extracted from their properties
 
     size_limit_2d: 2x1 numpy int64 array, optional, default: [1024, 1024]
         Size limit for 2D image visualization. If the roi is larger than this
@@ -651,7 +651,7 @@ def view(image=None,
     if have_vtk and actors is not None:
         if not isinstance(actors, (list, tuple)): # passing the object directly, so make it a list
             actors = [actors]
-        
+
         images = []
 
         for a in actors:
