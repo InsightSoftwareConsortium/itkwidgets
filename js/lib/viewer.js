@@ -256,7 +256,8 @@ const createRenderingPipeline = (domWidgetView, { rendered_image, point_sets, ge
     interactor.onEndPinch(cropROIByViewport)
 
     const dataArray = imageData.getPointData().getScalars()
-    if (dataArray.getNumberOfComponents() > 1) {
+    const numberOfComponents = dataArray.getNumberOfComponents()
+    if (domWidgetView.model.use2D && dataArray.getDataType() === 'Uint8Array' && (numberOfComponents === 3 || numberOfComponents === 4)) {
       domWidgetView.model.itkVtkViewer.setColorMap(0, 'Grayscale')
       domWidgetView.model.set('cmap', 'Grayscale')
       domWidgetView.model.save_changes()
@@ -286,7 +287,8 @@ function replaceRenderedImage(domWidgetView, rendered_image) {
   }
 
   const dataArray = imageData.getPointData().getScalars()
-  if (dataArray.getNumberOfComponents() > 1) {
+  const numberOfComponents = dataArray.getNumberOfComponents()
+  if (domWidgetView.model.use2D && dataArray.getDataType() === 'Uint8Array' && (numberOfComponents === 3 || numberOfComponents === 4)) {
     domWidgetView.model.itkVtkViewer.setColorMap(0, 'Grayscale')
     domWidgetView.model.set('cmap', 'Grayscale')
     domWidgetView.model.save_changes()
