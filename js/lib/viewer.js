@@ -257,7 +257,7 @@ const createRenderingPipeline = (domWidgetView, { rendered_image, point_sets, ge
 
     const dataArray = imageData.getPointData().getScalars()
     if (dataArray.getNumberOfComponents() > 1) {
-      domWidgetView.model.itkVtkViewer.setColorMap('Grayscale')
+      domWidgetView.model.itkVtkViewer.setColorMap(0, 'Grayscale')
       domWidgetView.model.set('cmap', 'Grayscale')
       domWidgetView.model.save_changes()
     }
@@ -287,7 +287,7 @@ function replaceRenderedImage(domWidgetView, rendered_image) {
 
   const dataArray = imageData.getPointData().getScalars()
   if (dataArray.getNumberOfComponents() > 1) {
-    domWidgetView.model.itkVtkViewer.setColorMap('Grayscale')
+    domWidgetView.model.itkVtkViewer.setColorMap(0, 'Grayscale')
     domWidgetView.model.set('cmap', 'Grayscale')
     domWidgetView.model.save_changes()
   }
@@ -529,7 +529,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       }
       this.model.itkVtkViewer.subscribeToggleInterpolation(onInterpolationToggle)
 
-      const onSelectColorMap = (colorMap) => {
+      const onSelectColorMap = (component, colorMap) => {
         if (colorMap !== this.model.get('cmap')) {
           this.model.set('cmap', colorMap)
           this.model.save_changes()
@@ -537,7 +537,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       }
       this.model.itkVtkViewer.subscribeSelectColorMap(onSelectColorMap)
 
-      const onChangeColorRange = (colorRange) => {
+      const onChangeColorRange = (component, colorRange) => {
         const vmin = this.model.get('vmin')
         if (colorRange[0] !== vmin) {
           this.model.set('vmin', colorRange[0])
@@ -939,25 +939,25 @@ const ViewerView = widgets.DOMWidgetView.extend({
   cmap_changed: function() {
     const cmap = this.model.get('cmap')
     if (this.model.hasOwnProperty('itkVtkViewer')) {
-      this.model.itkVtkViewer.setColorMap(cmap)
+      this.model.itkVtkViewer.setColorMap(0, cmap)
     }
   },
 
   vmin_changed: function() {
     const vmin = this.model.get('vmin')
     if (vmin !== null && this.model.hasOwnProperty('itkVtkViewer')) {
-      let colorRange = this.model.itkVtkViewer.getColorRange().slice()
+      let colorRange = this.model.itkVtkViewer.getColorRange(0).slice()
       colorRange[0] = vmin
-      this.model.itkVtkViewer.setColorRange(colorRange)
+      this.model.itkVtkViewer.setColorRange(0, colorRange)
     }
   },
 
   vmax_changed: function() {
     const vmax = this.model.get('vmax')
     if (vmax !== null && this.model.hasOwnProperty('itkVtkViewer')) {
-      let colorRange = this.model.itkVtkViewer.getColorRange().slice()
+      let colorRange = this.model.itkVtkViewer.getColorRange(0).slice()
       colorRange[1] = vmax
-      this.model.itkVtkViewer.setColorRange(colorRange)
+      this.model.itkVtkViewer.setColorRange(0, colorRange)
     }
   },
 
