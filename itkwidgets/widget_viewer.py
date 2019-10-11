@@ -14,7 +14,7 @@ import numpy as np
 import ipywidgets as widgets
 from traitlets import CBool, CFloat, Unicode, CaselessStrEnum, List, TraitError, validate
 from ipydatawidgets import NDArray, array_serialization, shape_constraints
-from .trait_types import ITKImage, PointSetList, PolyDataList, itkimage_serialization, polydata_list_serialization
+from .trait_types import ITKImage, PointSetList, PolyDataList, itkimage_serialization, polydata_list_serialization, Colormap
 
 try:
     import ipywebrtc
@@ -35,70 +35,6 @@ import colorcet
 from . import cm
 
 #from IPython.core.debugger import set_trace
-
-COLORMAPS = ('Viridis (matplotlib)',
-  'Plasma (matplotlib)',
-  'Inferno (matplotlib)',
-  'Magma (matplotlib)',
-  'Grayscale',
-  'X Ray',
-  'magenta',
-  'blue2cyan',
-  'gray_Matlab',
-  'bone_Matlab',
-  'pink_Matlab',
-  '2hot',
-  'gist_earth',
-  'Haze',
-  'Haze_green',
-  'Haze_lime',
-  'Haze_cyan',
-  'Black, Blue and White',
-  'Black, Orange and White',
-  'Black-Body Radiation',
-
-  'Cool to Warm',
-  'Warm to Cool',
-  'Cool to Warm (Extended)',
-  'Warm to Cool (Extended)',
-  'Blue to Red Rainbow',
-  'Red to Blue Rainbow',
-  'jet',
-  'rainbow',
-  'hsv',
-  'Rainbow Desaturated',
-  'Cold and Hot',
-  'Rainbow Blended Black',
-  'Rainbow Blended Grey',
-  'Rainbow Blended White',
-  'nic_CubicL',
-  'Spectral_lowBlue',
-  'Yellow 15',
-  'Asymmtrical Earth Tones (6_21b)',
-  'Green-Blue Asymmetric Divergent (62Blbc)',
-  'Muted Blue-Green',
-
-  'Reds',
-  'Greens',
-  'Blues',
-  'Purples',
-  'Oranges',
-  'PuBu',
-  'BuPu',
-  'BuGn',
-  'GnBu',
-  'PuRd',
-  'RdPu',
-  'RdOr',
-  'BuRd',
-  'GnRP',
-  'GYPi',
-  'GBBr',
-  'PRGn',
-  'PiYG',
-  'OrPu',
-  'BrBG'
-)
 
 def get_ioloop():
     import IPython
@@ -171,7 +107,11 @@ class Viewer(ViewerParent):
     rendered_image = ITKImage(default_value=None, allow_none=True).tag(sync=True, **itkimage_serialization)
     _rendering_image = CBool(default_value=False, help="We are currently volume rendering the image.").tag(sync=True)
     interpolation = CBool(default_value=True, help="Use linear interpolation in slicing planes.").tag(sync=True)
-    cmap = Unicode('Viridis (matplotlib)').tag(sync=True)
+    cmap = Colormap('Viridis (matplotlib)').tag(sync=True)
+    _custom_cmap = NDArray(dtype=np.float32, default_value=None, allow_none=True,
+                help="RGB triples from 0.0 to 1.0 that define a custom linear, sequential colormap")\
+            .tag(sync=True, **array_serialization)\
+            .valid(shape_constraints(None, 3))
     shadow = CBool(default_value=True, help="Use shadowing in the volume rendering.").tag(sync=True)
     slicing_planes = CBool(default_value=False, help="Display the slicing planes in volume rendering view mode.").tag(sync=True)
     gradient_opacity = CFloat(default_value=0.2, help="Volume rendering gradient opacity, from (0.0, 1.0]").tag(sync=True)
@@ -385,13 +325,6 @@ class Viewer(ViewerParent):
             return 0.01
         if value > 1.0:
             return 1.0
-        return value
-
-    @validate('cmap')
-    def _validate_cmap(self, proposal):
-        value = proposal['value']
-        if not value in COLORMAPS:
-            raise TraitError('Invalid colormap')
         return value
 
     @validate('point_set_colors')

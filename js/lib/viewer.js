@@ -66,6 +66,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       _rendering_image: false,
       interpolation: true,
       cmap: 'Viridis (matplotlib)',
+      _custom_cmap: new Float32Array([0., 0., 0.]),
       vmin: null,
       vmax: null,
       shadow: true,
@@ -92,6 +93,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
   }}, {
   serializers: Object.assign({
     rendered_image: { serialize: serialize_itkimage, deserialize: deserialize_itkimage },
+    _custom_cmap: simplearray_serialization,
     point_sets: { serialize: serialize_polydata_list, deserialize: deserialize_polydata_list },
     geometries: { serialize: serialize_polydata_list, deserialize: deserialize_polydata_list },
     roi: fixed_shape_serialization([2, 3]),
@@ -532,7 +534,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.model.itkVtkViewer.subscribeToggleInterpolation(onInterpolationToggle)
 
       const onSelectColorMap = (component, colorMap) => {
-        if (colorMap !== this.model.get('cmap')) {
+        if (colorMap !== this.model.get('cmap') && !!!this.model.colorMapLoopBreak) {
           this.model.set('cmap', colorMap)
           this.model.save_changes()
         }
@@ -941,7 +943,25 @@ const ViewerView = widgets.DOMWidgetView.extend({
   cmap_changed: function() {
     const cmap = this.model.get('cmap')
     if (this.model.hasOwnProperty('itkVtkViewer')) {
+      const lutProxies = this.model.itkVtkViewer.getLookupTableProxies()
+      const lutProxy = lutProxies[0]
+      if (cmap.startsWith('Custom')) {
+        const customCmap = this.model.get('_custom_cmap')
+        const numPoints = customCmap.shape[0]
+        const rgbPoints = new Array(numPoints)
+        const cmapArray = customCmap['array']
+        const step = 1.0 / (numPoints - 1);
+        let xx = 0.0
+        for (let pointIndex = 0; pointIndex < numPoints; pointIndex++) {
+          const rgb = cmapArray.slice(pointIndex*3, (pointIndex+1)*3)
+          rgbPoints[pointIndex] = [xx, rgb[0], rgb[1], rgb[2]]
+          xx += step
+        }
+        lutProxy.setRGBPoints(rgbPoints)
+      }
+      this.model.colorMapLoopBreak = true
       this.model.itkVtkViewer.setColorMap(0, cmap)
+      this.model.colorMapLoopBreak = false
     }
   },
 
