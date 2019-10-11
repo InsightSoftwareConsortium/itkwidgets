@@ -1,10 +1,12 @@
 import os
 import six
 import collections
+from datetime import datetime
 
 import traitlets
 import itk
 import numpy as np
+import matplotlib.colors
 try:
     import zstandard as zstd
 except ImportError:
@@ -15,6 +17,8 @@ except ImportError:
     pass
 
 from ._transform_types import to_itk_image, to_point_set, to_geometry
+
+from IPython.core.debugger import set_trace
 
 class ITKImage(traitlets.TraitType):
     """A trait type holding an itk.Image object"""
@@ -470,3 +474,96 @@ class PointSetList(PolyDataList):
             return point_sets
         except:
             self.error(obj, value)
+
+class Colormap(traitlets.Unicode):
+    """A trait type holding a colormap"""
+
+    info_text = 'A colormap, either a vtk.js colormap preset, np.ndarray of RGB points, or matplotlib colormap.'
+
+    _colormap_presets = ('Viridis (matplotlib)',
+      'Plasma (matplotlib)',
+      'Inferno (matplotlib)',
+      'Magma (matplotlib)',
+      'Grayscale',
+      'X Ray',
+      'magenta',
+      'blue2cyan',
+      'gray_Matlab',
+      'bone_Matlab',
+      'pink_Matlab',
+      '2hot',
+      'gist_earth',
+      'Haze',
+      'Haze_green',
+      'Haze_lime',
+      'Haze_cyan',
+      'Black, Blue and White',
+      'Black, Orange and White',
+      'Black-Body Radiation',
+
+      'Cool to Warm',
+      'Warm to Cool',
+      'Cool to Warm (Extended)',
+      'Warm to Cool (Extended)',
+      'Blue to Red Rainbow',
+      'Red to Blue Rainbow',
+      'jet',
+      'rainbow',
+      'hsv',
+      'Rainbow Desaturated',
+      'Cold and Hot',
+      'Rainbow Blended Black',
+      'Rainbow Blended Grey',
+      'Rainbow Blended White',
+      'nic_CubicL',
+      'Spectral_lowBlue',
+      'Yellow 15',
+      'Asymmtrical Earth Tones (6_21b)',
+      'Green-Blue Asymmetric Divergent (62Blbc)',
+      'Muted Blue-Green',
+
+      'Reds',
+      'Greens',
+      'Blues',
+      'Purples',
+      'Oranges',
+      'PuBu',
+      'BuPu',
+      'BuGn',
+      'GnBu',
+      'PuRd',
+      'RdPu',
+      'RdOr',
+      'BuRd',
+      'GnRP',
+      'GYPi',
+      'GBBr',
+      'PRGn',
+      'PiYG',
+      'OrPu',
+      'BrBG'
+    )
+
+    def validate(self, obj, value):
+        if isinstance(value, np.ndarray):
+            custom_cmap = value.astype(np.float32)
+            custom_cmap = custom_cmap[:,:3]
+            obj._custom_cmap = custom_cmap
+            timestamp = str(datetime.timestamp(datetime.now()))
+            return 'Custom NumPy ' + timestamp
+        elif isinstance(value, matplotlib.colors.LinearSegmentedColormap):
+            custom_cmap = value(np.linspace(0.0, 1.0, 64)).astype(np.float32)
+            custom_cmap = custom_cmap[:,:3]
+            obj._custom_cmap = custom_cmap
+            timestamp = str(datetime.timestamp(datetime.now()))
+            return 'Custom matplotlib ' + timestamp
+        elif isinstance(value, matplotlib.colors.ListedColormap):
+            custom_cmap = value.colors.astype(np.float32)
+            custom_cmap = custom_cmap[:,:3]
+            obj._custom_cmap = custom_cmap
+            timestamp = str(datetime.timestamp(datetime.now()))
+            return 'Custom matplotlib ' + timestamp
+        if not value in self._colormap_presets and not value.startswith('Custom'):
+            raise self.error('Invalid colormap')
+        return super(Colormap, self).validate(obj, value)
+
