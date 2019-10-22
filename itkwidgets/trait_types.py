@@ -557,12 +557,6 @@ class Colormap(traitlets.Unicode):
             obj._custom_cmap = custom_cmap
             timestamp = str(datetime.timestamp(datetime.now()))
             return 'Custom matplotlib ' + timestamp
-        elif isinstance(value, matplotlib.colors.ListedColormap):
-            custom_cmap = value.colors.astype(np.float32)
-            custom_cmap = custom_cmap[:,:3]
-            obj._custom_cmap = custom_cmap
-            timestamp = str(datetime.timestamp(datetime.now()))
-            return 'Custom matplotlib ' + timestamp
         if not value in self._colormap_presets and not value.startswith('Custom'):
             raise self.error('Invalid colormap')
         return super(Colormap, self).validate(obj, value)
