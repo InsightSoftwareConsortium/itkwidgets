@@ -29,6 +29,13 @@ try:
 except ImportError:
      pass
 
+have_mayavi = False
+try:
+     import mayavi
+     have_mayavi = True
+except ImportError:
+     pass
+
 import matplotlib
 import colorcet
 
@@ -596,6 +603,12 @@ def view(image=None,
         images = []
 
         for a in actors:
+            if have_mayavi:
+                from tvtk.api import tvtk
+                if isinstance(a, mayavi.modules.surface.Surface):
+                    a = tvtk.to_vtk(a.actor.actor)
+                elif isinstance(a, mayavi.modules.iso_surface.IsoSurface):
+                    a = tvtk.to_vtk(a.actor.actor)
 
             if isinstance(a, vtk.vtkAssembly): #unpack assemblies
                 cl = vtk.vtkPropCollection()
@@ -631,7 +644,7 @@ def view(image=None,
                 tp.Update()
                 poly = tp.GetOutput()
                 prop = a.GetProperty()
-                if poly.GetNumberOfPolys():
+                if poly.GetNumberOfPolys() or poly.GetNumberOfStrips() or poly.GetNumberOfLines():
                     geometries.insert(0, poly)
                     geometry_colors.insert(0, prop.GetColor())
                     geometry_opacities.insert(0, prop.GetOpacity())
