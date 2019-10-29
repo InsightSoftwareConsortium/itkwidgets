@@ -9,6 +9,10 @@ itkwidgets
     :target: https://pypi.python.org/pypi/itkwidgets
     :alt: PyPI
 
+.. image:: https://img.shields.io/npm/v/itkwidgets/latest
+    :target: https://www.npmjs.com/package/itkwidgets
+    :alt: npm
+
 .. image:: https://circleci.com/gh/InsightSoftwareConsortium/itkwidgets.svg?style=shield
     :target: https://circleci.com/gh/InsightSoftwareConsortium/itkwidgets
     :alt: Build status
