@@ -31,7 +31,7 @@ except ImportError:
 
 have_mayavi = False
 try:
-     import mayavi
+     import mayavi.modules
      have_mayavi = True
 except ImportError:
      pass
@@ -604,10 +604,12 @@ def view(image=None,
 
         for a in actors:
             if have_mayavi:
+                from mayavi.modules import surface
+                from mayavi.modules import iso_surface
                 from tvtk.api import tvtk
-                if isinstance(a, mayavi.modules.surface.Surface):
+                if isinstance(a, surface.Surface):
                     a = tvtk.to_vtk(a.actor.actor)
-                elif isinstance(a, mayavi.modules.iso_surface.IsoSurface):
+                elif isinstance(a, iso_surface.IsoSurface):
                     a = tvtk.to_vtk(a.actor.actor)
 
             if isinstance(a, vtk.vtkAssembly): #unpack assemblies
