@@ -157,8 +157,7 @@ def test_numpy_array_to_point_set():
     assert(point_set['points']['dataType'] == 'Float32Array')
     assert(point_set['points']['size'] == number_of_points * 3)
 
-    point_set_array.resize((number_of_points, 3))
-    point_set_array[:,2] = 0.0
+    point_set_array = np.hstack((point_set_array, -5.0e-6*np.ones((point_set_array.shape[0], 1)))).astype(np.float32)
     assert(np.alltrue(point_set['points']['values'] ==
         point_set_array.astype(np.float32)))
 
