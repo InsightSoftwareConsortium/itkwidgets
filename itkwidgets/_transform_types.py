@@ -155,8 +155,7 @@ def to_point_set(point_set_like):
         point_values = itk.PyVectorContainer[element_type].array_from_vector_container(points)
         if len(point_values.shape) > 1 and point_values.shape[1] == 2 or point_values.shape[1] == 3:
             if point_values.shape[1] == 2:
-                point_values.resize((point_values.shape[0], 3))
-                point_values[:,2] = 0.0
+                point_values = np.hstack((point_values, -5.0e-6*np.ones((point_values.shape[0], 1)))).astype(np.float32)
             points = { 'vtkClass': 'vtkPoints',
                        'numberOfComponents': 3,
                        'dataType': 'Float32Array',
@@ -191,8 +190,7 @@ def to_point_set(point_set_like):
         point_values = np.asarray(point_set_like).astype(np.float32)
         if len(point_values.shape) > 1 and point_values.shape[1] == 2 or point_values.shape[1] == 3:
             if point_values.shape[1] == 2:
-                point_values.resize((point_values.shape[0], 3))
-                point_values[:,2] = 0.0
+                point_values = np.hstack((point_values, -5.0e-6*np.ones((point_values.shape[0], 1)))).astype(np.float32)
             point_set = { 'vtkClass': 'vtkPolyData' }
             points = { 'vtkClass': 'vtkPoints',
                        'name': '_points',
