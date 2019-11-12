@@ -47,6 +47,7 @@ point sets, and meshes.
   - pyvista.PolyData point sets
 
   - itk.Mesh
+  - itk.PolyLineParametricPath
   - vtk.vtkPolyData
   - vtk.vtkStructuredGrid
   - vtk.vtkUnstructuredGrid

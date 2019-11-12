@@ -332,6 +332,43 @@ def to_geometry(geometry_like):
             geometry['cellData'] = cell_data
 
         return geometry
+    elif isinstance(geometry_like, itk.PolyLineParametricPath):
+        vertex_list = geometry_like.GetVertexList()
+        number_of_points = vertex_list.Size()
+        geometry = { 'vtkClass': 'vtkPolyData' }
+
+        points_data = -5.0e-6*np.ones((number_of_points, 3), dtype=np.float64)
+        dimension = len(vertex_list.GetElement(0))
+        # Todo: replace with itk.PyVectorContainer direct NumPy conversion
+        for index in range(number_of_points):
+            points_data[index,:dimension] = vertex_list.GetElement(index)
+        points_data = points_data.astype(np.float32).ravel()
+        points = { 'vtkClass': 'vtkPoints',
+                   'name': '_points',
+                   'numberOfComponents': 3,
+                   'dataType': 'Float32Array',
+                   'size': points_data.size,
+                   'values': points_data }
+        geometry['points'] = points
+
+        verts_data = np.ones((2*number_of_points,), dtype=np.uint32)
+        verts_data[1::2] = np.arange(number_of_points, dtype=np.uint32)
+
+        lines_data = 2*np.ones((3*(number_of_points-1),), dtype=np.uint32)
+        lines_data[1::3] = np.arange(number_of_points-1, dtype=np.uint32)
+        lines_data[2::3] = np.arange(1,number_of_points, dtype=np.uint32)
+
+        # For cell_type, cell_data in [('verts', verts_data),]:
+        for cell_type, cell_data in [('verts', verts_data), ('lines', lines_data)]:
+            cells = { 'vtkClass': 'vtkCellArray',
+                      'name': '_' + cell_type,
+                      'numberOfComponents': 1,
+                      'size': cell_data.size,
+                      'dataType': 'Uint32Array',
+                      'values': cell_data }
+            geometry[cell_type] = cells
+
+        return geometry
     elif have_vtk and isinstance(geometry_like, vtk.vtkPolyData):
         from vtk.util.numpy_support import vtk_to_numpy
 

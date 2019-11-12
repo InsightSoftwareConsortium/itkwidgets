@@ -18,7 +18,7 @@ except ImportError:
 
 from ._transform_types import to_itk_image, to_point_set, to_geometry
 
-from IPython.core.debugger import set_trace
+# from IPython.core.debugger import set_trace
 
 class ITKImage(traitlets.TraitType):
     """A trait type holding an itk.Image object"""

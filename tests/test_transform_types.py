@@ -127,6 +127,35 @@ def test_vtkpolydata_to_geometry():
     assert(np.array_equal(geometry['cellData']['arrays'][0]['data']['values'],
         np.arange(cone.GetNumberOfCells(), dtype=np.float32)))
 
+def test_itkpolylineparametricpath_to_geometry():
+    Dimension = 2
+    polyline = itk.PolyLineParametricPath[Dimension].New()
+    polyline.AddVertex([3.0, 3.0])
+    polyline.AddVertex([4.0, 7.0])
+    polyline.AddVertex([5.0, 5.0])
+
+    geometry = to_geometry(polyline)
+
+    assert(geometry['vtkClass'] == 'vtkPolyData')
+    assert(geometry['points']['vtkClass'] == 'vtkPoints')
+    assert(geometry['points']['numberOfComponents'] == 3)
+    assert(geometry['points']['dataType'] == 'Float32Array')
+    assert(geometry['points']['size'] == 3 * 3)
+    assert(np.array_equal(geometry['points']['values'],
+        np.array([3.0, 3.0, -5.0e-6, 4.0, 7.0, -5e-6, 5.0, 5.0, -5e-6]).astype(np.float32)))
+
+    assert(geometry['verts']['vtkClass'] == 'vtkCellArray')
+    assert(geometry['verts']['numberOfComponents'] == 1)
+    assert(geometry['verts']['dataType'] == 'Uint32Array')
+    assert(geometry['verts']['size'] == 6)
+    assert(np.array_equal(geometry['verts']['values'],
+        [1, 0, 1, 1, 1, 2]))
+    assert(geometry['lines']['vtkClass'] == 'vtkCellArray')
+    assert(geometry['lines']['numberOfComponents'] == 1)
+    assert(geometry['lines']['dataType'] == 'Uint32Array')
+    assert(geometry['lines']['size'] == 6)
+    assert(np.array_equal(geometry['lines']['values'],
+        [2, 0, 1, 2, 1, 2]))
 
 gaussian_1_mean = [0.0, 0.0, 0.0]
 gaussian_1_cov = [[1.0, 0.0, 0.0], [0.0, 2.0, 0.0], [0.0, 0.0, 0.5]]
