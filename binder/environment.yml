@@ -6,6 +6,7 @@ dependencies:
   - python=3.6
   - numpy
   - itk
+  - pip
   - pip:
     - ipywidgets>=7.1.2
     - numpy

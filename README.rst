@@ -123,7 +123,7 @@ or with conda::
 
 For Jupyter Lab, additionally run::
 
-  jupyter labextension install @jupyter-widgets/jupyterlab-manager itkwidgets
+  jupyter labextension install @jupyter-widgets/jupyterlab-manager jupyter-matplotlib jupyterlab-datawidgets itkwidgets
 
 Usage
 -----
