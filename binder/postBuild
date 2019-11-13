@@ -7,4 +7,5 @@ pip install .
 jupyter nbextension install --py --sys-prefix itkwidgets
 jupyter nbextension enable --py --sys-prefix itkwidgets
 cd /tmp/
-jupyter labextension install @jupyter-widgets/jupyterlab-manager jupyter-matplotlib jupyterlab-datawidgets itkwidgets
+jupyter labextension install @jupyter-widgets/jupyterlab-manager
+jupyter labextension install jupyter-matplotlib jupyterlab-datawidgets itkwidgets
