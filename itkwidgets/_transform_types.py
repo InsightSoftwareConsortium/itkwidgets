@@ -27,6 +27,12 @@ try:
     have_dask = True
 except ImportError:
     pass
+have_simpleitk = False
+try:
+    import SimpleITK as sitk
+    have_simpleitk = True
+except ImportError:
+    pass
 
 _itk_pixel_to_vtkjs_type_components = {
     itk.SC: ('Int8Array', 1),
@@ -130,6 +136,17 @@ def to_itk_image(image_like):
         image_from_array = itk.image_view_from_array(array)
         image_from_array.SetSpacing(image_like.GetSpacing())
         image_from_array.SetOrigin(image_like.GetOrigin())
+        return image_from_array
+    elif have_simpleitk and isinstance(image_like, sitk.Image):
+        array = sitk.GetArrayViewFromImage(image_like)
+        image_from_array = itk.image_view_from_array(array)
+        image_from_array.SetSpacing(image_like.GetSpacing())
+        image_from_array.SetOrigin(image_like.GetOrigin())
+        direction = image_like.GetDirection()
+        npdirection = np.asarray(direction)
+        npdirection = np.reshape(npdirection, (-1,3))
+        itkdirection = itk.matrix_from_array(npdirection)
+        image_from_array.SetDirection(itkdirection)
         return image_from_array
     elif have_imagej:
         import imglyb
