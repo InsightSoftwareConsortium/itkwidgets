@@ -1,6 +1,6 @@
 colorcet
-itk-core>=5.1b1
-itk-filtering>=5.1b1
+itk-core>=5.0.1
+itk-filtering>=5.0.1
 itk-meshtopolydata>=0.5.0
 ipydatawidgets>=3.2.0
 ipywidgets>=7.4.0
