@@ -40,6 +40,7 @@ point sets, and meshes.
   - vtkplotter.Volume
   - ImageJ / Fiji / ImageJ2 images
   - Additional NumPy array-like objects
+  - SimpleITK.Image
 
   - NumPy array point sets
   - itk.PointSet
