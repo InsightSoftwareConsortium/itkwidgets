@@ -118,6 +118,7 @@ Data types:
 Tasks:
 
 - `Binder: Compare images with a checkerboard pattern <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/Checkerboard.ipynb>`_
+- `Binder: Compare images side by side <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/CompareImages.ipynb>`_
 - `Binder: Examine a line profile <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/LineProfile.ipynb>`_
 - `Binder: Interactively explore algorithm parameters <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/InteractiveParameterExploration.ipynb>`_
 - `Binder: Record a video <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/RecordAVideo.ipynb>`_
@@ -259,6 +260,7 @@ After installation, try the following examples that demonstrate how to visualize
 or how to:
 
 - `Compares images with a checkerboard pattern <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/Checkerboard.ipynb>`_
+- `Compares images side by side <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/CompareImages.ipynb>`_
 - `Examine a line profile <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/LineProfile.ipynb>`_
 - `Interatively explore algorithm parameters <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/InteractiveParameterExploration.ipynb>`_
 - `Record a video <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/RecordAVideo.ipynb>`_
