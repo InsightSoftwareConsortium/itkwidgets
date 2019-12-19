@@ -626,6 +626,9 @@ const ViewerView = widgets.DOMWidgetView.extend({
         }
         const interactor = this.model.itkVtkViewer.getViewProxy().getInteractor()
         interactor.onEndMouseMove(onCameraChanged)
+        interactor.onEndMouseWheel(onCameraChanged)
+        interactor.onEndPan(onCameraChanged)
+        interactor.onEndPinch(onCameraChanged)
 
         const onShadowToggle = (enabled) => {
           if (enabled !== this.model.get('shadow')) {
