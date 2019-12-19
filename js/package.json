@@ -61,10 +61,10 @@
     "copy-webpack-plugin": "^4.5.1",
     "css-element-queries": "^1.0.2",
     "itk": "^10.2.0",
-    "itk-vtk-viewer": "^9.3.1",
+    "itk-vtk-viewer": "^9.10.0",
     "jupyter-dataserializers": "^2.1.0",
     "mobx": "^5.13.0",
-    "vtk.js": "^11.11.2"
+    "vtk.js": "^13.0.0"
   },
   "jupyterlab": {
     "extension": "dist/labextension"
