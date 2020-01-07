@@ -143,6 +143,8 @@ class Viewer(ViewerParent):
             help="We are downsampling the image to meet the size limits.").tag(sync=True)
     _reset_crop_requested = CBool(default_value=False,
             help="The user requested a reset of the roi.").tag(sync=True)
+    units = Unicode('', help="Units to display in the scale bar.").tag(sync=True)
+    point_set_representations = List(trait=Unicode(), default_value=[], help="Point set representation").tag(sync=True)
     point_sets = PointSetList(default_value=None, allow_none=True, help="Point sets to visualize").tag(sync=True, **polydata_list_serialization)
     point_set_colors = NDArray(dtype=np.float32, default_value=np.zeros((0, 3), dtype=np.float32),
                     help="RGB colors for the points sets")\
@@ -573,6 +575,9 @@ def view(image=None,
 
     Other Parameters
     ----------------
+
+    units: string, optional, default: ''
+        Units to display in the scale bar.
 
     actors: vtkActor, vtkAssembly, vtkVolume, optional, default: None
         List of standard vtk objects, colors are extracted from their properties

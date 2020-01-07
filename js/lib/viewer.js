@@ -77,6 +77,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       select_roi: false,
       _reset_crop_requested: false,
       _scale_factors: new Uint8Array([1, 1, 1]),
+      units: '',
       point_sets: null,
       point_set_colors: new Float32Array([0., 0., 0.]),
       point_set_opacities: new Float32Array([1.0]),
@@ -667,6 +668,8 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.geometry_opacities_changed()
       }
       this.mode_changed()
+
+      this.units_changed()
   },
 
   render: function() {
@@ -691,6 +694,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:rotate', this.rotate_changed, this)
     this.model.on('change:annotations', this.annotations_changed, this)
     this.model.on('change:mode', this.mode_changed, this)
+    this.model.on('change:units', this.units_changed, this)
     this.model.on('change:camera', this.camera_changed, this)
 
     let toDecompress = []
@@ -921,6 +925,15 @@ const ViewerView = widgets.DOMWidgetView.extend({
       default:
         throw new Error('Unknown view mode')
       }
+    }
+  },
+
+  units_changed: function() {
+    const units = this.model.get('units')
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      console.log(`Units: ${units}`)
+      const viewProxy = this.model.itkVtkViewer.getViewProxy()
+      viewProxy.setUnits(units)
     }
   },
 
