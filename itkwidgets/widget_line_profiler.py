@@ -51,10 +51,11 @@ class LineProfiler(Viewer):
             kwargs['ui_collapsed'] = True
         super(LineProfiler, self).__init__(**kwargs)
 
-    def get_profile(self, image_or_array=None, point1=None, point2=None, order=None):
+    def get_profile(self, image_or_array=None,
+                    point1=None, point2=None, order=None):
         """Calculate the line profile.
 
-        Calculate the pixel intensity values along the line that connects 
+        Calculate the pixel intensity values along the line that connects
         the given two points.
 
         The image can be 2D or 3D. If any/all of the parameters are None, default
@@ -77,13 +78,13 @@ class LineProfiler(Viewer):
 
         """
 
-        if image_or_array == None:
+        if image_or_array is None:
             image_or_array = self.image
-        if point1 == None:
+        if point1 is None:
             point1 = self.point1
-        if point2 == None:
+        if point2 is None:
             point2 = self.point2
-        if order == None:
+        if order is None:
             order = self.order
         image_from_array = to_itk_image(image_or_array)
         if image_from_array:
@@ -107,7 +108,8 @@ class LineProfiler(Viewer):
         return np.linspace(0.0, distance, num_points), mapped
 
 
-def line_profile(image, order=2, plotter=None, comparisons=None, **viewer_kwargs):
+def line_profile(image, order=2, plotter=None,  # noqa: C901
+                 comparisons=None, **viewer_kwargs):
     """View the image with a line profile.
 
     Creates and returns an ipywidget to visualize the image along with a line
@@ -155,14 +157,12 @@ def line_profile(image, order=2, plotter=None, comparisons=None, **viewer_kwargs
         plotter = 'ipympl'
 
     if plotter == 'plotly':
-        import plotly.graph_objs as go
         layout = go.Layout(
             xaxis=dict(title='Distance'),
             yaxis=dict(title='Intensity')
         )
         fig = go.FigureWidget(layout=layout)
     elif plotter == 'bqplot':
-        import bqplot
         x_scale = bqplot.LinearScale()
         y_scale = bqplot.LinearScale()
         x_axis = bqplot.Axis(
@@ -181,7 +181,6 @@ def line_profile(image, order=2, plotter=None, comparisons=None, **viewer_kwargs
         ipython = IPython.get_ipython()
         ipython.enable_matplotlib('widget')
 
-        is_interactive = matplotlib.is_interactive()
         matplotlib.interactive(False)
 
         fig, ax = plt.subplots()
@@ -196,8 +195,8 @@ def line_profile(image, order=2, plotter=None, comparisons=None, **viewer_kwargs
             if comparisons:
                 for ii, image_ in enumerate(comparisons.values()):
                     distance, intensity = profiler.get_profile(image_)
-                    fig.data[ii+1]['x'] = distance
-                    fig.data[ii+1]['y'] = intensity
+                    fig.data[ii + 1]['x'] = distance
+                    fig.data[ii + 1]['y'] = intensity
         elif plotter == 'bqplot':
             distance, intensity = profiler.get_profile(image)
             if comparisons:

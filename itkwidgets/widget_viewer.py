@@ -5,6 +5,9 @@ Visualization of an image.
 In the future, will add optional segmentation mesh overlay.
 """
 
+from . import cm
+import colorcet
+import matplotlib
 import collections
 import functools
 import time
@@ -12,7 +15,7 @@ import time
 import itk
 import numpy as np
 import ipywidgets as widgets
-from traitlets import CBool, CFloat, Unicode, CaselessStrEnum, List, TraitError, validate
+from traitlets import CBool, CFloat, Unicode, CaselessStrEnum, List, validate
 from ipydatawidgets import NDArray, array_serialization, shape_constraints
 from .trait_types import ITKImage, PointSetList, PolyDataList, itkimage_serialization, polydata_list_serialization, Colormap
 
@@ -24,24 +27,21 @@ except ImportError:
 
 have_vtk = False
 try:
-     import vtk
-     have_vtk = True
+    import vtk
+    have_vtk = True
 except ImportError:
-     pass
+    pass
 
 have_mayavi = False
 try:
-     import mayavi.modules
-     have_mayavi = True
+    import mayavi.modules  # noqa: F401
+    have_mayavi = True
 except ImportError:
-     pass
+    pass
 
-import matplotlib
-import colorcet
 
-from . import cm
+# from IPython.core.debugger import set_trace
 
-#from IPython.core.debugger import set_trace
 
 def get_ioloop():
     import IPython
@@ -49,6 +49,7 @@ def get_ioloop():
     ipython = IPython.get_ipython()
     if ipython and hasattr(ipython, 'kernel'):
         return zmq.eventloop.ioloop.IOLoop.instance()
+
 
 def debounced(delay_seconds=0.5, method=False):
     def wrapped(f):
@@ -63,14 +64,18 @@ def debounced(delay_seconds=0.5, method=False):
             counters[key] += 1
 
             def debounced_execute(counter=counters[key]):
-                if counter == counters[key]:  # only execute if the counter wasn't changed in the meantime
+                # only execute if the counter wasn't changed in the meantime
+                if counter == counters[key]:
                     f(*args, **kwargs)
             ioloop = get_ioloop()
 
             def thread_safe():
-                ioloop.add_timeout(time.time() + delay_seconds, debounced_execute)
+                ioloop.add_timeout(
+                    time.time() + delay_seconds,
+                    debounced_execute)
 
-            if ioloop is None:  # we live outside of IPython (e.g. unittest), so execute directly
+            # we live outside of IPython (e.g. unittest), so execute directly
+            if ioloop is None:
                 debounced_execute()
             else:
                 ioloop.add_callback(thread_safe)
@@ -78,6 +83,8 @@ def debounced(delay_seconds=0.5, method=False):
     return wrapped
 
 # https://ipywidgets.readthedocs.io/en/stable/examples/Widget%20Asynchronous.html
+
+
 def yield_for_change(widget, attribute):
     """Pause a generator to wait for a widget change event.
 
@@ -89,10 +96,11 @@ def yield_for_change(widget, attribute):
         @functools.wraps(iterator)
         def inner():
             i = iterator()
+
             def next_i(change):
                 try:
                     i.send(change.new)
-                except StopIteration as e:
+                except StopIteration:
                     widget.unobserve(next_i, attribute)
             widget.observe(next_i, attribute)
             # start the generator
@@ -110,90 +118,165 @@ class Viewer(ViewerParent):
     _model_module = Unicode('itkwidgets').tag(sync=True)
     _view_module_version = Unicode('^0.24.2').tag(sync=True)
     _model_module_version = Unicode('^0.24.2').tag(sync=True)
-    image = ITKImage(default_value=None, allow_none=True, help="Image to visualize.").tag(sync=False, **itkimage_serialization)
-    rendered_image = ITKImage(default_value=None, allow_none=True).tag(sync=True, **itkimage_serialization)
-    _rendering_image = CBool(default_value=False, help="We are currently volume rendering the image.").tag(sync=True)
-    interpolation = CBool(default_value=True, help="Use linear interpolation in slicing planes.").tag(sync=True)
+    image = ITKImage(
+        default_value=None,
+        allow_none=True,
+        help="Image to visualize.").tag(
+        sync=False,
+        **itkimage_serialization)
+    rendered_image = ITKImage(
+        default_value=None,
+        allow_none=True).tag(
+        sync=True,
+        **itkimage_serialization)
+    _rendering_image = CBool(
+        default_value=False,
+        help="We are currently volume rendering the image.").tag(
+        sync=True)
+    interpolation = CBool(
+        default_value=True,
+        help="Use linear interpolation in slicing planes.").tag(
+        sync=True)
     cmap = Colormap('Viridis (matplotlib)').tag(sync=True)
     _custom_cmap = NDArray(dtype=np.float32, default_value=None, allow_none=True,
-                help="RGB triples from 0.0 to 1.0 that define a custom linear, sequential colormap")\
-            .tag(sync=True, **array_serialization)\
-            .valid(shape_constraints(None, 3))
-    shadow = CBool(default_value=True, help="Use shadowing in the volume rendering.").tag(sync=True)
-    slicing_planes = CBool(default_value=False, help="Display the slicing planes in volume rendering view mode.").tag(sync=True)
-    gradient_opacity = CFloat(default_value=0.2, help="Volume rendering gradient opacity, from (0.0, 1.0]").tag(sync=True)
+                           help="RGB triples from 0.0 to 1.0 that define a custom linear, sequential colormap")\
+        .tag(sync=True, **array_serialization)\
+        .valid(shape_constraints(None, 3))
+    shadow = CBool(
+        default_value=True,
+        help="Use shadowing in the volume rendering.").tag(
+        sync=True)
+    slicing_planes = CBool(
+        default_value=False,
+        help="Display the slicing planes in volume rendering view mode.").tag(
+        sync=True)
+    gradient_opacity = CFloat(
+        default_value=0.2,
+        help="Volume rendering gradient opacity, from (0.0, 1.0]").tag(
+        sync=True)
     roi = NDArray(dtype=np.float64, default_value=np.zeros((2, 3), dtype=np.float64),
-                help="Region of interest: [[lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z]]")\
-            .tag(sync=True, **array_serialization)\
-            .valid(shape_constraints(2, 3))
-    vmin = CFloat(default_value=None, allow_none=True, help="Value that maps to the minimum of image colormap.").tag(sync=True)
-    vmax = CFloat(default_value=None, allow_none=True, help="Value that maps to the maximum of image colormap.").tag(sync=True)
+                  help="Region of interest: [[lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z]]")\
+        .tag(sync=True, **array_serialization)\
+        .valid(shape_constraints(2, 3))
+    vmin = CFloat(
+        default_value=None,
+        allow_none=True,
+        help="Value that maps to the minimum of image colormap.").tag(
+        sync=True)
+    vmax = CFloat(
+        default_value=None,
+        allow_none=True,
+        help="Value that maps to the maximum of image colormap.").tag(
+        sync=True)
     _largest_roi = NDArray(dtype=np.float64, default_value=np.zeros((2, 3), dtype=np.float64),
-                help="Largest possible region of interest: [[lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z]]")\
-            .tag(sync=True, **array_serialization)\
-            .valid(shape_constraints(2, 3))
-    select_roi = CBool(default_value=False, help="Enable an interactive region of interest widget for the image.").tag(sync=True)
+                           help="Largest possible region of interest: "
+                           "[[lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z]]")\
+        .tag(sync=True, **array_serialization)\
+        .valid(shape_constraints(2, 3))
+    select_roi = CBool(
+        default_value=False,
+        help="Enable an interactive region of interest widget for the image.").tag(
+        sync=True)
     size_limit_2d = NDArray(dtype=np.int64, default_value=np.array([1024, 1024], dtype=np.int64),
-            help="Size limit for 2D image visualization.").tag(sync=False)
+                            help="Size limit for 2D image visualization.").tag(sync=False)
     size_limit_3d = NDArray(dtype=np.int64, default_value=np.array([192, 192, 192], dtype=np.int64),
-            help="Size limit for 3D image visualization.").tag(sync=False)
+                            help="Size limit for 3D image visualization.").tag(sync=False)
     _scale_factors = NDArray(dtype=np.uint8, default_value=np.array([1, 1, 1], dtype=np.uint8),
-            help="Image downscaling factors.").tag(sync=True, **array_serialization)
+                             help="Image downscaling factors.").tag(sync=True, **array_serialization)
     _downsampling = CBool(default_value=False,
-            help="We are downsampling the image to meet the size limits.").tag(sync=True)
+                          help="We are downsampling the image to meet the size limits.").tag(sync=True)
     _reset_crop_requested = CBool(default_value=False,
-            help="The user requested a reset of the roi.").tag(sync=True)
-    units = Unicode('', help="Units to display in the scale bar.").tag(sync=True)
-    point_set_representations = List(trait=Unicode(), default_value=[], help="Point set representation").tag(sync=True)
-    point_sets = PointSetList(default_value=None, allow_none=True, help="Point sets to visualize").tag(sync=True, **polydata_list_serialization)
+                                  help="The user requested a reset of the roi.").tag(sync=True)
+    units = Unicode(
+        '',
+        help="Units to display in the scale bar.").tag(
+        sync=True)
+    point_set_representations = List(
+        trait=Unicode(),
+        default_value=[],
+        help="Point set representation").tag(
+        sync=True)
+    point_sets = PointSetList(
+        default_value=None,
+        allow_none=True,
+        help="Point sets to visualize").tag(
+        sync=True,
+        **polydata_list_serialization)
     point_set_colors = NDArray(dtype=np.float32, default_value=np.zeros((0, 3), dtype=np.float32),
-                    help="RGB colors for the points sets")\
-                .tag(sync=True, **array_serialization)\
-                .valid(shape_constraints(None, 3))
+                               help="RGB colors for the points sets")\
+        .tag(sync=True, **array_serialization)\
+        .valid(shape_constraints(None, 3))
     point_set_opacities = NDArray(dtype=np.float32, default_value=np.zeros((0,), dtype=np.float32),
-                    help="Opacities for the points sets")\
-                .tag(sync=True, **array_serialization)\
-                .valid(shape_constraints(None,))
-    point_set_representations = List(trait=Unicode(), default_value=[], help="Point set representation").tag(sync=True)
-    geometries = PolyDataList(default_value=None, allow_none=True, help="Geometries to visualize").tag(sync=True, **polydata_list_serialization)
+                                  help="Opacities for the points sets")\
+        .tag(sync=True, **array_serialization)\
+        .valid(shape_constraints(None,))
+    point_set_representations = List(
+        trait=Unicode(),
+        default_value=[],
+        help="Point set representation").tag(
+        sync=True)
+    geometries = PolyDataList(
+        default_value=None,
+        allow_none=True,
+        help="Geometries to visualize").tag(
+        sync=True,
+        **polydata_list_serialization)
     geometry_colors = NDArray(dtype=np.float32, default_value=np.zeros((0, 3), dtype=np.float32),
-                    help="RGB colors for the geometries")\
-                .tag(sync=True, **array_serialization)\
-                .valid(shape_constraints(None, 3))
+                              help="RGB colors for the geometries")\
+        .tag(sync=True, **array_serialization)\
+        .valid(shape_constraints(None, 3))
     geometry_opacities = NDArray(dtype=np.float32, default_value=np.zeros((0,), dtype=np.float32),
-                    help="Opacities for the geometries")\
-                .tag(sync=True, **array_serialization)\
-                .valid(shape_constraints(None,))
-    ui_collapsed = CBool(default_value=False, help="Collapse the built in user interface.").tag(sync=True)
-    rotate = CBool(default_value=False, help="Rotate the camera around the scene.").tag(sync=True)
-    annotations = CBool(default_value=True, help="Show annotations.").tag(sync=True)
-    mode = CaselessStrEnum(('x', 'y', 'z', 'v'), default_value='v', help="View mode: x: x plane, y: y plane, z: z plane, v: volume rendering").tag(sync=True)
+                                 help="Opacities for the geometries")\
+        .tag(sync=True, **array_serialization)\
+        .valid(shape_constraints(None,))
+    ui_collapsed = CBool(
+        default_value=False,
+        help="Collapse the built in user interface.").tag(
+        sync=True)
+    rotate = CBool(
+        default_value=False,
+        help="Rotate the camera around the scene.").tag(
+        sync=True)
+    annotations = CBool(
+        default_value=True,
+        help="Show annotations.").tag(
+        sync=True)
+    mode = CaselessStrEnum(
+        ('x',
+         'y',
+         'z',
+         'v'),
+        default_value='v',
+        help="View mode: x: x plane, y: y plane, z: z plane, v: volume rendering").tag(
+        sync=True)
     camera = NDArray(dtype=np.float32, default_value=np.zeros((3, 3), dtype=np.float32),
-                help="Camera parameters: [[position_x, position_y, position_z], [focal_point_x, focal_point_y, focal_point_z], [view_up_x, view_up_y, view_up_z]]")\
-            .tag(sync=True, **array_serialization)\
-            .valid(shape_constraints(3, 3))
+                     help="Camera parameters: [[position_x, position_y, position_z], "
+                     "[focal_point_x, focal_point_y, focal_point_z], "
+                     "[view_up_x, view_up_y, view_up_z]]")\
+        .tag(sync=True, **array_serialization)\
+        .valid(shape_constraints(3, 3))
 
-
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs):  # noqa: C901
         if 'point_set_colors' in kwargs:
-            proposal = { 'value': kwargs['point_set_colors'] }
+            proposal = {'value': kwargs['point_set_colors']}
             color_array = self._validate_point_set_colors(proposal)
             kwargs['point_set_colors'] = color_array
         if 'point_set_opacities' in kwargs:
-            proposal = { 'value': kwargs['point_set_opacities'] }
+            proposal = {'value': kwargs['point_set_opacities']}
             opacities_array = self._validate_point_set_opacities(proposal)
             kwargs['point_set_opacities'] = opacities_array
         if 'point_set_representations' in kwargs:
-            proposal = { 'value': kwargs['point_set_representations'] }
-            representations_list = self._validate_point_set_representations(proposal)
+            proposal = {'value': kwargs['point_set_representations']}
+            representations_list = self._validate_point_set_representations(
+                proposal)
             kwargs['point_set_representations'] = representations_list
         self.observe(self._on_point_sets_changed, ['point_sets'])
         if 'geometry_colors' in kwargs:
-            proposal = { 'value': kwargs['geometry_colors'] }
+            proposal = {'value': kwargs['geometry_colors']}
             color_array = self._validate_geometry_colors(proposal)
             kwargs['geometry_colors'] = color_array
         if 'geometry_opacities' in kwargs:
-            proposal = { 'value': kwargs['geometry_opacities'] }
+            proposal = {'value': kwargs['geometry_opacities']}
             opacities_array = self._validate_geometry_opacities(proposal)
             kwargs['geometry_opacities'] = opacities_array
         self.observe(self._on_geometries_changed, ['geometries'])
@@ -206,14 +289,17 @@ class Viewer(ViewerParent):
         largest_region = self.image.GetLargestPossibleRegion()
         size = largest_region.GetSize()
 
-        # Cache this so we do not need to recompute on it when resetting the roi
+        # Cache this so we do not need to recompute on it when resetting the
+        # roi
         self._largest_roi_rendered_image = None
         self._largest_roi = np.zeros((2, 3), dtype=np.float64)
         if not np.any(self.roi):
             largest_index = largest_region.GetIndex()
-            self.roi[0][:dimension] = np.array(self.image.TransformIndexToPhysicalPoint(largest_index))
+            self.roi[0][:dimension] = np.array(
+                self.image.TransformIndexToPhysicalPoint(largest_index))
             largest_index_upper = largest_index + size
-            self.roi[1][:dimension] = np.array(self.image.TransformIndexToPhysicalPoint(largest_index_upper))
+            self.roi[1][:dimension] = np.array(
+                self.image.TransformIndexToPhysicalPoint(largest_index_upper))
             self._largest_roi = self.roi.copy()
 
         if dimension == 2:
@@ -239,18 +325,20 @@ class Viewer(ViewerParent):
             self._update_rendered_image()
 
     def _on_reset_crop_requested(self, change=None):
-        if change.new == True and self._downsampling:
+        if change.new is True and self._downsampling:
             dimension = self.image.GetImageDimension()
             largest_region = self.image.GetLargestPossibleRegion()
             size = largest_region.GetSize()
             largest_index = largest_region.GetIndex()
             new_roi = self.roi.copy()
-            new_roi[0][:dimension] = np.array(self.image.TransformIndexToPhysicalPoint(largest_index))
+            new_roi[0][:dimension] = np.array(
+                self.image.TransformIndexToPhysicalPoint(largest_index))
             largest_index_upper = largest_index + size
-            new_roi[1][:dimension] = np.array(self.image.TransformIndexToPhysicalPoint(largest_index_upper))
+            new_roi[1][:dimension] = np.array(
+                self.image.TransformIndexToPhysicalPoint(largest_index_upper))
             self._largest_roi = new_roi.copy()
             self.roi = new_roi
-        if change.new == True:
+        if change.new is True:
             self._reset_crop_requested = False
 
     @debounced(delay_seconds=0.2, method=True)
@@ -261,7 +349,7 @@ class Viewer(ViewerParent):
 
     @staticmethod
     def _find_scale_factors(limit, dimension, size):
-        scale_factors = [1,] * 3
+        scale_factors = [1, ] * 3
         for dim in range(dimension):
             while(int(np.floor(float(size[dim]) / scale_factors[dim])) > limit[dim]):
                 scale_factors[dim] += 1
@@ -274,21 +362,24 @@ class Viewer(ViewerParent):
             @yield_for_change(self, '_rendering_image')
             def f():
                 x = yield
-                assert(x == False)
+                assert(x is False)
             f()
         self._rendering_image = True
 
-
         if self._downsampling:
             dimension = self.image.GetImageDimension()
-            index = self.image.TransformPhysicalPointToIndex(self.roi[0][:dimension])
-            upper_index = self.image.TransformPhysicalPointToIndex(self.roi[1][:dimension])
+            index = self.image.TransformPhysicalPointToIndex(
+                self.roi[0][:dimension])
+            upper_index = self.image.TransformPhysicalPointToIndex(
+                self.roi[1][:dimension])
             size = upper_index - index
 
             if dimension == 2:
-                scale_factors = self._find_scale_factors(self.size_limit_2d, dimension, size)
+                scale_factors = self._find_scale_factors(
+                    self.size_limit_2d, dimension, size)
             else:
-                scale_factors = self._find_scale_factors(self.size_limit_3d, dimension, size)
+                scale_factors = self._find_scale_factors(
+                    self.size_limit_3d, dimension, size)
             self._scale_factors = np.array(scale_factors, dtype=np.uint8)
             self.shrinker.SetShrinkFactors(scale_factors[:dimension])
 
@@ -306,7 +397,8 @@ class Viewer(ViewerParent):
             size = region.GetSize()
 
             is_largest = False
-            if np.any(self._largest_roi) and np.all(self._largest_roi == self.roi):
+            if np.any(self._largest_roi) and np.all(
+                    self._largest_roi == self.roi):
                 is_largest = True
                 if self._largest_roi_rendered_image is not None:
                     self.rendered_image = self._largest_roi_rendered_image
@@ -316,7 +408,8 @@ class Viewer(ViewerParent):
             if is_largest:
                 self._largest_roi_rendered_image = self.shrinker.GetOutput()
                 self._largest_roi_rendered_image.DisconnectPipeline()
-                self._largest_roi_rendered_image.SetOrigin(self.roi[0][:dimension])
+                self._largest_roi_rendered_image.SetOrigin(
+                    self.roi[0][:dimension])
                 self.rendered_image = self._largest_roi_rendered_image
                 return
             shrunk = self.shrinker.GetOutput()
@@ -344,11 +437,11 @@ class Viewer(ViewerParent):
             n_colors = len(self.point_sets)
         result = np.zeros((n_colors, 3), dtype=np.float32)
         for index, color in enumerate(value):
-            result[index,:] = matplotlib.colors.to_rgb(color)
+            result[index, :] = matplotlib.colors.to_rgb(color)
         if len(value) < n_colors:
             for index in range(len(value), n_colors):
                 color = colorcet.glasbey[index % len(colorcet.glasbey)]
-                result[index,:] = matplotlib.colors.to_rgb(color)
+                result[index, :] = matplotlib.colors.to_rgb(color)
         return result
 
     @validate('point_set_opacities')
@@ -377,7 +470,7 @@ class Viewer(ViewerParent):
         n_representations = n_values
         if self.point_sets:
             n_representations = len(self.point_sets)
-        result = ['points']*n_representations
+        result = ['points'] * n_representations
         result[:n_values] = value
         return result
 
@@ -390,7 +483,8 @@ class Viewer(ViewerParent):
         self.point_set_opacities = old_opacities[:len(self.point_sets)]
         # Make sure we have a sufficient number of representations
         old_representations = self.point_set_representations
-        self.point_set_representations = old_representations[:len(self.point_sets)]
+        self.point_set_representations = old_representations[:len(
+            self.point_sets)]
 
     @validate('geometry_colors')
     def _validate_geometry_colors(self, proposal):
@@ -400,11 +494,11 @@ class Viewer(ViewerParent):
             n_colors = len(self.geometries)
         result = np.zeros((n_colors, 3), dtype=np.float32)
         for index, color in enumerate(value):
-            result[index,:] = matplotlib.colors.to_rgb(color)
+            result[index, :] = matplotlib.colors.to_rgb(color)
         if len(value) < n_colors:
             for index in range(len(value), n_colors):
                 color = colorcet.glasbey[index % len(colorcet.glasbey)]
-                result[index,:] = matplotlib.colors.to_rgb(color)
+                result[index, :] = matplotlib.colors.to_rgb(color)
         return result
 
     @validate('geometry_opacities')
@@ -433,8 +527,10 @@ class Viewer(ViewerParent):
     def roi_region(self):
         """Return the itk.ImageRegion corresponding to the roi."""
         dimension = self.image.GetImageDimension()
-        index = self.image.TransformPhysicalPointToIndex(tuple(self.roi[0][:dimension]))
-        upper_index = self.image.TransformPhysicalPointToIndex(tuple(self.roi[1][:dimension]))
+        index = self.image.TransformPhysicalPointToIndex(
+            tuple(self.roi[0][:dimension]))
+        upper_index = self.image.TransformPhysicalPointToIndex(
+            tuple(self.roi[1][:dimension]))
         size = upper_index - index
         for dim in range(dimension):
             size[dim] += 1
@@ -456,13 +552,14 @@ class Viewer(ViewerParent):
         return tuple(slices)
 
 
-def view(image=None,
-        gradient_opacity=0.22, cmap=cm.viridis, slicing_planes=False,
-        select_roi=False, shadow=True, interpolation=True,
-        point_sets=[], point_set_colors=[], point_set_opacities=[], point_set_representations=[], # point_set_sizes=[],
-        geometries=[], geometry_colors=[], geometry_opacities=[],
-        ui_collapsed=False, rotate=False, annotations=True, mode='v',
-        **kwargs):
+def view(image=None,  # noqa: C901
+         gradient_opacity=0.22, cmap=cm.viridis, slicing_planes=False,
+         select_roi=False, shadow=True, interpolation=True,
+         point_sets=[], point_set_colors=[], point_set_opacities=[
+         ], point_set_representations=[],  # point_set_sizes=[],
+         geometries=[], geometry_colors=[], geometry_opacities=[],
+         ui_collapsed=False, rotate=False, annotations=True, mode='v',
+         **kwargs):
     """View the image and/or point sets and/or geometries.
 
     Creates and returns an ipywidget to visualize an image, and/or point sets
@@ -599,10 +696,12 @@ def view(image=None,
         widget.
     """
 
-    # this block allows the user to pass already formed vtkActor vtkVolume objects
+    # this block allows the user to pass already formed vtkActor vtkVolume
+    # objects
     actors = kwargs.pop("actors", None)
     if have_vtk and actors is not None:
-        if not isinstance(actors, (list, tuple)): # passing the object directly, so make it a list
+        if not isinstance(actors, (list, tuple)
+                          ):  # passing the object directly, so make it a list
             actors = [actors]
 
         images = []
@@ -617,7 +716,7 @@ def view(image=None,
                 elif isinstance(a, iso_surface.IsoSurface):
                     a = tvtk.to_vtk(a.actor.actor)
 
-            if isinstance(a, vtk.vtkAssembly): #unpack assemblies
+            if isinstance(a, vtk.vtkAssembly):  # unpack assemblies
                 cl = vtk.vtkPropCollection()
                 a.GetActors(cl)
                 cl.InitTraversal()
@@ -663,17 +762,16 @@ def view(image=None,
             elif isinstance(a, vtk.vtkVolume):
                 images.append(a.GetMapper().GetInput())
 
-        if image is None and len(images): #only one image is rendered
+        if image is None and len(images):  # only one image is rendered
             image = images[0]
 
-
     viewer = Viewer(image=image, interpolation=interpolation, cmap=cmap, shadow=shadow,
-            select_roi=select_roi, slicing_planes=slicing_planes, gradient_opacity=gradient_opacity,
-            point_sets=point_sets,
-            point_set_colors=point_set_colors,
-            point_set_opacities=point_set_opacities,
-            point_set_representations=point_set_representations,
-            geometries=geometries, geometry_colors=geometry_colors, geometry_opacities=geometry_opacities,
-            rotate=rotate, ui_collapsed=ui_collapsed, annotations=annotations, mode=mode,
-             **kwargs)
+                    select_roi=select_roi, slicing_planes=slicing_planes, gradient_opacity=gradient_opacity,
+                    point_sets=point_sets,
+                    point_set_colors=point_set_colors,
+                    point_set_opacities=point_set_opacities,
+                    point_set_representations=point_set_representations,
+                    geometries=geometries, geometry_colors=geometry_colors, geometry_opacities=geometry_opacities,
+                    rotate=rotate, ui_collapsed=ui_collapsed, annotations=annotations, mode=mode,
+                    **kwargs)
     return viewer
