@@ -10,7 +10,8 @@ from .widget_viewer import Viewer
 import itk
 from ._transform_types import to_itk_image
 
-def checkerboard(image1, image2, pattern=3, invert=False, **viewer_kwargs):
+
+def checkerboard(image1, image2, pattern=3, invert=False, **viewer_kwargs):  # noqa: C901
     """Compare two images with a checkerboard pattern.
 
     This is particularly useful for examining registration results.
@@ -50,7 +51,10 @@ def checkerboard(image1, image2, pattern=3, invert=False, **viewer_kwargs):
         np.allclose(np.array(itk_image1.GetSpacing()), np.array(itk_image2.GetSpacing())) and \
         itk_image1.GetDirection() == itk_image2.GetDirection() and \
         np.allclose(np.array(region_image1.GetIndex()), np.array(region_image2.GetIndex())) and \
-        np.allclose(np.array(region_image1.GetSize()), np.array(region_image2.GetSize()))
+        np.allclose(
+            np.array(
+                region_image1.GetSize()), np.array(
+                region_image2.GetSize()))
     if not same_physical_space:
         upsample_image2 = True
         if itk_image1.GetSpacing() != itk_image2.GetSpacing():
@@ -80,9 +84,10 @@ def checkerboard(image1, image2, pattern=3, invert=False, **viewer_kwargs):
     checkerboard_filter = itk.CheckerBoardImageFilter.New(input1, input2)
 
     dimension = itk_image1.GetImageDimension()
-    checker_pattern = [pattern]*dimension
+    checker_pattern = [pattern] * dimension
     checkerboard_filter.SetCheckerPattern(checker_pattern)
-    checkerboard_filter_inverse = itk.CheckerBoardImageFilter.New(input2, input1)
+    checkerboard_filter_inverse = itk.CheckerBoardImageFilter.New(
+        input2, input1)
 
     if invert:
         checkerboard_filter_inverse.Update()
@@ -101,16 +106,17 @@ def checkerboard(image1, image2, pattern=3, invert=False, **viewer_kwargs):
 
     # Heuristic to specify the max pattern size
     max_size1 = int(min(itk.size(itk_image1)) / 8)
-    max_size1 = max(max_size1, pattern*2)
+    max_size1 = max(max_size1, pattern * 2)
     max_size2 = int(min(itk.size(itk_image2)) / 8)
-    max_size2 = max(max_size2, pattern*2)
+    max_size2 = max(max_size2, pattern * 2)
     max_size = max(max_size1, max_size2)
 
     pattern_slider = widgets.IntSlider(value=pattern, min=2, max=max_size,
-            step=1, description='Pattern size:')
-    invert_checkbox = widgets.Checkbox(value=invert, description = 'Invert')
+                                       step=1, description='Pattern size:')
+    invert_checkbox = widgets.Checkbox(value=invert, description='Invert')
+
     def update_checkerboard(change):
-        checker_pattern = [pattern_slider.value]*dimension
+        checker_pattern = [pattern_slider.value] * dimension
         checkerboard_filter.SetCheckerPattern(checker_pattern)
         checkerboard_filter_inverse.SetCheckerPattern(checker_pattern)
         if invert_checkbox.value:
@@ -123,6 +129,6 @@ def checkerboard(image1, image2, pattern=3, invert=False, **viewer_kwargs):
     invert_checkbox.observe(update_checkerboard, ['value'])
 
     widget = widgets.VBox([viewer,
-        widgets.HBox([pattern_slider, invert_checkbox])])
+                           widgets.HBox([pattern_slider, invert_checkbox])])
 
     return widget

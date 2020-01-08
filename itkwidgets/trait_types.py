@@ -20,11 +20,12 @@ from ._transform_types import to_itk_image, to_point_set, to_geometry
 
 # from IPython.core.debugger import set_trace
 
+
 class ITKImage(traitlets.TraitType):
     """A trait type holding an itk.Image object"""
 
     info_text = 'An N-dimensional, potentially multi-component, scientific ' + \
-    'image with origin, spacing, and direction metadata'
+        'image with origin, spacing, and direction metadata'
 
     # Hold a reference to the source object to use with shallow views
     _source_object = None
@@ -47,11 +48,13 @@ class ITKImage(traitlets.TraitType):
             grafted = value.__New_orig__()
             grafted.Graft(value)
             return grafted
-        except:
+        except BaseException:
             self.error(obj, value)
 
-def _image_to_type(itkimage):
-    component_str = repr(itkimage).split('itkImagePython.')[1].split(';')[0][8:]
+
+def _image_to_type(itkimage):  # noqa: C901
+    component_str = repr(itkimage).split(
+        'itkImagePython.')[1].split(';')[0][8:]
     if component_str[:2] == 'UL':
         if os.name == 'nt':
             return 'uint32_t',
@@ -100,17 +103,18 @@ def _image_to_type(itkimage):
     else:
         mangle = component_str[:-1]
     _python_to_js = {
-        'SC':'int8_t',
-        'UC':'uint8_t',
-        'SS':'int16_t',
-        'US':'uint16_t',
-        'SI':'int32_t',
-        'UI':'uint32_t',
-        'F':'float',
-        'D':'double',
-        'B':'uint8_t'
-        }
+        'SC': 'int8_t',
+        'UC': 'uint8_t',
+        'SS': 'int16_t',
+        'US': 'uint16_t',
+        'SI': 'int32_t',
+        'UI': 'uint32_t',
+        'F': 'float',
+        'D': 'double',
+        'B': 'uint8_t'
+    }
     return _python_to_js[mangle], pixelType
+
 
 def itkimage_to_json(itkimage, manager=None):
     """Serialize a Python itk.Image object.
@@ -134,34 +138,34 @@ def itkimage_to_json(itkimage, manager=None):
                 directionList.append(directionMatrix.get(row, col))
         componentType, pixelType = _image_to_type(itkimage)
         imageType = dict(
-                dimension=dimension,
-                componentType=componentType,
-                pixelType=pixelType,
-                components=itkimage.GetNumberOfComponentsPerPixel()
-                )
+            dimension=dimension,
+            componentType=componentType,
+            pixelType=pixelType,
+            components=itkimage.GetNumberOfComponentsPerPixel()
+        )
         return dict(
             imageType=imageType,
             origin=tuple(itkimage.GetOrigin()),
             spacing=tuple(itkimage.GetSpacing()),
             size=tuple(itkimage.GetBufferedRegion().GetSize()),
             direction={'data': directionList,
-                'rows': dimension,
-                'columns': dimension},
+                       'rows': dimension,
+                       'columns': dimension},
             compressedData=pixelArrCompressed
         )
 
 
 def _type_to_image(jstype):
     _pixelType_to_prefix = {
-        1:'',
-        2:'RGB',
-        3:'RGBA',
-        4:'O',
-        5:'V',
-        7:'CV',
-        8:'SSRT',
-        11:'FA'
-        }
+        1: '',
+        2: 'RGB',
+        3: 'RGBA',
+        4: 'O',
+        5: 'V',
+        7: 'CV',
+        8: 'SSRT',
+        11: 'FA'
+    }
     pixelType = jstype['pixelType']
     dimension = jstype['dimension']
     if pixelType == 10:
@@ -177,17 +181,17 @@ def _type_to_image(jstype):
             return 'L'
     prefix = _pixelType_to_prefix[pixelType]
     _js_to_python = {
-        'int8_t':'SC',
-        'uint8_t':'UC',
-        'int16_t':'SS',
-        'uint16_t':'US',
-        'int32_t':'SI',
-        'uint32_t':'UI',
-        'int64_t':'S' + _long_type(),
-        'uint64_t':'U' + _long_type(),
+        'int8_t': 'SC',
+        'uint8_t': 'UC',
+        'int16_t': 'SS',
+        'uint16_t': 'US',
+        'int32_t': 'SI',
+        'uint32_t': 'UI',
+        'int64_t': 'S' + _long_type(),
+        'uint64_t': 'U' + _long_type(),
         'float': 'F',
         'double': 'D'
-        }
+    }
     _js_to_numpy_dtype = {
         'int8_t': np.int8,
         'uint8_t': np.uint8,
@@ -199,7 +203,7 @@ def _type_to_image(jstype):
         'uint64_t': np.uint64,
         'float': np.float32,
         'double': np.float64
-        }
+    }
     dtype = _js_to_numpy_dtype[jstype['componentType']]
     if pixelType != 4:
         prefix += _js_to_python[jstype['componentType']]
@@ -207,6 +211,7 @@ def _type_to_image(jstype):
         prefix += str(dimension)
     prefix += str(dimension)
     return getattr(itk.Image, prefix), dtype
+
 
 def itkimage_from_json(js, manager=None):
     """Deserialize a Javascript itk.js Image object."""
@@ -220,19 +225,21 @@ def itkimage_from_json(js, manager=None):
             pixelBufferArrayCompressed = np.frombuffer(asBytes, dtype=np.uint8)
         else:
             pixelBufferArrayCompressed = np.frombuffer(js['compressedData'],
-                    dtype=np.uint8)
-        pixelCount = reduce(lambda x, y: x*y, js['size'], 1)
-        numberOfBytes = pixelCount * js['imageType']['components'] * np.dtype(dtype).itemsize
+                                                       dtype=np.uint8)
+        pixelCount = reduce(lambda x, y: x * y, js['size'], 1)
+        numberOfBytes = pixelCount * \
+            js['imageType']['components'] * np.dtype(dtype).itemsize
         pixelBufferArray = \
             np.frombuffer(decompressor.decompress(pixelBufferArrayCompressed,
-                numberOfBytes),
-                    dtype=dtype)
+                                                  numberOfBytes),
+                          dtype=dtype)
         pixelBufferArray.shape = js['size'][::-1]
         # Workaround for GetImageFromArray required until 5.0.1
         # and https://github.com/numpy/numpy/pull/11739
         pixelBufferArrayCopyToBeRemoved = pixelBufferArray.copy()
         # image = itk.PyBuffer[ImageType].GetImageFromArray(pixelBufferArray)
-        image = itk.PyBuffer[ImageType].GetImageFromArray(pixelBufferArrayCopyToBeRemoved)
+        image = itk.PyBuffer[ImageType].GetImageFromArray(
+            pixelBufferArrayCopyToBeRemoved)
         Dimension = image.GetImageDimension()
         image.SetOrigin(js['origin'])
         image.SetSpacing(js['spacing'])
@@ -241,13 +248,16 @@ def itkimage_from_json(js, manager=None):
         directionJs = js['direction']['data']
         for col in range(Dimension):
             for row in range(Dimension):
-                directionMatrix.put(row, col, directionJs[col + row * Dimension])
+                directionMatrix.put(
+                    row, col, directionJs[col + row * Dimension])
         return image
+
 
 itkimage_serialization = {
     'from_json': itkimage_from_json,
     'to_json': itkimage_to_json
 }
+
 
 class PolyDataList(traitlets.TraitType):
     """A trait type holding a list of Python data structures compatible with vtk.js.
@@ -255,8 +265,8 @@ class PolyDataList(traitlets.TraitType):
     See: https://kitware.github.io/vtk-js/docs/structures_PolyData.html"""
 
     info_text = 'A data structure for rendering geometry in vtk.js ' + \
-    'consisting of points, verts (vertices), lines, polys (polygons), ' + \
-    'triangle strips, point data, and cell data.'
+        'consisting of points, verts (vertices), lines, polys (polygons), ' + \
+        'triangle strips, point data, and cell data.'
 
     # Hold a reference to the source object to use with shallow views
     _source_object = None
@@ -267,18 +277,21 @@ class PolyDataList(traitlets.TraitType):
         # For convenience, support assigning a single geometry instead of a
         # list
         geometries = value
-        if not isinstance(geometries, collections.Sequence) and not geometries is None:
+        if not isinstance(
+                geometries, collections.Sequence) and geometries is not None:
             geometries = [geometries]
 
         try:
             for index, geometry in enumerate(geometries):
-                if not isinstance(geometry, dict) or not 'vtkClass' in geometry:
+                if not isinstance(
+                        geometry, dict) or 'vtkClass' not in geometry:
                     geometries[index] = to_geometry(geometry)
             return geometries
-        except:
+        except BaseException:
             self.error(obj, value)
 
-def polydata_list_to_json(polydata_list, manager=None):
+
+def polydata_list_to_json(polydata_list, manager=None):  # noqa: C901
     """Serialize a list of a Python object that represents vtk.js PolyData.
 
     The returned data is compatibile with vtk.js PolyData with compressed data
@@ -332,29 +345,31 @@ def polydata_list_to_json(polydata_list, manager=None):
                         compressed = compressor.compress(values.data)
                         compressedView = memoryview(compressed)
                         compressed_array['compressedValues'] = compressedView
-                        compressed_arrays.append({ 'data': compressed_array })
+                        compressed_arrays.append({'data': compressed_array})
                     compressed_data['arrays'] = compressed_arrays
                     json_polydata[data_type] = compressed_data
 
             json.append(json_polydata)
         return json
 
+
 def _type_to_numpy(jstype):
     _js_to_numpy_dtype = {
-            'Int8Array': np.int8,
-            'Uint8Array': np.uint8,
-            'Int16Array': np.int16,
-            'Uint16Array': np.uint16,
-            'Int32Array': np.int32,
-            'Uint32Array': np.uint32,
-            'BigInt64Array': np.int64,
-            'BigUint64Array': np.uint64,
-            'Float32Array': np.float32,
-            'Float64Array': np.float64
-            }
+        'Int8Array': np.int8,
+        'Uint8Array': np.uint8,
+        'Int16Array': np.int16,
+        'Uint16Array': np.uint16,
+        'Int32Array': np.int32,
+        'Uint32Array': np.uint32,
+        'BigInt64Array': np.int64,
+        'BigUint64Array': np.uint64,
+        'Float32Array': np.float32,
+        'Float64Array': np.float64
+    }
     return _js_to_numpy_dtype[jstype]
 
-def polydata_list_from_json(js, manager=None):
+
+def polydata_list_from_json(js, manager=None):  # noqa: C901
     """Deserialize a Javascript vtk.js PolyData object.
 
     Decompresses data buffers.
@@ -380,34 +395,42 @@ def polydata_list_from_json(js, manager=None):
             if 'points' in polydata:
                 dtype = _type_to_numpy(polydata['points']['dataType'])
                 if six.PY2:
-                    asBytes = json_polydata['points']['compressedValues'].tobytes()
-                    valuesBufferArrayCompressed = np.frombuffer(asBytes, dtype=np.uint8)
+                    asBytes = json_polydata['points']['compressedValues'].tobytes(
+                    )
+                    valuesBufferArrayCompressed = np.frombuffer(
+                        asBytes, dtype=np.uint8)
                 else:
                     valuesBufferArrayCompressed = np.frombuffer(json_polydata['points']['compressedValues'],
-                            dtype=np.uint8)
-                numberOfBytes = json_polydata['points']['size'] * np.dtype(dtype).itemsize
+                                                                dtype=np.uint8)
+                numberOfBytes = json_polydata['points']['size'] * \
+                    np.dtype(dtype).itemsize
                 valuesBufferArray = \
                     np.frombuffer(decompressor.decompress(valuesBufferArrayCompressed,
-                        numberOfBytes),
-                            dtype=dtype)
-                valuesBufferArray.shape = (int(json_polydata['points']['size'] / 3), 3)
+                                                          numberOfBytes),
+                                  dtype=dtype)
+                valuesBufferArray.shape = (
+                    int(json_polydata['points']['size'] / 3), 3)
                 polydata['points']['values'] = valuesBufferArray
 
             for cell_type in ['verts', 'lines', 'polys', 'strips']:
                 if cell_type in polydata:
                     dtype = _type_to_numpy(polydata[cell_type]['dataType'])
                     if six.PY2:
-                        asBytes = json_polydata[cell_type]['compressedValues'].tobytes()
-                        valuesBufferArrayCompressed = np.frombuffer(asBytes, dtype=np.uint8)
+                        asBytes = json_polydata[cell_type]['compressedValues'].tobytes(
+                        )
+                        valuesBufferArrayCompressed = np.frombuffer(
+                            asBytes, dtype=np.uint8)
                     else:
                         valuesBufferArrayCompressed = np.frombuffer(json_polydata[cell_type]['compressedValues'],
-                                dtype=np.uint8)
-                    numberOfBytes = json_polydata[cell_type]['size'] * np.dtype(dtype).itemsize
+                                                                    dtype=np.uint8)
+                    numberOfBytes = json_polydata[cell_type]['size'] * \
+                        np.dtype(dtype).itemsize
                     valuesBufferArray = \
                         np.frombuffer(decompressor.decompress(valuesBufferArrayCompressed,
-                            numberOfBytes),
-                                dtype=dtype)
-                    valuesBufferArray.shape = (json_polydata[cell_type]['size'],)
+                                                              numberOfBytes),
+                                      dtype=dtype)
+                    valuesBufferArray.shape = (
+                        json_polydata[cell_type]['size'],)
                     polydata[cell_type]['values'] = valuesBufferArray
 
             for data_type in ['pointData', 'cellData']:
@@ -425,29 +448,35 @@ def polydata_list_from_json(js, manager=None):
                                 decompressed_array[nested_key] = nested_value
                         dtype = _type_to_numpy(decompressed_array['dataType'])
                         if six.PY2:
-                            asBytes = array['data']['compressedValues'].tobytes()
-                            valuesBufferArrayCompressed = np.frombuffer(asBytes, dtype=np.uint8)
+                            asBytes = array['data']['compressedValues'].tobytes(
+                            )
+                            valuesBufferArrayCompressed = np.frombuffer(
+                                asBytes, dtype=np.uint8)
                         else:
                             valuesBufferArrayCompressed = np.frombuffer(array['data']['compressedValues'],
-                                    dtype=np.uint8)
-                        numberOfBytes = decompressed_array['size'] * np.dtype(dtype).itemsize
+                                                                        dtype=np.uint8)
+                        numberOfBytes = decompressed_array['size'] * \
+                            np.dtype(dtype).itemsize
                         valuesBufferArray = \
                             np.frombuffer(decompressor.decompress(valuesBufferArrayCompressed,
-                                numberOfBytes),
-                                    dtype=dtype)
+                                                                  numberOfBytes),
+                                          dtype=dtype)
                         valuesBufferArray.shape = (decompressed_array['size'],)
                         decompressed_array['values'] = valuesBufferArray
-                        decompressed_arrays.append({ 'data': decompressed_array })
+                        decompressed_arrays.append(
+                            {'data': decompressed_array})
                     decompressed_data['arrays'] = decompressed_arrays
                     polydata[data_type] = decompressed_data
 
             polydata_list.append(polydata)
         return polydata_list
 
+
 polydata_list_serialization = {
     'from_json': polydata_list_from_json,
     'to_json': polydata_list_to_json
 }
+
 
 class PointSetList(PolyDataList):
     """A trait type holding a list of Python data structures compatible with vtk.js that
@@ -464,16 +493,19 @@ class PointSetList(PolyDataList):
         # For convenience, support assigning a single point set instead of a
         # list
         point_sets = value
-        if not isinstance(point_sets, collections.Sequence) and not point_sets is None:
+        if not isinstance(
+                point_sets, collections.Sequence) and point_sets is not None:
             point_sets = [point_sets]
 
         try:
             for index, point_set in enumerate(point_sets):
-                if not isinstance(point_set, dict) or not 'vtkClass' in point_set:
+                if not isinstance(
+                        point_set, dict) or 'vtkClass' not in point_set:
                     point_sets[index] = to_point_set(point_set)
             return point_sets
-        except:
+        except BaseException:
             self.error(obj, value)
+
 
 class Colormap(traitlets.Unicode):
     """A trait type holding a colormap"""
@@ -481,83 +513,83 @@ class Colormap(traitlets.Unicode):
     info_text = 'A colormap, either a vtk.js colormap preset, np.ndarray of RGB points, or matplotlib colormap.'
 
     _colormap_presets = ('Viridis (matplotlib)',
-      'Plasma (matplotlib)',
-      'Inferno (matplotlib)',
-      'Magma (matplotlib)',
-      'Grayscale',
-      'X Ray',
-      'magenta',
-      'blue2cyan',
-      'gray_Matlab',
-      'bone_Matlab',
-      'pink_Matlab',
-      '2hot',
-      'gist_earth',
-      'Haze',
-      'Haze_green',
-      'Haze_lime',
-      'Haze_cyan',
-      'Black, Blue and White',
-      'Black, Orange and White',
-      'Black-Body Radiation',
+                         'Plasma (matplotlib)',
+                         'Inferno (matplotlib)',
+                         'Magma (matplotlib)',
+                         'Grayscale',
+                         'X Ray',
+                         'magenta',
+                         'blue2cyan',
+                         'gray_Matlab',
+                         'bone_Matlab',
+                         'pink_Matlab',
+                         '2hot',
+                         'gist_earth',
+                         'Haze',
+                         'Haze_green',
+                         'Haze_lime',
+                         'Haze_cyan',
+                         'Black, Blue and White',
+                         'Black, Orange and White',
+                         'Black-Body Radiation',
 
-      'Cool to Warm',
-      'Warm to Cool',
-      'Cool to Warm (Extended)',
-      'Warm to Cool (Extended)',
-      'Blue to Red Rainbow',
-      'Red to Blue Rainbow',
-      'jet',
-      'rainbow',
-      'hsv',
-      'Rainbow Desaturated',
-      'Cold and Hot',
-      'Rainbow Blended Black',
-      'Rainbow Blended Grey',
-      'Rainbow Blended White',
-      'nic_CubicL',
-      'Spectral_lowBlue',
-      'Yellow 15',
-      'Asymmtrical Earth Tones (6_21b)',
-      'Green-Blue Asymmetric Divergent (62Blbc)',
-      'Muted Blue-Green',
+                         'Cool to Warm',
+                         'Warm to Cool',
+                         'Cool to Warm (Extended)',
+                         'Warm to Cool (Extended)',
+                         'Blue to Red Rainbow',
+                         'Red to Blue Rainbow',
+                         'jet',
+                         'rainbow',
+                         'hsv',
+                         'Rainbow Desaturated',
+                         'Cold and Hot',
+                         'Rainbow Blended Black',
+                         'Rainbow Blended Grey',
+                         'Rainbow Blended White',
+                         'nic_CubicL',
+                         'Spectral_lowBlue',
+                         'Yellow 15',
+                         'Asymmtrical Earth Tones (6_21b)',
+                         'Green-Blue Asymmetric Divergent (62Blbc)',
+                         'Muted Blue-Green',
 
-      'Reds',
-      'Greens',
-      'Blues',
-      'Purples',
-      'Oranges',
-      'PuBu',
-      'BuPu',
-      'BuGn',
-      'GnBu',
-      'PuRd',
-      'RdPu',
-      'RdOr',
-      'BuRd',
-      'GnRP',
-      'GYPi',
-      'GBBr',
-      'PRGn',
-      'PiYG',
-      'OrPu',
-      'BrBG'
-    )
+                         'Reds',
+                         'Greens',
+                         'Blues',
+                         'Purples',
+                         'Oranges',
+                         'PuBu',
+                         'BuPu',
+                         'BuGn',
+                         'GnBu',
+                         'PuRd',
+                         'RdPu',
+                         'RdOr',
+                         'BuRd',
+                         'GnRP',
+                         'GYPi',
+                         'GBBr',
+                         'PRGn',
+                         'PiYG',
+                         'OrPu',
+                         'BrBG'
+                         )
 
     def validate(self, obj, value):
         if isinstance(value, np.ndarray):
             custom_cmap = value.astype(np.float32)
-            custom_cmap = custom_cmap[:,:3]
+            custom_cmap = custom_cmap[:, :3]
             obj._custom_cmap = custom_cmap
             timestamp = str(datetime.timestamp(datetime.now()))
             return 'Custom NumPy ' + timestamp
         elif isinstance(value, matplotlib.colors.LinearSegmentedColormap):
             custom_cmap = value(np.linspace(0.0, 1.0, 64)).astype(np.float32)
-            custom_cmap = custom_cmap[:,:3]
+            custom_cmap = custom_cmap[:, :3]
             obj._custom_cmap = custom_cmap
             timestamp = str(datetime.timestamp(datetime.now()))
             return 'Custom matplotlib ' + timestamp
-        if not value in self._colormap_presets and not value.startswith('Custom'):
+        if value not in self._colormap_presets and not value.startswith(
+                'Custom'):
             raise self.error('Invalid colormap')
         return super(Colormap, self).validate(obj, value)
-
