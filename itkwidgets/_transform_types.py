@@ -171,7 +171,7 @@ def to_itk_image(image_like):
 def to_point_set(point_set_like):  # noqa: C901
     if isinstance(point_set_like, itk.PointSet):
         if not hasattr(itk, 'PyVectorContainer'):
-            raise ModuleNotFoundError(
+            raise ImportError(
                 'itk.MeshToPolyDataFilter is not available -- install the itk-meshtopolydata package')
         itk_polydata = itk.mesh_to_poly_data_filter(point_set_like)
 
@@ -289,7 +289,7 @@ def to_point_set(point_set_like):  # noqa: C901
 def to_geometry(geometry_like):  # noqa: C901
     if isinstance(geometry_like, itk.Mesh):
         if not hasattr(itk, 'PyVectorContainer'):
-            raise ModuleNotFoundError(
+            raise ImportError(
                 'itk.MeshToPolyDataFilter is not available -- install the itk-meshtopolydata package')
         itk_polydata = itk.mesh_to_poly_data_filter(geometry_like)
 
