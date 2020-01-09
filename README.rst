@@ -1,10 +1,6 @@
 itkwidgets
 ==========
 
-.. image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
-    :target: https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/LICENSE
-    :alt: License
-
 .. image:: https://img.shields.io/pypi/v/itkwidgets.svg
     :target: https://pypi.python.org/pypi/itkwidgets
     :alt: PyPI
@@ -13,12 +9,25 @@ itkwidgets
     :target: https://www.npmjs.com/package/itkwidgets
     :alt: npm
 
+.. image:: https://github.com/InsightSoftwareConsortium/itkwidgets/workflows/Build%20and%20test/badge.svg
+    :target: https://github.com/InsightSoftwareConsortium/itkwidgets/actions?query=workflow%3A%22Build+and+test%22
+    :alt: Build status
+
 .. image:: https://circleci.com/gh/InsightSoftwareConsortium/itkwidgets.svg?style=shield
     :target: https://circleci.com/gh/InsightSoftwareConsortium/itkwidgets
     :alt: Build status
 
 .. image:: https://mybinder.org/badge.svg
     :target: https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples%2F3DImage.ipynb
+    :alt: Interactive example on MyBinder
+
+.. image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
+    :target: https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/LICENSE
+    :alt: License
+
+.. image:: https://zenodo.org/badge/121581663.svg
+    :target: https://zenodo.org/badge/latestdoi/121581663
+    :alt: Software citation DOI
 
 Interactive `Jupyter <https://jupyter.org/>`_ widgets to visualize images,
 point sets, and meshes.
