@@ -25,6 +25,10 @@ itkwidgets
     :target: https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/LICENSE
     :alt: License
 
+.. image:: https://zenodo.org/badge/121581663.svg
+    :target: https://zenodo.org/badge/latestdoi/121581663
+    :alt: Software citation DOI
+
 Interactive `Jupyter <https://jupyter.org/>`_ widgets to visualize images,
 point sets, and meshes.
 
