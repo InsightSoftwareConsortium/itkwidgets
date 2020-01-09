@@ -3,7 +3,11 @@ itkwidgets
 
 .. image:: https://img.shields.io/pypi/v/itkwidgets.svg
     :target: https://pypi.python.org/pypi/itkwidgets
-    :alt: PyPI
+    :alt: PyPI version
+
+.. image:: https://img.shields.io/conda/vn/conda-forge/itkwidgets.svg
+    :target: https://anaconda.org/conda-forge/itkwidgets
+    :alt: Conda version
 
 .. image:: https://img.shields.io/npm/v/itkwidgets/latest
     :target: https://www.npmjs.com/package/itkwidgets
