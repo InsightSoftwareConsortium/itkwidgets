@@ -268,6 +268,9 @@ or how to:
 Troubleshooting
 ---------------
 
+IOPub data rate exceeded.
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
 If you experience the notebook warning::
 
   IOPub data rate exceeded.
@@ -279,6 +282,15 @@ If you experience the notebook warning::
 Set the notebook configuration value::
 
   jupyter notebook --NotebookApp.iopub_data_rate_limit=1e12
+
+
+Scrolling in JupyterLab
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Cell output scrolls by default in JupyterLab. To disable scrolling, right click
+in the region to the left of the output and select *Disable Scrolling for
+Outputs*.
+
 
 Hacking
 -------
