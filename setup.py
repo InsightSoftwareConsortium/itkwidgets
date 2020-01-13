@@ -164,7 +164,7 @@ setup_args = {
         'itk-filtering>=5.0.1',
         'itk-meshtopolydata>=0.5.1',
         'ipydatawidgets>=4.0.1',
-        'ipywidgets>=7.4.0',
+        'ipywidgets>=7.5.1',
         'ipympl',
         'matplotlib',
         'numpy',
