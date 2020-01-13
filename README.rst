@@ -22,7 +22,7 @@ itkwidgets
     :alt: Build status
 
 .. image:: https://mybinder.org/badge.svg
-    :target: https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples%2F3DImage.ipynb
+    :target: https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples%2F3DImage.ipynb
     :alt: Interactive example on MyBinder
 
 .. image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
@@ -104,25 +104,25 @@ Examples on Binder
 
 Data types:
 
-- `Binder: 2D ITK Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples%2F2DImage.ipynb>`_
-- `Binder: 3D ITK Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples%2F3DImage.ipynb>`_
-- `Binder: Dask Array images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples/DaskArray.ipynb>`_
-- `Binder: Large volumes <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples/LargeVolumes.ipynb>`_
-- `Binder: NumPy array images (processed with SciPy) <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples/NumPyArrayImage.ipynb>`_
-- `Binder: NumPy array images (processed with scikit-image) <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples/scikit-image.ipynb>`_
-- `Binder: NumPy array for image with anisotropic spacing <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples/ImageWithAnisotropicPixelSpacing.ipynb>`_
-- `Binder: NumPy array point sets <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples/NumPyArrayPointSet.ipynb>`_
-- `Binder: ITK Mesh <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples/Mesh.ipynb>`_
+- `Binder: 2D ITK Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples%2F2DImage.ipynb>`_
+- `Binder: 3D ITK Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples%2F3DImage.ipynb>`_
+- `Binder: Dask Array images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/DaskArray.ipynb>`_
+- `Binder: Large volumes <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/LargeVolumes.ipynb>`_
+- `Binder: NumPy array images (processed with SciPy) <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/NumPyArrayImage.ipynb>`_
+- `Binder: NumPy array images (processed with scikit-image) <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/scikit-image.ipynb>`_
+- `Binder: NumPy array for image with anisotropic spacing <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/ImageWithAnisotropicPixelSpacing.ipynb>`_
+- `Binder: NumPy array point sets <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/NumPyArrayPointSet.ipynb>`_
+- `Binder: ITK Mesh <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/Mesh.ipynb>`_
 
 Tasks:
 
-- `Binder: Compare images with a checkerboard pattern <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples/Checkerboard.ipynb>`_
-- `Binder: Examine a line profile <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples/LineProfile.ipynb>`_
-- `Binder: Interactively explore algorithm parameters <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples/InteractiveParameterExploration.ipynb>`_
-- `Binder: Record a video <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples/RecordAVideo.ipynb>`_
-- `Binder: Select a region of interest <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples/SelectRegionOfInterest.ipynb>`_
-- `Binder: Specify camera parameters <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples/SpecifyCameraParameters.ipynb>`_
-- `Binder: Specify a colormap <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?filepath=examples/SpecifyAColormap.ipynb>`_
+- `Binder: Compare images with a checkerboard pattern <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/Checkerboard.ipynb>`_
+- `Binder: Examine a line profile <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/LineProfile.ipynb>`_
+- `Binder: Interactively explore algorithm parameters <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/InteractiveParameterExploration.ipynb>`_
+- `Binder: Record a video <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/RecordAVideo.ipynb>`_
+- `Binder: Select a region of interest <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SelectRegionOfInterest.ipynb>`_
+- `Binder: Specify camera parameters <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SpecifyCameraParameters.ipynb>`_
+- `Binder: Specify a colormap <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SpecifyAColormap.ipynb>`_
 
 Installation
 ------------
