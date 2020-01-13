@@ -295,10 +295,26 @@ Participation is welcome! For a development installation (requires `Node.js <htt
   python -m pytest
 
 The above commands will setup your system for development with the Jupyter
-Notebook. To develop for Jupyter Lab, additionally run::
+Notebook. In one terminal, start Jupyter::
 
-  jupyter labextension install @jupyter-widgets/jupyterlab-manager
+  cd itkwidgets
+  jupyter notebook
+
+In another terminal, put Webpack in watch mode to rebuild any Javascript
+changes when you save a Javascript file::
+
+  cd itkwidgets
+  npm run watch
+
+If Python code is changed, restart the kernel to see the changes. If
+Javascript code is changed, reload the page after to Webpack has finished
+building.
+
+To develop for Jupyter Lab, additionally run::
+
+  jupyter labextension install @jupyter-widgets/jupyterlab-manager jupyter-matplotlib jupyterlab-datawidgets jupyter-webrtc
   jupyter labextension install ./js
+  jupyter lab --watch
 
 .. note::
 
