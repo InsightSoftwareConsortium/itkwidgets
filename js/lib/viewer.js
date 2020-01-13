@@ -931,7 +931,6 @@ const ViewerView = widgets.DOMWidgetView.extend({
   units_changed: function() {
     const units = this.model.get('units')
     if (this.model.hasOwnProperty('itkVtkViewer')) {
-      console.log(`Units: ${units}`)
       const viewProxy = this.model.itkVtkViewer.getViewProxy()
       viewProxy.setUnits(units)
     }
