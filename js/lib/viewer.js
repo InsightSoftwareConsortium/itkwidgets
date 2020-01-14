@@ -72,6 +72,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       shadow: true,
       slicing_planes: false,
       gradient_opacity: 0.2,
+      blend: 'composite',
       roi: new Float64Array([0., 0., 0., 0., 0., 0.]),
       _largest_roi: new Float64Array([0., 0., 0., 0., 0., 0.]),
       select_roi: false,
@@ -494,6 +495,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.shadow_changed()
         this.slicing_planes_changed()
         this.gradient_opacity_changed()
+        this.blend_changed()
       }
       this.ui_collapsed_changed()
       this.rotate_changed()
@@ -582,6 +584,31 @@ const ViewerView = widgets.DOMWidgetView.extend({
         }
       }
       this.model.itkVtkViewer.subscribeToggleCroppingPlanes(onToggleCroppingPlanes)
+
+      const onBlendModeChanged = (blend) => {
+        let pythonMode = null
+        switch(blend) {
+        case 0:
+          pythonMode = 'composite'
+          break
+        case 1:
+          pythonMode = 'max'
+          break
+        case 2:
+          pythonMode = 'min'
+          break
+        case 3:
+          pythonMode = 'average'
+          break
+        default:
+          throw new Error('Unknown blend mode')
+        }
+        if (pythonMode !== this.model.get('blend')) {
+          this.model.set('blend', pythonMode)
+          this.model.save_changes()
+        }
+      }
+      this.model.itkVtkViewer.subscribeBlendModeChanged(onBlendModeChanged)
 
       if (!this.model.use2D) {
         const onViewModeChanged = (mode) => {
@@ -680,6 +707,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:shadow', this.shadow_changed, this)
     this.model.on('change:slicing_planes', this.slicing_planes_changed, this)
     this.model.on('change:gradient_opacity', this.gradient_opacity_changed, this)
+    this.model.on('change:blend', this.blend_changed, this)
     this.model.on('change:select_roi', this.select_roi_changed, this)
     this.model.on('change:_scale_factors', this.scale_factors_changed, this)
     this.model.on('change:point_sets', this.point_sets_changed, this)
@@ -1016,6 +1044,29 @@ const ViewerView = widgets.DOMWidgetView.extend({
     const gradient_opacity = this.model.get('gradient_opacity')
     if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
       this.model.itkVtkViewer.setGradientOpacity(gradient_opacity)
+    }
+  },
+
+  blend_changed: function() {
+    const blend = this.model.get('blend')
+    if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
+      switch (blend) {
+      case 'composite':
+        this.model.itkVtkViewer.setBlendMode(0)
+        break
+      case 'max':
+        this.model.itkVtkViewer.setBlendMode(1)
+        break
+      case 'min':
+        this.model.itkVtkViewer.setBlendMode(2)
+        break
+      case 'average':
+        this.model.itkVtkViewer.setBlendMode(3)
+        break
+      default:
+        throw new Error('Unexpected blend mode')
+      }
+
     }
   },
 
