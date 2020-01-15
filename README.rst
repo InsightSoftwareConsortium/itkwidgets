@@ -73,6 +73,7 @@ point sets, and meshes.
   - pyvista.UnstructuredGrid
   - vtkplotter.Actor
   - vtkplotter.Assembly
+  - skan.csr.Skeleton
 
 - Exquisite volume rendering
 - Tri-plane volume slicing
@@ -123,6 +124,7 @@ Tasks:
 - `Binder: Select a region of interest <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SelectRegionOfInterest.ipynb>`_
 - `Binder: Specify camera parameters <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SpecifyCameraParameters.ipynb>`_
 - `Binder: Specify a colormap <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SpecifyAColormap.ipynb>`_
+- `Binder: Visualize a segmentation skeleton <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SegmentationSkeleton.ipynb>`_
 
 Installation
 ------------
@@ -263,6 +265,7 @@ or how to:
 - `Select a region of interest <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/SelectRegionOfInterest.ipynb>`_
 - `Specify camera parameters <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/SpecifyCameraParameters.ipynb>`_
 - `Specify a colormap <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/SpecifyAColormap.ipynb>`_
+- `Visualization segmentation skeleton <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/SegmentationSkeleton.ipynb>`_
 
 
 Troubleshooting
