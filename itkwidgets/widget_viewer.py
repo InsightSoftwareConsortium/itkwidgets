@@ -131,12 +131,10 @@ class Viewer(ViewerParent):
         **itkimage_serialization)
     _rendering_image = CBool(
         default_value=False,
-        help="We are currently volume rendering the image.").tag(
-        sync=True)
+        help="We are currently volume rendering the image.").tag(sync=True)
     interpolation = CBool(
         default_value=True,
-        help="Use linear interpolation in slicing planes.").tag(
-        sync=True)
+        help="Use linear interpolation in slicing planes.").tag(sync=True)
     cmap = Colormap('Viridis (matplotlib)').tag(sync=True)
     _custom_cmap = NDArray(dtype=np.float32, default_value=None, allow_none=True,
                            help="RGB triples from 0.0 to 1.0 that define a custom linear, sequential colormap")\
@@ -144,16 +142,26 @@ class Viewer(ViewerParent):
         .valid(shape_constraints(None, 3))
     shadow = CBool(
         default_value=True,
-        help="Use shadowing in the volume rendering.").tag(
-        sync=True)
+        help="Use shadowing in the volume rendering.").tag(sync=True)
     slicing_planes = CBool(
         default_value=False,
         help="Display the slicing planes in volume rendering view mode.").tag(
         sync=True)
+    x_slice = CFloat(
+        default_value=None,
+        allow_none=True,
+        help="World-space position of the X slicing plane.").tag(sync=True)
+    y_slice = CFloat(
+        default_value=None,
+        allow_none=True,
+        help="World-space position of the Y slicing plane.").tag(sync=True)
+    z_slice = CFloat(
+        default_value=None,
+        allow_none=True,
+        help="World-space position of the Z slicing plane.").tag(sync=True)
     gradient_opacity = CFloat(
         default_value=0.2,
-        help="Volume rendering gradient opacity, from (0.0, 1.0]").tag(
-        sync=True)
+        help="Volume rendering gradient opacity, from (0.0, 1.0]").tag(sync=True)
     blend = CaselessStrEnum(
         ('composite',
          'max',
@@ -640,14 +648,23 @@ def view(image=None,  # noqa: C901
     select_roi: bool, optional, default: False
         Enable an interactive region of interest widget for the image.
 
+    slicing_planes: bool, optional, default: False
+        Enable slicing planes on the volume rendering.
+
+    x_slice: float, optional, default: None
+        World-space position of the X slicing plane.
+
+    y_slice: float, optional, default: None
+        World-space position of the Y slicing plane.
+
+    z_slice: float, optional, default: None
+        World-space position of the Z slicing plane.
+
     interpolation: bool, optional, default: True
         Linear as opposed to nearest neighbor interpolation for image slices.
 
     gradient_opacity: float, optional, default: 0.22
         Gradient opacity for composite volume rendering, in the range (0.0, 1.0].
-
-    slicing_planes: bool, optional, default: False
-        Enable slicing planes on the volume rendering.
 
     shadow: bool, optional, default: True
         Use shadowing with composite volume rendering.
