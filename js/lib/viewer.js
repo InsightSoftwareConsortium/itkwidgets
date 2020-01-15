@@ -585,32 +585,32 @@ const ViewerView = widgets.DOMWidgetView.extend({
       }
       this.model.itkVtkViewer.subscribeToggleCroppingPlanes(onToggleCroppingPlanes)
 
-      const onBlendModeChanged = (blend) => {
-        let pythonMode = null
-        switch(blend) {
-        case 0:
-          pythonMode = 'composite'
-          break
-        case 1:
-          pythonMode = 'max'
-          break
-        case 2:
-          pythonMode = 'min'
-          break
-        case 3:
-          pythonMode = 'average'
-          break
-        default:
-          throw new Error('Unknown blend mode')
-        }
-        if (pythonMode !== this.model.get('blend')) {
-          this.model.set('blend', pythonMode)
-          this.model.save_changes()
-        }
-      }
-      this.model.itkVtkViewer.subscribeBlendModeChanged(onBlendModeChanged)
-
       if (!this.model.use2D) {
+        const onBlendModeChanged = (blend) => {
+          let pythonMode = null
+          switch(blend) {
+          case 0:
+            pythonMode = 'composite'
+            break
+          case 1:
+            pythonMode = 'max'
+            break
+          case 2:
+            pythonMode = 'min'
+            break
+          case 3:
+            pythonMode = 'average'
+            break
+          default:
+            throw new Error('Unknown blend mode')
+          }
+          if (pythonMode !== this.model.get('blend')) {
+            this.model.set('blend', pythonMode)
+            this.model.save_changes()
+          }
+        }
+        this.model.itkVtkViewer.subscribeBlendModeChanged(onBlendModeChanged)
+
         const onViewModeChanged = (mode) => {
           let pythonMode = null;
           switch (mode) {
