@@ -154,6 +154,13 @@ class Viewer(ViewerParent):
         default_value=0.2,
         help="Volume rendering gradient opacity, from (0.0, 1.0]").tag(
         sync=True)
+    blend = CaselessStrEnum(
+        ('composite',
+         'max',
+         'min',
+         'average'),
+        default_value='composite',
+        help="Volume rendering blend mode").tag(sync=True)
     roi = NDArray(dtype=np.float64, default_value=np.zeros((2, 3), dtype=np.float64),
                   help="Region of interest: [[lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z]]")\
         .tag(sync=True, **array_serialization)\
@@ -553,11 +560,15 @@ class Viewer(ViewerParent):
 
 
 def view(image=None,  # noqa: C901
-         gradient_opacity=0.22, cmap=cm.viridis, slicing_planes=False,
-         select_roi=False, shadow=True, interpolation=True,
-         point_sets=[], point_set_colors=[], point_set_opacities=[
-         ], point_set_representations=[],  # point_set_sizes=[],
-         geometries=[], geometry_colors=[], geometry_opacities=[],
+         cmap=cm.viridis,
+         select_roi=False,
+         interpolation=True,
+         gradient_opacity=0.22, slicing_planes=False, shadow=True, blend='composite',
+         point_sets=[],
+         point_set_colors=[], point_set_opacities=[], point_set_representations=[],
+         # point_set_sizes=[],
+         geometries=[],
+         geometry_colors=[], geometry_opacities=[],
          ui_collapsed=False, rotate=False, annotations=True, mode='v',
          **kwargs):
     """View the image and/or point sets and/or geometries.
@@ -580,29 +591,40 @@ def view(image=None,  # noqa: C901
     Parameters
     ----------
 
+    General Interface
+    ^^^^^^^^^^^^^^^^^
+
+    ui_collapsed : bool, optional, default: False
+        Collapse the native widget user interface.
+
+    rotate : bool, optional, default: False
+        Continuously rotate the camera around the scene in volume rendering
+        mode.
+
+    annotations : bool, optional, default: True
+        Display annotations describing orientation and the value of a
+        mouse-position-based data probe.
+
+    mode: 'x', 'y', 'z', or 'v', optional, default: 'v'
+        Only relevant for 3D scenes.
+        Viewing mode:
+            'x': x-plane
+            'y': y-plane
+            'z': z-plane
+            'v': volume rendering
+
+    camera: 3x3 numpy float32 array, optional
+        Camera parameters:
+            [[position_x,    position_y,    position_z],
+             [focal_point_x, focal_point_y, focal_point_z],
+             [view_up_x,     view_up_y,     view_up_z]]
+
+
     Images
     ^^^^^^
 
     image : array_like, itk.Image, or vtk.vtkImageData
         The 2D or 3D image to visualize.
-
-    gradient_opacity: float, optional, default: 0.22
-        Gradient opacity for the volume rendering, in the range (0.0, 1.0].
-
-    cmap: string, optional, default: 'Viridis (matplotlib)'
-        Colormap. Some valid values available at itkwidgets.cm.*
-
-    slicing_planes: bool, optional, default: False
-        Enable slicing planes on the volume rendering.
-
-    select_roi: bool, optional, default: False
-        Enable an interactive region of interest widget for the image.
-
-    interpolation: bool, optional, default: True
-        Linear as opposed to nearest neighbor interpolation for image slices.
-
-    shadow: bool, optional, default: True
-        Use shadowing in the volume rendering.
 
     vmin: float, optional, default: None
         Value that maps to the minimum of image colormap. Defaults to minimum of
@@ -611,6 +633,27 @@ def view(image=None,  # noqa: C901
     vmax: float, optional, default: None
         Value that maps to the minimum of image colormap. Defaults to maximum of
         the image pixel buffer.
+
+    cmap: string, optional, default: 'Viridis (matplotlib)'
+        Colormap. Some valid values available at itkwidgets.cm.*
+
+    select_roi: bool, optional, default: False
+        Enable an interactive region of interest widget for the image.
+
+    interpolation: bool, optional, default: True
+        Linear as opposed to nearest neighbor interpolation for image slices.
+
+    gradient_opacity: float, optional, default: 0.22
+        Gradient opacity for composite volume rendering, in the range (0.0, 1.0].
+
+    slicing_planes: bool, optional, default: False
+        Enable slicing planes on the volume rendering.
+
+    shadow: bool, optional, default: True
+        Use shadowing with composite volume rendering.
+
+    blend: 'composite', 'max', 'min', or 'average', optional, default: 'composite'
+        Volume rendering blend mode.
 
     Point Sets
     ^^^^^^^^^^
@@ -640,34 +683,6 @@ def view(image=None,  # noqa: C901
 
     geometry_opacities: list of floats, optional, default: [1.0,]*n
         Opacity for the point sets, in the range (0.0, 1.0].
-
-    General Interface
-    ^^^^^^^^^^^^^^^^^
-
-    ui_collapsed : bool, optional, default: False
-        Collapse the native widget user interface.
-
-    rotate : bool, optional, default: False
-        Continuously rotate the camera around the scene in volume rendering
-        mode.
-
-    annotations : bool, optional, default: True
-        Display annotations describing orientation and the value of a
-        mouse-position-based data probe.
-
-    mode: 'x', 'y', 'z', or 'v', optional, default: 'v'
-        Only relevant for 3D images.
-        Viewing mode:
-            'x': x-plane
-            'y': y-plane
-            'z': z-plane
-            'v': volume rendering
-
-    camera: 3x3 numpy float32 array, optional
-        Camera parameters:
-            [[position_x,    position_y,    position_z],
-             [focal_point_x, focal_point_y, focal_point_z],
-             [view_up_x,     view_up_y,     view_up_z]]
 
 
     Other Parameters
@@ -765,8 +780,12 @@ def view(image=None,  # noqa: C901
         if image is None and len(images):  # only one image is rendered
             image = images[0]
 
-    viewer = Viewer(image=image, interpolation=interpolation, cmap=cmap, shadow=shadow,
-                    select_roi=select_roi, slicing_planes=slicing_planes, gradient_opacity=gradient_opacity,
+    viewer = Viewer(image=image,
+                    cmap=cmap,
+                    select_roi=select_roi,
+                    interpolation=interpolation,
+                    gradient_opacity=gradient_opacity, slicing_planes=slicing_planes,
+                    shadow=shadow, blend=blend,
                     point_sets=point_sets,
                     point_set_colors=point_set_colors,
                     point_set_opacities=point_set_opacities,
