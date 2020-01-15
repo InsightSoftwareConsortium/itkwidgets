@@ -10,6 +10,7 @@ def is_arraylike(arr):
         hasattr(arr, '__array__') and \
         hasattr(arr, 'ndim')
 
+# from IPython.core.debugger import set_trace
 
 have_imagej = False
 try:
@@ -33,6 +34,12 @@ have_simpleitk = False
 try:
     import SimpleITK as sitk
     have_simpleitk = True
+except ImportError:
+    pass
+have_skan = False
+try:
+    import skan
+    have_skan = True
 except ImportError:
     pass
 
@@ -403,6 +410,50 @@ def to_geometry(geometry_like):  # noqa: C901
         lines_data[2::3] = np.arange(1, number_of_points, dtype=np.uint32)
 
         # For cell_type, cell_data in [('verts', verts_data),]:
+        for cell_type, cell_data in [
+                ('verts', verts_data), ('lines', lines_data)]:
+            cells = {'vtkClass': 'vtkCellArray',
+                     'name': '_' + cell_type,
+                     'numberOfComponents': 1,
+                     'size': cell_data.size,
+                     'dataType': 'Uint32Array',
+                     'values': cell_data}
+            geometry[cell_type] = cells
+
+        return geometry
+    elif have_skan and isinstance(geometry_like, skan.csr.Skeleton):
+
+        geometry = {'vtkClass': 'vtkPolyData'}
+
+        number_of_points = geometry_like.coordinates.shape[0]
+        dimension = geometry_like.coordinates.shape[1]
+
+        points_data = -5.0e-6 * \
+            np.ones((number_of_points, 3), dtype=np.float64)
+        points_data[:, :dimension] = np.flip(geometry_like.coordinates[:, :dimension], 1)
+        points_data = points_data.astype(np.float32).ravel()
+        points = {'vtkClass': 'vtkPoints',
+                  'name': '_points',
+                  'numberOfComponents': 3,
+                  'dataType': 'Float32Array',
+                  'size': points_data.size,
+                  'values': points_data}
+        geometry['points'] = points
+
+        verts_data = np.empty((0,), dtype=np.uint32)
+        lines_data = np.empty((0,), dtype=np.uint32)
+        for path in geometry_like.paths_list():
+            path_number_of_points = len(path)
+            verts = np.ones((2 * path_number_of_points,), dtype=np.uint32)
+            verts[1::2] = np.array(path, dtype=np.uint32)
+            verts_data = np.concatenate((verts_data, verts))
+
+            lines = 2 * \
+                np.ones((3 * (path_number_of_points - 1),), dtype=np.uint32)
+            lines[1::3] = np.array(path[:-1], dtype=np.uint32)
+            lines[2::3] = np.array(path[1:], dtype=np.uint32)
+            lines_data = np.concatenate((lines_data, lines))
+
         for cell_type, cell_data in [
                 ('verts', verts_data), ('lines', lines_data)]:
             cells = {'vtkClass': 'vtkCellArray',

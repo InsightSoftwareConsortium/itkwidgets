@@ -25,6 +25,7 @@ examples/General_EduRes_Heart_BloodVessels_0.jpg
 examples/cow.vtk
 examples/Bunny.vtp
 examples/uGridEx.vtk
+examples/input.tiff
 
 js/lib/ZstdDecompress/web-build/
 .pytest_cache/
