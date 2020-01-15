@@ -71,6 +71,9 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       vmax: null,
       shadow: true,
       slicing_planes: false,
+      x_slice: null,
+      y_slice: null,
+      z_slice: null,
       gradient_opacity: 0.2,
       blend: 'composite',
       roi: new Float64Array([0., 0., 0., 0., 0., 0.]),
@@ -494,6 +497,9 @@ const ViewerView = widgets.DOMWidgetView.extend({
       if (rendered_image) {
         this.shadow_changed()
         this.slicing_planes_changed()
+        this.x_slice_changed()
+        this.y_slice_changed()
+        this.z_slice_changed()
         this.gradient_opacity_changed()
         this.blend_changed()
       }
@@ -674,6 +680,40 @@ const ViewerView = widgets.DOMWidgetView.extend({
         }
         this.model.itkVtkViewer.subscribeToggleSlicingPlanes(onSlicingPlanesToggle)
 
+        const onXSliceChanged = (position) => {
+          if (position !== this.model.get('x_slice')) {
+            this.model.set('x_slice', position)
+            this.model.save_changes()
+          }
+        }
+        this.model.itkVtkViewer.subscribeXSliceChanged(onXSliceChanged)
+        if (this.model.get('x_slice') === null) {
+          this.model.set('x_slice', this.model.itkVtkViewer.getXSlice())
+          this.model.save_changes()
+        }
+        const onYSliceChanged = (position) => {
+          if (position !== this.model.get('y_slice')) {
+            this.model.set('y_slice', position)
+            this.model.save_changes()
+          }
+        }
+        this.model.itkVtkViewer.subscribeYSliceChanged(onYSliceChanged)
+        if (this.model.get('y_slice') === null) {
+          this.model.set('y_slice', this.model.itkVtkViewer.getYSlice())
+          this.model.save_changes()
+        }
+        const onZSliceChanged = (position) => {
+          if (position !== this.model.get('z_slice')) {
+            this.model.set('z_slice', position)
+            this.model.save_changes()
+          }
+        }
+        this.model.itkVtkViewer.subscribeZSliceChanged(onZSliceChanged)
+        if (this.model.get('z_slice') === null) {
+          this.model.set('z_slice', this.model.itkVtkViewer.getZSlice())
+          this.model.save_changes()
+        }
+
         const onGradientOpacityChange = (opacity) => {
           if (opacity !== this.model.get('gradient_opacity')) {
             this.model.set('gradient_opacity', opacity)
@@ -706,6 +746,9 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:vmax', this.vmax_changed, this)
     this.model.on('change:shadow', this.shadow_changed, this)
     this.model.on('change:slicing_planes', this.slicing_planes_changed, this)
+    this.model.on('change:x_slice', this.x_slice_changed, this)
+    this.model.on('change:y_slice', this.y_slice_changed, this)
+    this.model.on('change:z_slice', this.z_slice_changed, this)
     this.model.on('change:gradient_opacity', this.gradient_opacity_changed, this)
     this.model.on('change:blend', this.blend_changed, this)
     this.model.on('change:select_roi', this.select_roi_changed, this)
@@ -1037,6 +1080,27 @@ const ViewerView = widgets.DOMWidgetView.extend({
     const slicing_planes = this.model.get('slicing_planes')
     if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
       this.model.itkVtkViewer.setSlicingPlanesEnabled(slicing_planes)
+    }
+  },
+
+  x_slice_changed: function() {
+    const position = this.model.get('x_slice')
+    if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D && position !== null) {
+      this.model.itkVtkViewer.setXSlice(position)
+    }
+  },
+
+  y_slice_changed: function() {
+    const position = this.model.get('y_slice')
+    if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D && position !== null) {
+      this.model.itkVtkViewer.setYSlice(position)
+    }
+  },
+
+  z_slice_changed: function() {
+    const position = this.model.get('z_slice')
+    if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D && position !== null) {
+      this.model.itkVtkViewer.setZSlice(position)
     }
   },
 
