@@ -30,7 +30,7 @@ with open(output_file, 'w') as fp:
     fp.write('\n')
 
     fp.write('## Changes from {0} to {1}\n'.format(previous_tag, current_tag))
-    subjects = subprocess.check_output(['git', 'log', '--pretty=%s',
+    subjects = subprocess.check_output(['git', 'log', '--pretty=%s:%h',
         '--no-merges', '{0}..{1}'.format(previous_tag, current_tag)]).decode('utf-8')
 
     bug_fixes = []
@@ -41,53 +41,62 @@ with open(output_file, 'w') as fp:
     style_changes = []
     for subject in subjects.split('\n'):
         prefix = subject.split(':')[0]
+        commit = subject.split(':')[-1]
         if prefix == 'BUG':
             description = subject.split(':')[1]
-            bug_fixes.append(description)
+            bug_fixes.append((description, commit))
         elif prefix == 'COMP':
             description = subject.split(':')[1]
-            platform_fixes.append(description)
+            platform_fixes.append((description, commit))
         elif prefix == 'DOC':
             description = subject.split(':')[1]
-            doc_updates.append(description)
+            doc_updates.append((description, commit))
         elif prefix == 'ENH':
             description = subject.split(':')[1]
-            enhancements.append(description)
+            enhancements.append((description, commit))
         elif prefix == 'PERF':
             description = subject.split(':')[1]
-            performance_improvements.append(description)
+            performance_improvements.append((description, commit))
         elif prefix == 'STYLE':
             description = subject.split(':')[1]
-            style_changes.append(description)
+            style_changes.append((description, commit))
+
+    commit_link_prefix = 'https://github.com/InsightSoftwareConsortium/itkwidgets/commit/'
 
     if enhancements:
         fp.write('\n### Enhancements\n\n')
-        for subject in enhancements:
+        for subject, commit in enhancements:
             if subject.find('Bump itkwidgets version for development') != -1:
                 continue
-            fp.write('- {0}\n'.format(subject))
+            fp.write('- {0}'.format(subject))
+            fp.write(' ([{0}]({1}{0}))\n'.format(commit, commit_link_prefix))
 
     if performance_improvements:
         fp.write('\n### Performance Improvements\n\n')
-        for subject in performance_improvements:
-            fp.write('- {0}\n'.format(subject))
+        for subject, commit in performance_improvements:
+            fp.write('- {0}'.format(subject))
+            fp.write(' ([{0}]({1}{0}))\n'.format(commit, commit_link_prefix))
 
     if doc_updates:
         fp.write('\n### Documentation Updates\n\n')
-        for subject in doc_updates:
-            fp.write('- {0}\n'.format(subject))
+        for subject, commit in doc_updates:
+            fp.write('- {0}'.format(subject))
+            fp.write(' ([{0}]({1}{0}))\n'.format(commit, commit_link_prefix))
 
     if platform_fixes:
         fp.write('\n### Platform Fixes\n\n')
-        for subject in platform_fixes:
-            fp.write('- {0}\n'.format(subject))
+        for subject, commit in platform_fixes:
+            fp.write('- {0}'.format(subject))
+            fp.write(' ([{0}]({1}{0}))\n'.format(commit, commit_link_prefix))
 
     if bug_fixes:
         fp.write('\n### Bug Fixes\n\n')
-        for subject in bug_fixes:
-            fp.write('- {0}\n'.format(subject))
+        for subject, commit in bug_fixes:
+            fp.write('- {0}'.format(subject))
+            fp.write(' ([{0}]({1}{0}))\n'.format(commit, commit_link_prefix))
 
     if style_changes:
         fp.write('\n### Style Changes\n\n')
-        for subject in style_changes:
-            fp.write('- {0}\n'.format(subject))
+        for subject, commit in style_changes:
+            fp.write('- {0}'.format(subject))
+            fp.write(' ([{0}]({1}{0}))\n'.format(commit, commit_link_prefix))
