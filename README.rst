@@ -114,6 +114,7 @@ Data types:
 - `Binder: NumPy array for image with anisotropic spacing <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/ImageWithAnisotropicPixelSpacing.ipynb>`_
 - `Binder: NumPy array point sets <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/NumPyArrayPointSet.ipynb>`_
 - `Binder: ITK Mesh <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/Mesh.ipynb>`_
+- `Binder: skan segmentation skeleton <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SegmentationSkeleton.ipynb>`_
 
 Tasks:
 
@@ -125,7 +126,6 @@ Tasks:
 - `Binder: Select a region of interest <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SelectRegionOfInterest.ipynb>`_
 - `Binder: Specify camera parameters <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SpecifyCameraParameters.ipynb>`_
 - `Binder: Specify a colormap <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SpecifyAColormap.ipynb>`_
-- `Binder: Visualize a segmentation skeleton <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SegmentationSkeleton.ipynb>`_
 
 Installation
 ------------
@@ -256,6 +256,7 @@ After installation, try the following examples that demonstrate how to visualize
 - `pyvista UnstructuredGrid <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/pyvista.UnstructuredGrid.ipynb>`_
 - `pyvista LiDAR <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/pyvistaLiDAR.ipynb>`_
 - `vtkplotter actors and volumes <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/vtkplotter.ipynb>`_
+- `skan segmentation skeleton <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/SegmentationSkeleton.ipynb>`_
 
 or how to:
 
@@ -267,7 +268,6 @@ or how to:
 - `Select a region of interest <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/SelectRegionOfInterest.ipynb>`_
 - `Specify camera parameters <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/SpecifyCameraParameters.ipynb>`_
 - `Specify a colormap <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/SpecifyAColormap.ipynb>`_
-- `Visualization segmentation skeleton <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/SegmentationSkeleton.ipynb>`_
 
 
 Troubleshooting
