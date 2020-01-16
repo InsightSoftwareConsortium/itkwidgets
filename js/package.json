@@ -46,10 +46,10 @@
     "shader-loader": "^1.3.1",
     "style-loader": "^0.23.1",
     "url-loader": "^1.0.1",
-    "webpack": "^4.16.4",
-    "webpack-cli": "^3.1.0",
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10",
     "webpack-node-externals": "^1.7.2",
-    "webpackbar": "^3.1.4",
+    "webpackbar": "^4.0.0",
     "worker-loader": "^2.0.0"
   },
   "dependencies": {
@@ -58,7 +58,7 @@
     "@jupyter-widgets/base": "^1.1 || ^2",
     "autoprefixer": "^9.4.3",
     "babel-preset-mobx": "^2.0.0",
-    "copy-webpack-plugin": "^4.5.1",
+    "copy-webpack-plugin": "^5.1.1",
     "css-element-queries": "^1.0.2",
     "itk": "^10.2.0",
     "itk-vtk-viewer": "^9.11.0",
