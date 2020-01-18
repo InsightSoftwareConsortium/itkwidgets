@@ -21,7 +21,7 @@ itkwidgets
     :target: https://circleci.com/gh/InsightSoftwareConsortium/itkwidgets
     :alt: Build status
 
-.. image:: https://mybinder.org/badge.svg
+.. image:: https://mybinder.org/badge_logo.svg
     :target: https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples%2F3DImage.ipynb
     :alt: Interactive example on MyBinder
 
