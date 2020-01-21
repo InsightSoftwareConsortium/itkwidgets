@@ -296,6 +296,28 @@ Cell output scrolls by default in JupyterLab. To disable scrolling, right click
 in the region to the left of the output and select *Disable Scrolling for
 Outputs*.
 
+'Permission denied' during installation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If *Permission denied* errors occur during installation, install the Python
+package with *user* permission via:
+
+  pip install --user itkwidgets
+
+For JupyterLab extension installation, configure JupyterLab to use your user
+application directory by setting the environmental variable,
+`JUPYTERLAB_DIR`::
+
+  export JUPYTERLAB_DIR=$HOME/.local/share/jupyter/lab
+
+Check that this is picked up in the value of the *Application directory*
+reportred by::
+
+  jupyter lab path
+
+Then, install the extension as usual::
+
+  jupyter labextension install @jupyter-widgets/jupyterlab-manager jupyter-matplotlib jupyterlab-datawidgets itkwidgets
 
 Hacking
 -------
