@@ -33,8 +33,7 @@ itkwidgets
     :target: https://zenodo.org/badge/latestdoi/121581663
     :alt: Software citation DOI
 
-Interactive `Jupyter <https://jupyter.org/>`_ widgets to visualize images,
-point sets, and meshes.
+Interactive Jupyter_ widgets to visualize images, point sets, and meshes.
 
 .. image:: https://i.imgur.com/d8aXycW.png
     :width: 800px
@@ -42,44 +41,45 @@ point sets, and meshes.
 
 **Key Features**:
 
-- Visualize 2D and 3D images, point sets, and geometry, e.g. meshes, in Jupyter
+- Visualize 2D and 3D images, point sets, and geometry, e.g. meshes, in Jupyter_
 - Support for
 
-  - NumPy array images
-  - itk.Image
-  - Dask array images
-  - vtk.vtkImageData
-  - pyvista.UniformGrid
-  - vtkplotter.Volume
-  - ImageJ / Fiji / ImageJ2 images
+  - `NumPy array <https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html>`_ images
+  - `itk.Image <https://itkpythonpackage.readthedocs.io/en/latest/Quick_start_guide.html>`_
+  - `Dask array <https://docs.dask.org/en/latest/array.html>`_ images
+  - `vtk.vtkImageData <https://vtk.org>`_
+  - `pyvista.UniformGrid <https://pyvista.org>`_
+  - `vtkplotter.Volume <https://vtkplotter.embl.es/index.html>`_
+  - `pyimagej ImageJ / Fiji / ImageJ2 images <https://github.com/imagej/pyimagej>`_
   - Additional NumPy array-like objects
-  - SimpleITK.Image
+  - `SimpleITK.Image <https://simpleitk-prototype.readthedocs.io/en/latest/user_guide/plot_image.html#sphx-glr-user-guide-plot-image-py>`_
 
   - NumPy array point sets
-  - itk.PointSet
-  - vtk.vtkPolyData point sets
-  - pyvista.PolyData point sets
+  - `itk.PointSet <https://itk.org/Doxygen/html/classitk_1_1PointSet.html>`_
+  - `vtk.vtkPolyData <https://vtk.org/doc/nightly/html/classvtkPolyData.html>`_ point sets
+  - `pyvista.PolyData <https://docs.pyvista.org/core/points.html>`_ point sets
 
-  - itk.Mesh
-  - itk.PolyLineParametricPath
-  - vtk.vtkPolyData
-  - vtk.vtkStructuredGrid
-  - vtk.vtkUnstructuredGrid
-  - vtk.vtkActor
-  - vtk.vtkVolume
-  - vtk.vtkAssembly
-  - pyvista.PolyData
-  - pyvista.StructuredGrid
-  - pyvista.UnstructuredGrid
-  - vtkplotter.Actor
-  - vtkplotter.Assembly
-  - skan.csr.Skeleton
+  - `itk.Mesh <https://itk.org/Doxygen/html/classitk_1_1Mesh.html>`_
+  - `itk.PolyLineParametricPath <https://itk.org/Doxygen/html/classitk_1_1PolyLineParametricPath.html>`_
+  - `vtk.vtkPolyData <https://vtk.org/doc/nightly/html/classvtkPolyData.html>`_
+  - `vtk.vtkStructuredGrid <https://vtk.org/doc/nightly/html/classvtkStructuredGrid.html>`_
+  - `vtk.vtkUnstructuredGrid <https://vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html>`_
+  - `vtk.vtkActor <https://vtk.org/doc/nightly/html/classvtkActor.html>`_
+  - `vtk.vtkVolume <https://vtk.org/doc/nightly/html/classvtkVolume.html>`_
+  - `vtk.vtkAssembly <https://vtk.org/doc/nightly/html/classvtkAssembly.html>`_
+  - `pyvista.PolyData <https://docs.pyvista.org/core/points.html>`_
+  - `pyvista.StructuredGrid <https://docs.pyvista.org/core/point-grids.html#structured-grid-creation>`_
+  - `pyvista.UnstructuredGrid <https://docs.pyvista.org/core/point-grids.html#unstructured-grid-creation>`_
+  - `vtkplotter.Actor <https://vtkplotter.embl.es/index.html>`_
+  - `vtkplotter.Assembly <https://vtkplotter.embl.es/index.html>`_
+  - `skan.csr.Skeleton <https://jni.github.io/skan/api/skan.csr.html#module-skan.csr>`_
 
 - Exquisite volume rendering
 - Tri-plane volume slicing
 - Innovative, powerful opacity transfer function / window / level widget
 - Anisotropic voxel spacing supported
 - Image line profile widget
+- Compare images widget
 - Widgets to select solid colors for geometry or colormaps when point data or
   cell data is availble
 - Visualize point sets as points or spheres and interactively adjust the point
@@ -296,6 +296,28 @@ Cell output scrolls by default in JupyterLab. To disable scrolling, right click
 in the region to the left of the output and select *Disable Scrolling for
 Outputs*.
 
+'Permission denied' during installation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If *Permission denied* errors occur during installation, install the Python
+package with *user* permission via:
+
+  pip install --user itkwidgets
+
+For JupyterLab extension installation, configure JupyterLab to use your user
+application directory by setting the environmental variable,
+`JUPYTERLAB_DIR`::
+
+  export JUPYTERLAB_DIR=$HOME/.local/share/jupyter/lab
+
+Check that this is picked up in the value of the *Application directory*
+reportred by::
+
+  jupyter lab path
+
+Then, install the extension as usual::
+
+  jupyter labextension install @jupyter-widgets/jupyterlab-manager jupyter-matplotlib jupyterlab-datawidgets itkwidgets
 
 Hacking
 -------
@@ -341,3 +363,5 @@ To develop for Jupyter Lab, additionally run::
 
   This project is under active development. Its API and behavior may change at
   any time. We mean it.
+
+.. _Jupyter: https://jupyter.org/
