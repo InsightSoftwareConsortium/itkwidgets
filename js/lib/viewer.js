@@ -127,8 +127,19 @@ const createRenderingPipeline = (domWidgetView, { rendered_image, point_sets, ge
     overflow: 'hidden',
     display: 'block-inline'
   };
+  let backgroundColor = [1.0, 1.0, 1.0];
+  const bodyBackground = getComputedStyle(document.body).getPropertyValue('background-color');
+  if (!!bodyBackground) {
+    // Separator can be , or space
+    const sep = bodyBackground.indexOf(",") > -1 ? "," : " ";
+    // Turn "rgb(r,g,b)" into [r,g,b]
+    const rgb = bodyBackground.substr(4).split(")")[0].split(sep);
+    backgroundColor[0] = rgb[0] / 255.0;
+    backgroundColor[1] = rgb[1] / 255.0;
+    backgroundColor[2] = rgb[2] / 255.0;
+  }
   const viewerStyle = {
-    backgroundColor: [1.0, 1.0, 1.0],
+    backgroundColor,
     containerStyle: containerStyle,
   };
   let is3D = true
