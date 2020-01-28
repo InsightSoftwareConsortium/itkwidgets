@@ -653,30 +653,6 @@ const ViewerView = widgets.DOMWidgetView.extend({
         }
         this.model.itkVtkViewer.subscribeViewModeChanged(onViewModeChanged)
 
-        const onCameraChanged = macro.throttle(() => {
-          const camera = new Float32Array(9)
-          const viewProxy = this.model.itkVtkViewer.getViewProxy()
-          camera.set(viewProxy.getCameraPosition(), 0)
-          camera.set(viewProxy.getCameraFocalPoint(), 3)
-          camera.set(viewProxy.getCameraViewUp(), 6)
-          this.model.set('camera', camera)
-          this.model.save_changes()
-        }, 50)
-        // If view-up has not been set, set initial value to itk-vtk-viewer default
-        const viewUp = this.model.get('camera').slice(6, 9)
-        if (!!!viewUp[0] && !!!viewUp[1] && !!!viewUp[2]) {
-          onCameraChanged()
-        } else {
-          this.camera_changed()
-        }
-        const interactor = this.model.itkVtkViewer.getViewProxy().getInteractor()
-        interactor.onEndMouseMove(onCameraChanged)
-        interactor.onEndMouseWheel(onCameraChanged)
-        interactor.onEndPan(onCameraChanged)
-        interactor.onEndPinch(onCameraChanged)
-        const vtkCamera = this.model.itkVtkViewer.getViewProxy().getCamera()
-        vtkCamera.onModified(onCameraChanged)
-
         const onShadowToggle = (enabled) => {
           if (enabled !== this.model.get('shadow')) {
             this.model.set('shadow', enabled)
@@ -734,7 +710,31 @@ const ViewerView = widgets.DOMWidgetView.extend({
           }
         }
         this.model.itkVtkViewer.subscribeGradientOpacityChanged(onGradientOpacityChange)
+      } // end use2D
+
+      const onCameraChanged = macro.throttle(() => {
+        const camera = new Float32Array(9)
+        const viewProxy = this.model.itkVtkViewer.getViewProxy()
+        camera.set(viewProxy.getCameraPosition(), 0)
+        camera.set(viewProxy.getCameraFocalPoint(), 3)
+        camera.set(viewProxy.getCameraViewUp(), 6)
+        this.model.set('camera', camera)
+        this.model.save_changes()
+      }, 50)
+      // If view-up has not been set, set initial value to itk-vtk-viewer default
+      const viewUp = this.model.get('camera').slice(6, 9)
+      if (!!!viewUp[0] && !!!viewUp[1] && !!!viewUp[2]) {
+        onCameraChanged()
+      } else {
+        this.camera_changed()
       }
+      const interactor = this.model.itkVtkViewer.getViewProxy().getInteractor()
+      interactor.onEndMouseMove(onCameraChanged)
+      interactor.onEndMouseWheel(onCameraChanged)
+      interactor.onEndPan(onCameraChanged)
+      interactor.onEndPinch(onCameraChanged)
+      const vtkCamera = this.model.itkVtkViewer.getViewProxy().getCamera()
+      vtkCamera.onModified(onCameraChanged)
 
       const point_sets = this.model.get('point_sets')
       if(point_sets) {
