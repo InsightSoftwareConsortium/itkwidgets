@@ -162,6 +162,7 @@ Other available widgets:
 
 - ``itkwidgets.line_profile``: Plot an intensity line profile.
 - ``itkwidgets.checkerboard``: Compare two images in a checkerboard pattern.
+- ``itkwidgets.compare``: Compare two images side-by-side.
 
 Advanced Usage
 ^^^^^^^^^^^^^^
