@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  create-github-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v1
+      - name: Download package
+        run: |
+          python -m pip install --upgrade pip
+          latest_tag=$(git tag --sort=taggerdate | tail -n 1 | cut -d 'v' -f 2)
+          python -m pip download itkwidgets==$latest_tag
+          echo "::set-output name=release_name::itkwidgets ${latest_tag}"
+      - name: Generate release notes
+        run: |
+          python ./utilities/release-notes.py ./ReleaseNotes.txt
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            itkwidgets*.whl
+          body_path: ./ReleaseNotes.txt
+          name: ${{ release_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
