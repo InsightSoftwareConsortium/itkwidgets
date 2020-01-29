@@ -31,6 +31,7 @@ def compare(image1, image2,
     widgets.jslink((viewer1, 'x_slice'), (viewer2, 'x_slice'))
     widgets.jslink((viewer1, 'y_slice'), (viewer2, 'y_slice'))
     widgets.jslink((viewer1, 'z_slice'), (viewer2, 'z_slice'))
+    widgets.jslink((viewer1, 'slicing_planes'), (viewer2, 'slicing_planes'))
 
     link_widgets = []
     link_widgets.append(widgets.Label('Link:'))
