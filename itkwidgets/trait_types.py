@@ -277,15 +277,27 @@ class PolyDataList(traitlets.TraitType):
         # For convenience, support assigning a single geometry instead of a
         # list
         geometries = value
-        if not isinstance(
+        if not isinstance(geometries, dict) and not isinstance(
                 geometries, collections.Sequence) and geometries is not None:
             geometries = [geometries]
 
         try:
+            if isinstance(geometries, dict):
+                geometries_list = []
+                for name, geometry in geometries.items():
+                    if not isinstance(
+                            geometry, dict) or 'vtkClass' not in geometry:
+                        geometry = to_geometry(geometry)
+                    if 'metadata' not in geometry:
+                        geometry['metadata'] = {'name': str(name)}
+                    geometries_list.append(geometry)
+                return geometries_list
             for index, geometry in enumerate(geometries):
                 if not isinstance(
                         geometry, dict) or 'vtkClass' not in geometry:
                     geometries[index] = to_geometry(geometry)
+                if 'metadata' not in geometries[index]:
+                    geometries[index]['metadata'] = {'name': 'Geometry {0}'.format(index)}
             return geometries
         except BaseException:
             self.error(obj, value)
@@ -493,16 +505,29 @@ class PointSetList(PolyDataList):
         # For convenience, support assigning a single point set instead of a
         # list
         point_sets = value
-        if not isinstance(
+        if not isinstance(point_sets, dict) and not isinstance(
                 point_sets, collections.Sequence) and point_sets is not None:
             point_sets = [point_sets]
 
         try:
-            for index, point_set in enumerate(point_sets):
-                if not isinstance(
-                        point_set, dict) or 'vtkClass' not in point_set:
-                    point_sets[index] = to_point_set(point_set)
-            return point_sets
+            if isinstance(point_sets, dict):
+                point_sets_list = []
+                for name, point_set in point_sets.items():
+                    if not isinstance(
+                            point_set, dict) or 'vtkClass' not in point_set:
+                        point_set = to_point_set(point_set)
+                    if 'metadata' not in point_set:
+                        point_set['metadata'] = {'name': str(name)}
+                    point_sets_list.append(point_set)
+                return point_sets_list
+            else:
+                for index, point_set in enumerate(point_sets):
+                    if not isinstance(
+                            point_set, dict) or 'vtkClass' not in point_set:
+                        point_sets[index] = to_point_set(point_set)
+                    if 'metadata' not in point_sets[index]:
+                        point_sets[index]['metadata'] = {'name': 'Point Set {0}'.format(index)}
+                return point_sets
         except BaseException:
             self.error(obj, value)
 

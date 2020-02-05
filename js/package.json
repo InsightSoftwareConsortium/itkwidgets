@@ -61,7 +61,7 @@
     "copy-webpack-plugin": "^5.1.1",
     "css-element-queries": "^1.0.2",
     "itk": "^10.2.0",
-    "itk-vtk-viewer": "^9.11.1",
+    "itk-vtk-viewer": "^9.12.0",
     "jupyter-dataserializers": "^2.1.0",
     "mobx": "^5.13.0",
     "vtk.js": "^13.0.0"
