@@ -1,4 +1,3 @@
-import '@babel/polyfill'
 const widgets = require('@jupyter-widgets/base')
 import {
   fixed_shape_serialization,
