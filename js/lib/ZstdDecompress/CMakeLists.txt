@@ -8,6 +8,8 @@ set(ZstdExeSources
   ZstdDecompress.cxx
   zstd/lib/decompress/zstd_decompress.c
   zstd/lib/decompress/huf_decompress.c
+  zstd/lib/decompress/zstd_ddict.c
+  zstd/lib/decompress/zstd_decompress_block.c
   zstd/lib/common/zstd_common.c
   zstd/lib/common/error_private.c
   zstd/lib/common/xxhash.c
