@@ -1003,7 +1003,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         const viewProxy = this.model.itkVtkViewer.getViewProxy()
         const representation = viewProxy.getRepresentations()[0];
         const shadow = this.model.get('shadow')
-        representation.setUseShadow(shadow);
+        !!representation && representation.setUseShadow(shadow);
         break
       default:
         throw new Error('Unknown view mode')

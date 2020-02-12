@@ -56,6 +56,7 @@ Interactive Jupyter_ widgets to visualize images, point sets, and meshes.
 
   - NumPy array point sets
   - `itk.PointSet <https://itk.org/Doxygen/html/classitk_1_1PointSet.html>`_
+  - `itk.PointBasedSpatialObject <https://itk.org/Doxygen/html/classitk_1_1PointBasedSpatialObject.html>`_
   - `vtk.vtkPolyData <https://vtk.org/doc/nightly/html/classvtkPolyData.html>`_ point sets
   - `pyvista.PolyData <https://docs.pyvista.org/core/points.html>`_ point sets
 
@@ -114,6 +115,7 @@ Data types:
 - `Binder: NumPy array for image with anisotropic spacing <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/ImageWithAnisotropicPixelSpacing.ipynb>`_
 - `Binder: NumPy array point sets <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/NumPyArrayPointSet.ipynb>`_
 - `Binder: ITK Mesh <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/Mesh.ipynb>`_
+- `Binder: ITK PointBasedSpatialObject <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/PointBasedSpatialObject.ipynb>`_
 - `Binder: skan segmentation skeleton <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SegmentationSkeleton.ipynb>`_
 
 Tasks:
@@ -250,6 +252,7 @@ After installation, try the following examples that demonstrate how to visualize
 - `pyvista UniformGrid <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/pyvista.UniformGrid.ipynb>`_
 - `NumPy array point sets <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/NumPyArrayPointSet.ipynb>`_
 - `ITK Mesh <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/Mesh.ipynb>`_
+- `ITK PointBasedSpatialObject <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/PointBasedSpatialObject.ipynb>`_
 - `VTK vtkPolyData <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/vtkPolyData.ipynb>`_
 - `VTK vtkUnstructuredGrid <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/vtkUnstructuredGrid.ipynb>`_
 - `pyvista PolyData <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/pyvista.PolyData.ipynb>`_

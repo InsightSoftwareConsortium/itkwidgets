@@ -131,6 +131,33 @@ def _vtk_data_attributes_to_vtkjs(attributes):
     vtkjs_attributes["arrays"] = arrays
     return vtkjs_attributes
 
+def _numpy_array_to_point_set(point_set_like):
+    point_values = np.asarray(point_set_like).astype(np.float32)
+    if len(
+            point_values.shape) > 1 and point_values.shape[1] == 2 or point_values.shape[1] == 3:
+        if point_values.shape[1] == 2:
+            point_values = np.hstack(
+                (point_values, -5.0e-6 * np.ones((point_values.shape[0], 1)))).astype(np.float32)
+        point_set = {'vtkClass': 'vtkPolyData'}
+        points = {'vtkClass': 'vtkPoints',
+                  'name': '_points',
+                  'numberOfComponents': 3,
+                  'dataType': 'Float32Array',
+                  'size': point_values.size,
+                  'values': point_values}
+        point_set['points'] = points
+        vert_values = np.ones((point_values.size * 2,), dtype=np.uint32)
+        vert_values[1::2] = np.arange(point_values.size)
+        verts = {'vtkClass': 'vtkCellArray',
+                 'name': '_verts',
+                 'numberOfComponents': 1,
+                 'dataType': 'Uint32Array',
+                 'size': vert_values.size,
+                 'values': vert_values}
+        point_set['verts'] = verts
+        return point_set
+    else:
+        return None
 
 def to_itk_image(image_like):
     if is_arraylike(image_like):
@@ -226,33 +253,25 @@ def to_point_set(point_set_like):  # noqa: C901
             point_set['pointData'] = point_data
 
         return point_set
+    elif isinstance(point_set_like, itk.GroupSpatialObject):
+        children = point_set_like.GetChildren()
+
+        point_set = {'vtkClass': 'vtkPolyData'}
+
+        points_list = []
+        for ii in range(len(children)):
+            child = children[ii]
+            down_casted = itk.down_cast(child)
+            if isinstance(down_casted, itk.PointBasedSpatialObject):
+                n_points = down_casted.GetNumberOfPoints()
+                for ii in range(n_points):
+                    point = down_casted.GetPoint(ii)
+                    point.SetSpatialObject(down_casted)
+                    position = point.GetPositionInWorldSpace()
+                    points_list.append(list(position))
+        return _numpy_array_to_point_set(points_list)
     elif is_arraylike(point_set_like):
-        point_values = np.asarray(point_set_like).astype(np.float32)
-        if len(
-                point_values.shape) > 1 and point_values.shape[1] == 2 or point_values.shape[1] == 3:
-            if point_values.shape[1] == 2:
-                point_values = np.hstack(
-                    (point_values, -5.0e-6 * np.ones((point_values.shape[0], 1)))).astype(np.float32)
-            point_set = {'vtkClass': 'vtkPolyData'}
-            points = {'vtkClass': 'vtkPoints',
-                      'name': '_points',
-                      'numberOfComponents': 3,
-                      'dataType': 'Float32Array',
-                      'size': point_values.size,
-                      'values': point_values}
-            point_set['points'] = points
-            vert_values = np.ones((point_values.size * 2,), dtype=np.uint32)
-            vert_values[1::2] = np.arange(point_values.size)
-            verts = {'vtkClass': 'vtkCellArray',
-                     'name': '_verts',
-                     'numberOfComponents': 1,
-                     'dataType': 'Uint32Array',
-                     'size': vert_values.size,
-                     'values': vert_values}
-            point_set['verts'] = verts
-            return point_set
-        else:
-            return None
+        return _numpy_array_to_point_set(point_set_like)
     elif have_vtk and isinstance(point_set_like, vtk.vtkPolyData):
         from vtk.util.numpy_support import vtk_to_numpy
         point_set = {'vtkClass': 'vtkPolyData'}

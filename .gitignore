@@ -26,6 +26,7 @@ examples/cow.vtk
 examples/Bunny.vtp
 examples/uGridEx.vtk
 examples/input.tiff
+examples/Normal071-VascularNetwork.tre
 
 js/lib/ZstdDecompress/web-build/
 .pytest_cache/
