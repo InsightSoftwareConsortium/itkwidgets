@@ -2,7 +2,7 @@ colorcet
 itk-core>=5.0.1
 itk-filtering>=5.0.1
 itk-meshtopolydata>=0.5.0
-ipydatawidgets>=3.2.0
+ipydatawidgets>=4.0.1
 ipywidgets>=7.5.1
 ipympl>=0.4.1
 matplotlib
