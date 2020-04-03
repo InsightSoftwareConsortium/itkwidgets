@@ -148,6 +148,24 @@ module.exports = [
             'ZstdDecompressWasm.js'
           ),
         },
+        {
+          from: path.join(
+            __dirname,
+            'lib',
+            'ZstdDecompress',
+            'web-build',
+            'ZstdDecompressWasm.wasm'
+          ),
+          to: path.join(
+            __dirname,
+            '..',
+            'itkwidgets',
+            'static',
+            'itk',
+            'Pipelines',
+            'ZstdDecompressWasm.wasm'
+          ),
+        },
       ]),
       new WebPackBar(),
     ],
@@ -238,6 +256,22 @@ module.exports = [
             'itk',
             'Pipelines',
             'ZstdDecompressWasm.js'
+          ),
+        },
+        {
+          from: path.join(
+            __dirname,
+            'lib',
+            'ZstdDecompress',
+            'web-build',
+            'ZstdDecompressWasm.wasm'
+          ),
+          to: path.join(
+            __dirname,
+            'dist',
+            'itk',
+            'Pipelines',
+            'ZstdDecompressWasm.wasm'
           ),
         },
       ]),
