@@ -12,11 +12,17 @@ import IntTypes from 'itk/IntTypes'
 import FloatTypes from 'itk/FloatTypes'
 import IOTypes from 'itk/IOTypes'
 import runPipelineBrowser from 'itk/runPipelineBrowser'
+import WorkerPool from 'itk/WorkerPool'
 import macro from 'vtk.js/Sources/macro'
 
 const ANNOTATION_DEFAULT = '<table style="margin-left: 0;"><tr><td style="margin-left: auto; margin-right: 0;">Index:</td><td>${iIndex},</td><td>${jIndex},</td><td>${kIndex}</td></tr><tr><td style="margin-left: auto; margin-right: 0;">Position:</td><td>${xPosition},</td><td>${yPosition},</td><td>${zPosition}</td></tr><tr><td style="margin-left: auto; margin-right: 0;"">Value:</td><td>${value}</td></tr></table>'
 const ANNOTATION_CUSTOM_PREFIX = '<table style="margin-left: 0;"><tr><td style="margin-left: auto; margin-right: 0;">Scale/Index:</td>'
 const ANNOTATION_CUSTOM_POSTFIX = '</tr><tr><td style="margin-left: auto; margin-right: 0;">Position:</td><td>${xPosition},</td><td>${yPosition},</td><td>${zPosition}</td></tr><tr><td style="margin-left: auto; margin-right: 0;"">Value:</td><td>${value}</td></tr></table>'
+
+const cores = navigator.hardwareConcurrency ? navigator.hardwareConcurrency : 4
+const numberOfWorkers = cores + Math.floor(Math.sqrt(cores))
+const workerPool = new WorkerPool(numberOfWorkers, runPipelineBrowser)
+
 
 const serialize_itkimage = (itkimage) => {
   if (itkimage === null) {
@@ -334,9 +340,9 @@ function replaceGeometries(domWidgetView, geometries) {
 }
 
 
-function decompressImage(image) {
+async function decompressImage(image) {
   if (!!image.data) {
-    return Promise.resolve(image)
+    return image
   }
   const byteArray = new Uint8Array(image.compressedData.buffer)
   const reducer = (accumulator, currentValue) => accumulator * currentValue
@@ -390,49 +396,48 @@ function decompressImage(image) {
   const compressionAmount = byteArray.length / numberOfBytes
   console.log(`compression amount: ${compressionAmount}`)
   const t0 = performance.now()
-  return runPipelineBrowser(null, pipelinePath, args, desiredOutputs, inputs)
-    .then(function ({stdout, stderr, outputs, webWorker}) {
-      webWorker.terminate()
-      const t1 = performance.now();
-      const duration = Number(t1 - t0).toFixed(1).toString()
-      console.log("decompression took " + duration + " milliseconds.")
+  const taskArgsArray = [[pipelinePath, args, desiredOutputs, inputs],]
+  const results = await workerPool.runTasks(taskArgsArray)
+  const t1 = performance.now();
+  const duration = Number(t1 - t0).toFixed(1).toString()
+  console.log("decompression took " + duration + " milliseconds.")
 
-      switch (image.imageType.componentType) {
-        case IntTypes.Int8:
-          image.data = new Int8Array(outputs[0].data.buffer)
-          break
-        case IntTypes.UInt8:
-          image.data = outputs[0].data
-          break
-        case IntTypes.Int16:
-          image.data = new Int16Array(outputs[0].data.buffer)
-          break
-        case IntTypes.UInt16:
-          image.data = new Uint16Array(outputs[0].data.buffer)
-          break
-        case IntTypes.Int32:
-          image.data = new Int32Array(outputs[0].data.buffer)
-          break
-        case IntTypes.UInt32:
-          image.data = new Uint32Array(outputs[0].data.buffer)
-          break
-        case IntTypes.Int64:
-          image.data = new BigUint64Array(outputs[0].data.buffer)
-          break
-        case IntTypes.UInt64:
-          image.data = new BigUint64Array(outputs[0].data.buffer)
-          break
-        case FloatTypes.Float32:
-          image.data = new Float32Array(outputs[0].data.buffer)
-          break
-        case FloatTypes.Float64:
-          image.data = new Float64Array(outputs[0].data.buffer)
-          break
-        default:
-          console.error('Unexpected component type: ' + image.imageType.componentType)
-      }
-      return image
-    })
+  const decompressed = results[0].outputs[0].data
+  switch (image.imageType.componentType) {
+    case IntTypes.Int8:
+      image.data = new Int8Array(decompressed.buffer)
+      break
+    case IntTypes.UInt8:
+      image.data = decompressed
+      break
+    case IntTypes.Int16:
+      image.data = new Int16Array(decompressed.buffer)
+      break
+    case IntTypes.UInt16:
+      image.data = new Uint16Array(decompressed.buffer)
+      break
+    case IntTypes.Int32:
+      image.data = new Int32Array(decompressed.buffer)
+      break
+    case IntTypes.UInt32:
+      image.data = new Uint32Array(decompressed.buffer)
+      break
+    case IntTypes.Int64:
+      image.data = new BigUint64Array(decompressed.buffer)
+      break
+    case IntTypes.UInt64:
+      image.data = new BigUint64Array(decompressed.buffer)
+      break
+    case FloatTypes.Float32:
+      image.data = new Float32Array(decompressed.buffer)
+      break
+    case FloatTypes.Float64:
+      image.data = new Float64Array(decompressed.buffer)
+      break
+    default:
+      console.error('Unexpected component type: ' + image.imageType.componentType)
+  }
+  return image
 }
 
 
