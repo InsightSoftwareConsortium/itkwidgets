@@ -62,7 +62,7 @@
     "autoprefixer": "^9.7.6",
     "copy-webpack-plugin": "^5.1.1",
     "css-element-queries": "^1.2.3",
-    "itk": "^12.0.1",
+    "itk": "^12.3.0",
     "itk-vtk-viewer": "^9.20.3",
     "jupyter-dataserializers": "^2.2.0",
     "mobx": "^5.15.4",
