@@ -12,11 +12,17 @@ import IntTypes from 'itk/IntTypes'
 import FloatTypes from 'itk/FloatTypes'
 import IOTypes from 'itk/IOTypes'
 import runPipelineBrowser from 'itk/runPipelineBrowser'
+import WorkerPool from 'itk/WorkerPool'
 import macro from 'vtk.js/Sources/macro'
 
 const ANNOTATION_DEFAULT = '<table style="margin-left: 0;"><tr><td style="margin-left: auto; margin-right: 0;">Index:</td><td>${iIndex},</td><td>${jIndex},</td><td>${kIndex}</td></tr><tr><td style="margin-left: auto; margin-right: 0;">Position:</td><td>${xPosition},</td><td>${yPosition},</td><td>${zPosition}</td></tr><tr><td style="margin-left: auto; margin-right: 0;"">Value:</td><td>${value}</td></tr></table>'
 const ANNOTATION_CUSTOM_PREFIX = '<table style="margin-left: 0;"><tr><td style="margin-left: auto; margin-right: 0;">Scale/Index:</td>'
 const ANNOTATION_CUSTOM_POSTFIX = '</tr><tr><td style="margin-left: auto; margin-right: 0;">Position:</td><td>${xPosition},</td><td>${yPosition},</td><td>${zPosition}</td></tr><tr><td style="margin-left: auto; margin-right: 0;"">Value:</td><td>${value}</td></tr></table>'
+
+const cores = navigator.hardwareConcurrency ? navigator.hardwareConcurrency : 4
+const numberOfWorkers = cores + Math.floor(Math.sqrt(cores))
+const workerPool = new WorkerPool(numberOfWorkers, runPipelineBrowser)
+
 
 const serialize_itkimage = (itkimage) => {
   if (itkimage === null) {
@@ -334,9 +340,9 @@ function replaceGeometries(domWidgetView, geometries) {
 }
 
 
-function decompressImage(image) {
+async function decompressImage(image) {
   if (!!image.data) {
-    return Promise.resolve(image)
+    return image
   }
   const byteArray = new Uint8Array(image.compressedData.buffer)
   const reducer = (accumulator, currentValue) => accumulator * currentValue
@@ -390,49 +396,48 @@ function decompressImage(image) {
   const compressionAmount = byteArray.length / numberOfBytes
   console.log(`compression amount: ${compressionAmount}`)
   const t0 = performance.now()
-  return runPipelineBrowser(null, pipelinePath, args, desiredOutputs, inputs)
-    .then(function ({stdout, stderr, outputs, webWorker}) {
-      webWorker.terminate()
-      const t1 = performance.now();
-      const duration = Number(t1 - t0).toFixed(1).toString()
-      console.log("decompression took " + duration + " milliseconds.")
+  const taskArgsArray = [[pipelinePath, args, desiredOutputs, inputs],]
+  const results = await workerPool.runTasks(taskArgsArray)
+  const t1 = performance.now();
+  const duration = Number(t1 - t0).toFixed(1).toString()
+  console.log("decompression took " + duration + " milliseconds.")
 
-      switch (image.imageType.componentType) {
-        case IntTypes.Int8:
-          image.data = new Int8Array(outputs[0].data.buffer)
-          break
-        case IntTypes.UInt8:
-          image.data = outputs[0].data
-          break
-        case IntTypes.Int16:
-          image.data = new Int16Array(outputs[0].data.buffer)
-          break
-        case IntTypes.UInt16:
-          image.data = new Uint16Array(outputs[0].data.buffer)
-          break
-        case IntTypes.Int32:
-          image.data = new Int32Array(outputs[0].data.buffer)
-          break
-        case IntTypes.UInt32:
-          image.data = new Uint32Array(outputs[0].data.buffer)
-          break
-        case IntTypes.Int64:
-          image.data = new BigUint64Array(outputs[0].data.buffer)
-          break
-        case IntTypes.UInt64:
-          image.data = new BigUint64Array(outputs[0].data.buffer)
-          break
-        case FloatTypes.Float32:
-          image.data = new Float32Array(outputs[0].data.buffer)
-          break
-        case FloatTypes.Float64:
-          image.data = new Float64Array(outputs[0].data.buffer)
-          break
-        default:
-          console.error('Unexpected component type: ' + image.imageType.componentType)
-      }
-      return image
-    })
+  const decompressed = results[0].outputs[0].data
+  switch (image.imageType.componentType) {
+    case IntTypes.Int8:
+      image.data = new Int8Array(decompressed.buffer)
+      break
+    case IntTypes.UInt8:
+      image.data = decompressed
+      break
+    case IntTypes.Int16:
+      image.data = new Int16Array(decompressed.buffer)
+      break
+    case IntTypes.UInt16:
+      image.data = new Uint16Array(decompressed.buffer)
+      break
+    case IntTypes.Int32:
+      image.data = new Int32Array(decompressed.buffer)
+      break
+    case IntTypes.UInt32:
+      image.data = new Uint32Array(decompressed.buffer)
+      break
+    case IntTypes.Int64:
+      image.data = new BigUint64Array(decompressed.buffer)
+      break
+    case IntTypes.UInt64:
+      image.data = new BigUint64Array(decompressed.buffer)
+      break
+    case FloatTypes.Float32:
+      image.data = new Float32Array(decompressed.buffer)
+      break
+    case FloatTypes.Float64:
+      image.data = new Float64Array(decompressed.buffer)
+      break
+    default:
+      console.error('Unexpected component type: ' + image.imageType.componentType)
+  }
+  return image
 }
 
 
@@ -468,28 +473,101 @@ function decompressDataValue(polyData, prop) {
     })
 }
 
-function decompressPolyData(polyData) {
+async function decompressPolyData(polyData) {
   const props = ['points', 'verts', 'lines', 'polys', 'strips']
-  return Promise.all(props.map((prop) => decompressDataValue(polyData, prop)))
-    .then((result) => {
-      const decompressedGeometry = result[0]
-      let dataPromises = []
-      if (decompressedGeometry.hasOwnProperty('pointData')) {
-        const pointDataArrays = decompressedGeometry.pointData.arrays
-        dataPromises = pointDataArrays.map((array) => decompressDataValue(array, 'data'))
-      }
-      if (decompressedGeometry.hasOwnProperty('cellData')) {
-        const cellDataArrays = decompressedGeometry.cellData.arrays
-        dataPromises = dataPromises.concat(cellDataArrays.map((array) => decompressDataValue(array, 'data')))
-      }
-      if(dataPromises.length) {
-        return Promise.all(dataPromises).then((resolved) => {
-          return decompressedGeometry
-        })
-      } else {
-        return decompressedGeometry
-      }
-    })
+  const decompressedProps = []
+  const taskArgsArray = []
+  for (let index = 0; index < props.length; index++) {
+    const prop = props[index]
+    if (!polyData.hasOwnProperty(prop)) {
+      continue
+    }
+    const byteArray = new Uint8Array(polyData[prop].compressedValues.buffer)
+    const elementSize = DataTypeByteSize[polyData[prop].dataType]
+    const numberOfBytes = polyData[prop].size * elementSize
+    const pipelinePath = 'ZstdDecompress'
+    const args = ['input.bin', 'output.bin', String(numberOfBytes)]
+    const desiredOutputs = [
+      { path: 'output.bin', type: IOTypes.Binary }
+    ]
+    const inputs = [
+      { path: 'input.bin', type: IOTypes.Binary, data: byteArray }
+    ]
+    console.log(`${prop} input MB: ${byteArray.length / 1000 / 1000}`)
+    console.log(`${prop} output MB: ${numberOfBytes / 1000 / 1000 }`)
+    const compressionAmount = byteArray.length / numberOfBytes
+    console.log(`${prop} compression amount: ${compressionAmount}`)
+    taskArgsArray.push([pipelinePath, args, desiredOutputs, inputs])
+    decompressedProps.push(prop)
+  }
+
+  const decompressedPointData = []
+  if (polyData.hasOwnProperty('pointData')) {
+    const pointDataArrays = polyData.pointData.arrays
+    for (let index = 0; index < pointDataArrays.length; index++) {
+      const array = pointDataArrays[index]
+      const byteArray = new Uint8Array(array.data.compressedValues.buffer)
+      const elementSize = DataTypeByteSize[array.data.dataType]
+      const numberOfBytes = array.data.size * elementSize
+      const pipelinePath = 'ZstdDecompress'
+      const args = ['input.bin', 'output.bin', String(numberOfBytes)]
+      const desiredOutputs = [
+        { path: 'output.bin', type: IOTypes.Binary }
+      ]
+      const inputs = [
+        { path: 'input.bin', type: IOTypes.Binary, data: byteArray }
+      ]
+      console.log(`${array} input MB: ${byteArray.length / 1000 / 1000}`)
+      console.log(`${array} output MB: ${numberOfBytes / 1000 / 1000 }`)
+      const compressionAmount = byteArray.length / numberOfBytes
+      console.log(`${array} compression amount: ${compressionAmount}`)
+      taskArgsArray.push([pipelinePath, args, desiredOutputs, inputs])
+      decompressedPointData.push(array)
+    }
+  }
+
+  const decompressedCellData = []
+  if (polyData.hasOwnProperty('cellData')) {
+    const cellDataArrays = polyData.cellData.arrays
+    for (let index = 0; index < cellDataArrays.length; index++) {
+      const array = cellDataArrays[index]
+      const byteArray = new Uint8Array(array.data.compressedValues.buffer)
+      const elementSize = DataTypeByteSize[array.data.dataType]
+      const numberOfBytes = array.data.size * elementSize
+      const pipelinePath = 'ZstdDecompress'
+      const args = ['input.bin', 'output.bin', String(numberOfBytes)]
+      const desiredOutputs = [
+        { path: 'output.bin', type: IOTypes.Binary }
+      ]
+      const inputs = [
+        { path: 'input.bin', type: IOTypes.Binary, data: byteArray }
+      ]
+      console.log(`${array} input MB: ${byteArray.length / 1000 / 1000}`)
+      console.log(`${array} output MB: ${numberOfBytes / 1000 / 1000 }`)
+      const compressionAmount = byteArray.length / numberOfBytes
+      console.log(`${array} compression amount: ${compressionAmount}`)
+      taskArgsArray.push([pipelinePath, args, desiredOutputs, inputs])
+      decompressedCellData.push(array)
+    }
+  }
+
+  const t0 = performance.now()
+  const results = await workerPool.runTasks(taskArgsArray)
+  const t1 = performance.now();
+  const duration = Number(t1 - t0).toFixed(1).toString()
+  console.log(`PolyData decompression took ${duration} milliseconds.`)
+  for (let index = 0; index < decompressedProps.length; index++) {
+    const prop = decompressedProps[index]
+    polyData[prop]['values'] = new window[polyData[prop].dataType](results[index].outputs[0].data.buffer)
+  }
+  for (let index = 0; index < decompressedPointData.length; index++) {
+    polyData.pointData.arrays[index].data['values'] = new window[polyData.pointData.arrays[index].data.dataType](results[decompressedProps.length + index].outputs[0].data.buffer)
+  }
+  for (let index = 0; index < decompressedCellData.length; index++) {
+    polyData.cellData.arrays[index].data['values'] = new window[polyData.cellData.arrays[index].data.dataType](results[decompressedProps.length + decompressedPointData.length + index].outputs[0].data.buffer)
+  }
+
+  return polyData
 }
 
 
