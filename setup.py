@@ -160,9 +160,9 @@ setup_args = {
     ],
     'install_requires': [
         'colorcet',
-        'itk-core>=5.0.1',
-        'itk-filtering>=5.0.1',
-        'itk-meshtopolydata>=0.5.1',
+        'itk-core>=5.1.0',
+        'itk-filtering>=5.1.0',
+        'itk-meshtopolydata>=0.6.0',
         'ipydatawidgets>=4.0.1',
         'ipywidgets>=7.5.1',
         'ipympl>=0.4.1',
