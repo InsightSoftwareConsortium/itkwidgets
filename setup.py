@@ -96,12 +96,6 @@ class NPM(Command):
         except BaseException:
             return False
 
-    def should_run_npm_install(self):
-        package_json = os.path.join(node_root, 'package.json')
-        package_json_exists = os.path.exists(package_json)
-        node_modules_exists = os.path.exists(self.node_modules)
-        return self.has_npm() and package_json_exists and not node_modules_exists
-
     def run(self):
         has_npm = self.has_npm()
         if not has_npm:
@@ -111,15 +105,14 @@ class NPM(Command):
         env = os.environ.copy()
         env['PATH'] = npm_path
 
-        if self.should_run_npm_install():
-            log.info(
-                "Installing build dependencies with npm.  This may take a while...")
-            npmName = self.get_npm_name()
-            check_call([npmName, 'ci'], cwd=node_root,
-                       stdout=sys.stdout, stderr=sys.stderr)
-            check_call([npmName, 'run', 'build'], cwd=node_root,
-                       stdout=sys.stdout, stderr=sys.stderr)
-            os.utime(self.node_modules, None)
+        log.info(
+            "Installing build dependencies with npm.  This may take a while...")
+        npmName = self.get_npm_name()
+        check_call([npmName, 'ci'], cwd=node_root,
+                   stdout=sys.stdout, stderr=sys.stderr)
+        check_call([npmName, 'run', 'build'], cwd=node_root,
+                   stdout=sys.stdout, stderr=sys.stderr)
+        os.utime(self.node_modules, None)
 
         for t in self.targets:
             if not os.path.exists(t):
