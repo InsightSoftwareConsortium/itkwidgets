@@ -145,6 +145,7 @@ setup_args = {
         ('etc/jupyter/nbconfig/notebook.d', ['itkwidgets.json']),
         ('share/jupyter/nbextensions/itkwidgets/itk/Pipelines', [
             'itkwidgets/static/itk/Pipelines/ZstdDecompressWasm.js',
+            'itkwidgets/static/itk/Pipelines/ZstdDecompressWasm.wasm',
             'itkwidgets/static/itk/Pipelines/ZstdDecompress.js',
         ]),
         ('share/jupyter/nbextensions/itkwidgets/itk/WebWorkers', [
