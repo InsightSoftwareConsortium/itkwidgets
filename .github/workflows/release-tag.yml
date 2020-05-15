@@ -15,8 +15,6 @@ jobs:
         uses: actions/setup-python@v1
       - name: Download package
         id: download_package
-        outputs:
-          release_name
         run: |
           python -m pip install --upgrade pip
           latest_tag=$(git tag --sort=taggerdate | tail -n 1 | cut -d 'v' -f 2)
