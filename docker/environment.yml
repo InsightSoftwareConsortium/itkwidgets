@@ -1,0 +1,11 @@
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.7
+  - itkwidgets=0.27.4
+  - ipywidgets=7.5.1
+  - jupyter=1.0.0
+  - jupyterhub=1.1.0
+  - jupyterlab=2.1.2
+  - notebook=6.0.3

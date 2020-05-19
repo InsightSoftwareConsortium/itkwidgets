@@ -166,6 +166,24 @@ Other available widgets:
 - ``itkwidgets.checkerboard``: Compare two images in a checkerboard pattern.
 - ``itkwidgets.compare``: Compare two images side-by-side.
 
+Using within a Docker Container
+-------------------------------
+You can use ``itkwidgets`` from within a docker container with jupyterlab.
+To create a local docker image:
+
+Install ``docker`` and build the docker image with::
+
+  git clone https://github.com/InsightSoftwareConsortium/itkwidgets
+  cd itkwidgets/docker
+  IMAGE=itkwidgets:0.1.0
+  docker build -t $IMAGE.
+
+Then run the docker container with::
+
+  EXAMPLESDIR=`pwd`/../examples
+  docker run -it --rm -v $EXAMPLESDIR:/home/jovyan -p 8888:8888 itkwidgets:0.1.0
+
+
 Advanced Usage
 ^^^^^^^^^^^^^^
 
