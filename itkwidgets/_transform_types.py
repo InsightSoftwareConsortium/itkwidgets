@@ -3,7 +3,6 @@ __all__ = ['to_itk_image', 'to_point_set', 'to_geometry']
 import itk
 import numpy as np
 
-
 def is_arraylike(arr):
     return hasattr(arr, 'shape') and \
         hasattr(arr, 'dtype') and \
@@ -160,6 +159,10 @@ def _numpy_array_to_point_set(point_set_like):
         return None
 
 def to_itk_image(image_like):
+
+    if isinstance(image_like, itk.Image):
+        return None
+
     if is_arraylike(image_like):
         array = np.asarray(image_like)
         case_use_view = array.flags['OWNDATA']
