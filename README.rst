@@ -176,13 +176,14 @@ Install ``docker`` and build the docker image with::
   git clone https://github.com/InsightSoftwareConsortium/itkwidgets
   cd itkwidgets/docker
   IMAGE=itkwidgets:0.1.0
-  docker build -t $IMAGE.
+  docker build -t $IMAGE .
 
 Then run the docker container with::
 
   EXAMPLESDIR=`pwd`/../examples
   docker run -it --rm -v $EXAMPLESDIR:/home/jovyan -p 8888:8888 itkwidgets:0.1.0
 
+Finally, connect to your notebook at http://127.0.0.1:8888/lab
 
 Advanced Usage
 ^^^^^^^^^^^^^^
