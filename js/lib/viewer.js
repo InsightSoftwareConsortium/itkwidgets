@@ -902,11 +902,11 @@ const ViewerView = widgets.DOMWidgetView.extend({
     if(rendered_image) {
       if (!rendered_image.data) {
         const domWidgetView = this
-        decompressImage(rendered_image).then((rendered_image) => {
+        decompressImage(rendered_image).then((decompressed) => {
             if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
-              return Promise.resolve(replaceRenderedImage(domWidgetView, rendered_image))
+              return Promise.resolve(replaceRenderedImage(domWidgetView, decompressed))
             } else {
-              return createRenderingPipeline(domWidgetView, { rendered_image })
+              return createRenderingPipeline(domWidgetView, { decompressed })
             }
           })
       } else {
@@ -925,11 +925,11 @@ const ViewerView = widgets.DOMWidgetView.extend({
     if(point_sets && !!point_sets.length) {
       if (!point_sets[0].points.values) {
         const domWidgetView = this
-        Promise.all(point_sets.map(decompressPolyData)).then((point_sets) => {
+        return Promise.all(point_sets.map(decompressPolyData)).then((decompressed) => {
           if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
-            return Promise.resolve(replacePointSets(domWidgetView, point_sets))
+            return Promise.resolve(replacePointSets(domWidgetView, decompressed))
           } else {
-            return createRenderingPipeline(domWidgetView, { point_sets })
+            return createRenderingPipeline(domWidgetView, { decompressed })
           }
         })
       } else {
@@ -997,11 +997,11 @@ const ViewerView = widgets.DOMWidgetView.extend({
     if(geometries && !!geometries.length) {
       if (!geometries[0].points.values) {
         const domWidgetView = this
-        Promise.all(geometries.map(decompressPolyData)).then((geometries) => {
+        return Promise.all(geometries.map(decompressPolyData)).then((decompressed) => {
           if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
-            return Promise.resolve(replaceGeometries(domWidgetView, geometries))
+            return Promise.resolve(replaceGeometries(domWidgetView, decompressed))
           } else {
-            return createRenderingPipeline(domWidgetView, { geometries })
+            return createRenderingPipeline(domWidgetView, { decompressed })
           }
         })
       } else {
