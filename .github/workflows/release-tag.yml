@@ -17,6 +17,7 @@ jobs:
         id: download_package
         run: |
           python -m pip install --upgrade pip
+          git fetch origin --tags
           latest_tag=$(git tag --sort=taggerdate | tail -n 1 | cut -d 'v' -f 2)
           python -m pip download itkwidgets==$latest_tag
           echo "::set-output name=release_name::itkwidgets ${latest_tag}"
