@@ -68,6 +68,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
       _model_module_version: '0.27.5',
       _view_module_version: '0.27.5',
       rendered_image: null,
+      rendered_label_map: null,
       _rendering_image: false,
       interpolation: true,
       cmap: 'Viridis (matplotlib)',
@@ -103,6 +104,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
   }}, {
   serializers: Object.assign({
     rendered_image: { serialize: serialize_itkimage, deserialize: deserialize_itkimage },
+    rendered_label_map: { serialize: serialize_itkimage, deserialize: deserialize_itkimage },
     _custom_cmap: simplearray_serialization,
     point_sets: { serialize: serialize_polydata_list, deserialize: deserialize_polydata_list },
     geometries: { serialize: serialize_polydata_list, deserialize: deserialize_polydata_list },
@@ -118,11 +120,11 @@ const ViewerModel = widgets.DOMWidgetModel.extend({
 })
 
 
-const createRenderingPipeline = (domWidgetView, { rendered_image, point_sets, geometries }) => {
+const createRenderingPipeline = (domWidgetView, { rendered_image, rendered_label_map, point_sets, geometries }) => {
   const containerStyle = {
     position: 'relative',
     width: '100%',
-    height: '600px',
+    height: '700px',
     minHeight: '400px',
     minWidth: '400px',
     margin: '1',
@@ -149,9 +151,14 @@ const createRenderingPipeline = (domWidgetView, { rendered_image, point_sets, ge
   };
   let is3D = true
   let imageData = null
+  let labelMapData = null
   if (rendered_image) {
     imageData = vtkITKHelper.convertItkToVtkImage(rendered_image)
     is3D = rendered_image.imageType.dimension === 3
+  }
+  if (rendered_label_map) {
+    labelMapData = vtkITKHelper.convertItkToVtkImage(rendered_label_map)
+    is3D = rendered_label_map.imageType.dimension === 3
   }
   let pointSets = null
   if (point_sets) {
@@ -166,6 +173,7 @@ const createRenderingPipeline = (domWidgetView, { rendered_image, point_sets, ge
   domWidgetView.model.itkVtkViewer = createViewer(domWidgetView.el, {
     viewerStyle: viewerStyle,
     image: imageData,
+    labelMap: labelMapData,
     pointSets,
     geometries: vtkGeometries,
     use2D: !is3D,
@@ -272,18 +280,20 @@ const createRenderingPipeline = (domWidgetView, { rendered_image, point_sets, ge
     domWidgetView.model.save_changes()
   }
 
-  if (rendered_image) {
+  if (rendered_image || rendered_label_map) {
     const interactor = viewProxy.getInteractor()
     interactor.onEndMouseWheel(cropROIByViewport)
     interactor.onEndPan(cropROIByViewport)
     interactor.onEndPinch(cropROIByViewport)
 
-    const dataArray = imageData.getPointData().getScalars()
-    const numberOfComponents = dataArray.getNumberOfComponents()
-    if (domWidgetView.model.use2D && dataArray.getDataType() === 'Uint8Array' && (numberOfComponents === 3 || numberOfComponents === 4)) {
-      domWidgetView.model.itkVtkViewer.setColorMap(0, 'Grayscale')
-      domWidgetView.model.set('cmap', 'Grayscale')
-      domWidgetView.model.save_changes()
+    if (rendered_image) {
+      const dataArray = imageData.getPointData().getScalars()
+      const numberOfComponents = dataArray.getNumberOfComponents()
+      if (domWidgetView.model.use2D && dataArray.getDataType() === 'Uint8Array' && (numberOfComponents === 3 || numberOfComponents === 4)) {
+        domWidgetView.model.itkVtkViewer.setColorMap(0, 'Grayscale')
+        domWidgetView.model.set('cmap', 'Grayscale')
+        domWidgetView.model.save_changes()
+      }
     }
     domWidgetView.model.set('_rendering_image', false)
     domWidgetView.model.save_changes()
@@ -315,6 +325,19 @@ function replaceRenderedImage(domWidgetView, rendered_image) {
     domWidgetView.model.itkVtkViewer.setColorMap(0, 'Grayscale')
     domWidgetView.model.set('cmap', 'Grayscale')
     domWidgetView.model.save_changes()
+  }
+  domWidgetView.model.set('_rendering_image', false)
+  domWidgetView.model.save_changes()
+}
+
+
+function replaceRenderedLabelMap(domWidgetView, rendered_label_map) {
+  const labelMapData = vtkITKHelper.convertItkToVtkImage(rendered_label_map)
+
+  domWidgetView.model.itkVtkViewer.setLabelMap(labelMapData)
+
+  if (viewProxy.getViewMode() === 'VolumeRendering') {
+    viewProxy.resetCamera()
   }
   domWidgetView.model.set('_rendering_image', false)
   domWidgetView.model.save_changes()
@@ -575,6 +598,7 @@ async function decompressPolyData(polyData) {
 const ViewerView = widgets.DOMWidgetView.extend({
   initialize_itkVtkViewer: function() {
       const rendered_image = this.model.get('rendered_image')
+      const rendered_label_map = this.model.get('rendered_label_map')
       this.annotations_changed()
       if (rendered_image) {
         this.interpolation_changed()
@@ -582,18 +606,20 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.vmin_changed()
         this.vmax_changed()
       }
-      if (rendered_image) {
-        this.shadow_changed()
+      if (rendered_image || rendered_label_map) {
         this.slicing_planes_changed()
         this.x_slice_changed()
         this.y_slice_changed()
         this.z_slice_changed()
+      }
+      if (rendered_image) {
+        this.shadow_changed()
         this.gradient_opacity_changed()
         this.blend_changed()
       }
       this.ui_collapsed_changed()
       this.rotate_changed()
-      if (rendered_image) {
+      if (rendered_image || rendered_label_map) {
         this.select_roi_changed()
         this.scale_factors_changed()
       }
@@ -831,6 +857,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
 
   render: function() {
     this.model.on('change:rendered_image', this.rendered_image_changed, this)
+    this.model.on('change:rendered_label_map', this.rendered_label_map_changed, this)
     this.model.on('change:cmap', this.cmap_changed, this)
     this.model.on('change:vmin', this.vmin_changed, this)
     this.model.on('change:vmax', this.vmax_changed, this)
@@ -863,6 +890,10 @@ const ViewerView = widgets.DOMWidgetView.extend({
     if (rendered_image) {
       toDecompress.push(decompressImage(rendered_image))
     }
+    const rendered_label_map = this.model.get('rendered_label_map')
+    if (rendered_label_map) {
+      toDecompress.push(decompressImage(rendered_label_map))
+    }
     const point_sets = this.model.get('point_sets')
     if(point_sets && !!point_sets.length) {
       toDecompress = toDecompress.concat(point_sets.map(decompressPolyData))
@@ -875,8 +906,13 @@ const ViewerView = widgets.DOMWidgetView.extend({
     Promise.all(toDecompress).then((decompressedData) => {
       let index = 0;
       let decompressedRenderedImage = null
+      let decompressedRenderedLabelMap = null
       if (rendered_image) {
-        decompressedRenderedImage = decompressedData[0]
+        decompressedRenderedImage = decompressedData[index]
+        index++
+      }
+      if (rendered_label_map) {
+        decompressedRenderedLabelMap = decompressedData[index]
         index++
       }
       let decompressedPointSets = null
@@ -890,7 +926,9 @@ const ViewerView = widgets.DOMWidgetView.extend({
         index += geometries.length
       }
 
-      return createRenderingPipeline(domWidgetView, { rendered_image: decompressedRenderedImage,
+      return createRenderingPipeline(domWidgetView, {
+        rendered_image: decompressedRenderedImage,
+        rendered_label_map: decompressedRenderedLabelMap,
         point_sets: decompressedPointSets,
         geometries: decompressedGeometries
       })
@@ -906,7 +944,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
             if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
               return Promise.resolve(replaceRenderedImage(domWidgetView, decompressed))
             } else {
-              return createRenderingPipeline(domWidgetView, { decompressed })
+              return createRenderingPipeline(domWidgetView, { rendered_image: decompressed })
             }
           })
       } else {
@@ -914,6 +952,29 @@ const ViewerView = widgets.DOMWidgetView.extend({
           return Promise.resolve(replaceRenderedImage(this, rendered_image))
         } else {
           return Promise.resolve(createRenderingPipeline(this, { rendered_image }))
+        }
+      }
+    }
+    return Promise.resolve(null)
+  },
+
+  rendered_label_map_changed: function() {
+    const rendered_label_map = this.model.get('rendered_label_map')
+    if(rendered_label_map) {
+      if (!rendered_label_map.data) {
+        const domWidgetView = this
+        decompressImage(rendered_label_map).then((decompressed) => {
+            if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
+              return Promise.resolve(replaceRenderedLabelMap(domWidgetView, decompressed))
+            } else {
+              return createRenderingPipeline(domWidgetView, { rendered_label_map: decompressed })
+            }
+          })
+      } else {
+        if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
+          return Promise.resolve(replaceRenderedLabelMap(this, rendered_label_map))
+        } else {
+          return Promise.resolve(createRenderingPipeline(this, { rendered_label_map }))
         }
       }
     }
