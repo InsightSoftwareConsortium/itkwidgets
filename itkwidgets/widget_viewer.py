@@ -15,9 +15,9 @@ import time
 import itk
 import numpy as np
 import ipywidgets as widgets
-from traitlets import CBool, CFloat, Unicode, CaselessStrEnum, List, validate
+from traitlets import CBool, CFloat, CInt, Unicode, CaselessStrEnum, List, validate
 from ipydatawidgets import NDArray, array_serialization, shape_constraints
-from .trait_types import ITKImage, PointSetList, PolyDataList, itkimage_serialization, polydata_list_serialization, Colormap
+from .trait_types import ITKImage, ImagePointTrait, ImagePoint, PointSetList, PolyDataList, itkimage_serialization, image_point_serialization, polydata_list_serialization, Colormap
 
 try:
     import ipywebrtc
@@ -170,6 +170,12 @@ class Viewer(ViewerParent):
         default_value=None,
         allow_none=True,
         help="World-space position of the Z slicing plane.").tag(sync=True)
+    clicked_slice_point = ImagePointTrait(
+        default_value=None,
+        allow_none=True,
+        help="Data for the point clicked on an image slice.").tag(
+            sync=True,
+            **image_point_serialization)
     gradient_opacity = CFloat(
         default_value=0.2,
         help="Volume rendering gradient opacity, from (0.0, 1.0]").tag(sync=True)
@@ -306,6 +312,9 @@ class Viewer(ViewerParent):
             opacities_array = self._validate_geometry_opacities(proposal)
             kwargs['geometry_opacities'] = opacities_array
         self.observe(self._on_geometries_changed, ['geometries'])
+        if 'label_map' in kwargs:
+            # Interpolation is not currently supported with label maps
+            kwargs['interpolation'] = False
 
         super(Viewer, self).__init__(**kwargs)
 
@@ -733,6 +742,7 @@ def view(image=None,  # noqa: C901
 
     interpolation: bool, optional, default: True
         Linear as opposed to nearest neighbor interpolation for image slices.
+        Note: Interpolation is not currently supported with label maps.
 
     gradient_opacity: float, optional, default: 0.22
         Gradient opacity for composite volume rendering, in the range (0.0, 1.0].

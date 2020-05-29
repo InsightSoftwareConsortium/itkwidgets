@@ -17,6 +17,7 @@ except ImportError:
     pass
 
 from ._transform_types import to_itk_image, to_point_set, to_geometry
+from ipydatawidgets import array_serialization
 
 # from IPython.core.debugger import set_trace
 
@@ -252,12 +253,61 @@ def itkimage_from_json(js, manager=None):
                     row, col, directionJs[col + row * Dimension])
         return image
 
-
 itkimage_serialization = {
     'from_json': itkimage_from_json,
     'to_json': itkimage_to_json
 }
 
+class ImagePoint(object):
+    """Data from a picked point on an image slice."""
+
+    def __init__(self, index=None, position=None, value=None, label=None):
+        self.index = index
+        self.position = position
+        self.value = value
+        self.label = label
+
+    def __str__(self):
+        return 'index: {0}, position: {1}, value: {2}, label: {3}'.format(
+            self.index,
+            self.position,
+            self.value,
+            self.label)
+
+class ImagePointTrait(traitlets.Instance):
+    """A trait type holding an data from a picked point on an image slice."""
+
+    info_text = 'Data from a picked point on an image'
+
+    klass = ImagePoint
+
+def image_point_from_json(js, manager=None):
+    if js is None:
+        return None
+    else:
+        return ImagePoint(
+            index = array_serialization['from_json'](js['index'], manager),
+            position = array_serialization['from_json'](js['position'], manager),
+            value = array_serialization['from_json'](js['value'], manager),
+            label = int(js['label']),
+        )
+
+def image_point_to_json(image_point, manager=None):
+    if image_point is None:
+        return None
+    else:
+        return {
+            'index': array_serialization['to_json'](image_point.index, manager),
+            'position': array_serialization['to_json'](image_point.position,
+                manager),
+            'value': array_serialization['to_json'](image_point.value, manager),
+            'label': int(image_point.label, manager),
+        }
+
+image_point_serialization = {
+    'from_json': image_point_from_json,
+    'to_json': image_point_to_json
+}
 
 class PolyDataList(traitlets.TraitType):
     """A trait type holding a list of Python data structures compatible with vtk.js.
