@@ -312,9 +312,15 @@ class Viewer(ViewerParent):
             opacities_array = self._validate_geometry_opacities(proposal)
             kwargs['geometry_opacities'] = opacities_array
         self.observe(self._on_geometries_changed, ['geometries'])
-        if 'label_map' in kwargs:
+        have_label_map = 'label_map' in kwargs and kwargs['label_map'] is not None
+        if have_label_map:
             # Interpolation is not currently supported with label maps
             kwargs['interpolation'] = False
+        if not 'cmap' in kwargs or kwargs['cmap'] is None:
+            if have_label_map:
+                kwargs['cmap'] = cm.grayscale
+            else:
+                kwargs['cmap'] = cm.viridis
 
         super(Viewer, self).__init__(**kwargs)
 
@@ -643,7 +649,7 @@ class Viewer(ViewerParent):
 
 def view(image=None,  # noqa: C901
          label_map=None,  # noqa: C901
-         cmap=cm.viridis,
+         cmap=None,
          select_roi=False,
          interpolation=True,
          gradient_opacity=0.22, slicing_planes=False, shadow=True, blend='composite',
@@ -722,7 +728,7 @@ def view(image=None,  # noqa: C901
         Value that maps to the minimum of image colormap. Defaults to maximum of
         the image pixel buffer.
 
-    cmap: string, optional, default: 'Viridis (matplotlib)'
+    cmap: string, optional, default: viridis, grayscale with a label map
         Colormap. Some valid values available at itkwidgets.cm.*
 
     select_roi: bool, optional, default: False
