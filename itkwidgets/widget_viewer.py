@@ -15,9 +15,9 @@ import time
 import itk
 import numpy as np
 import ipywidgets as widgets
-from traitlets import CBool, CFloat, Unicode, CaselessStrEnum, List, validate
+from traitlets import CBool, CFloat, CInt, Unicode, CaselessStrEnum, List, validate
 from ipydatawidgets import NDArray, array_serialization, shape_constraints
-from .trait_types import ITKImage, PointSetList, PolyDataList, itkimage_serialization, polydata_list_serialization, Colormap
+from .trait_types import ITKImage, ImagePointTrait, ImagePoint, PointSetList, PolyDataList, itkimage_serialization, image_point_serialization, polydata_list_serialization, Colormap
 
 try:
     import ipywebrtc
@@ -132,6 +132,17 @@ class Viewer(ViewerParent):
     _rendering_image = CBool(
         default_value=False,
         help="We are currently volume rendering the image.").tag(sync=True)
+    label_map = ITKImage(
+        default_value=None,
+        allow_none=True,
+        help="Label map for the image.").tag(
+        sync=False,
+        **itkimage_serialization)
+    rendered_label_map = ITKImage(
+        default_value=None,
+        allow_none=True).tag(
+        sync=True,
+        **itkimage_serialization)
     interpolation = CBool(
         default_value=True,
         help="Use linear interpolation in slicing planes.").tag(sync=True)
@@ -159,6 +170,12 @@ class Viewer(ViewerParent):
         default_value=None,
         allow_none=True,
         help="World-space position of the Z slicing plane.").tag(sync=True)
+    clicked_slice_point = ImagePointTrait(
+        default_value=None,
+        allow_none=True,
+        help="Data for the point clicked on an image slice.").tag(
+            sync=True,
+            **image_point_serialization)
     gradient_opacity = CFloat(
         default_value=0.2,
         help="Volume rendering gradient opacity, from (0.0, 1.0]").tag(sync=True)
@@ -295,26 +312,40 @@ class Viewer(ViewerParent):
             opacities_array = self._validate_geometry_opacities(proposal)
             kwargs['geometry_opacities'] = opacities_array
         self.observe(self._on_geometries_changed, ['geometries'])
+        have_label_map = 'label_map' in kwargs and kwargs['label_map'] is not None
+        if have_label_map:
+            # Interpolation is not currently supported with label maps
+            kwargs['interpolation'] = False
+        if not 'cmap' in kwargs or kwargs['cmap'] is None:
+            if have_label_map:
+                kwargs['cmap'] = cm.grayscale
+            else:
+                kwargs['cmap'] = cm.viridis
 
         super(Viewer, self).__init__(**kwargs)
 
-        if not self.image:
+        if not self.image and not self.label_map:
             return
-        dimension = self.image.GetImageDimension()
-        largest_region = self.image.GetLargestPossibleRegion()
+        if self.image:
+            image = self.image
+        else:
+            image = self.label_map
+        dimension = image.GetImageDimension()
+        largest_region = image.GetLargestPossibleRegion()
         size = largest_region.GetSize()
 
         # Cache this so we do not need to recompute on it when resetting the
         # roi
         self._largest_roi_rendered_image = None
+        self._largest_roi_rendered_label_map = None
         self._largest_roi = np.zeros((2, 3), dtype=np.float64)
         if not np.any(self.roi):
             largest_index = largest_region.GetIndex()
             self.roi[0][:dimension] = np.array(
-                self.image.TransformIndexToPhysicalPoint(largest_index))
+                image.TransformIndexToPhysicalPoint(largest_index))
             largest_index_upper = largest_index + size
             self.roi[1][:dimension] = np.array(
-                self.image.TransformIndexToPhysicalPoint(largest_index_upper))
+                image.TransformIndexToPhysicalPoint(largest_index_upper))
             self._largest_roi = self.roi.copy()
 
         if dimension == 2:
@@ -325,15 +356,18 @@ class Viewer(ViewerParent):
             for dim in range(dimension):
                 if size[dim] > self.size_limit_3d[dim]:
                     self._downsampling = True
-        if self._downsampling:
+        if self._downsampling and self.image:
             self.extractor = itk.ExtractImageFilter.New(self.image)
             self.shrinker = itk.BinShrinkImageFilter.New(self.extractor)
+        if self._downsampling and self.label_map:
+            self.label_map_extractor = itk.ExtractImageFilter.New(self.label_map)
+            self.label_map_shrinker = itk.ShrinkImageFilter.New(self.label_map_extractor)
         self._update_rendered_image()
         if self._downsampling:
             self.observe(self._on_roi_changed, ['roi'])
 
         self.observe(self._on_reset_crop_requested, ['_reset_crop_requested'])
-        self.observe(self.update_rendered_image, ['image'])
+        self.observe(self.update_rendered_image, ['image', 'label_map'])
 
     def _on_roi_changed(self, change=None):
         if self._downsampling:
@@ -341,16 +375,20 @@ class Viewer(ViewerParent):
 
     def _on_reset_crop_requested(self, change=None):
         if change.new is True and self._downsampling:
-            dimension = self.image.GetImageDimension()
-            largest_region = self.image.GetLargestPossibleRegion()
+            if self.image:
+                image = self.image
+            else:
+                image = self.label_map
+            dimension = image.GetImageDimension()
+            largest_region = image.GetLargestPossibleRegion()
             size = largest_region.GetSize()
             largest_index = largest_region.GetIndex()
             new_roi = self.roi.copy()
             new_roi[0][:dimension] = np.array(
-                self.image.TransformIndexToPhysicalPoint(largest_index))
+                image.TransformIndexToPhysicalPoint(largest_index))
             largest_index_upper = largest_index + size
             new_roi[1][:dimension] = np.array(
-                self.image.TransformIndexToPhysicalPoint(largest_index_upper))
+                image.TransformIndexToPhysicalPoint(largest_index_upper))
             self._largest_roi = new_roi.copy()
             self.roi = new_roi
         if change.new is True:
@@ -359,6 +397,7 @@ class Viewer(ViewerParent):
     @debounced(delay_seconds=0.2, method=True)
     def update_rendered_image(self, change=None):
         self._largest_roi_rendered_image = None
+        self._largest_roi_rendered_label_map = None
         self._largest_roi = np.zeros((2, 3), dtype=np.float64)
         self._update_rendered_image()
 
@@ -371,7 +410,7 @@ class Viewer(ViewerParent):
         return scale_factors
 
     def _update_rendered_image(self):
-        if self.image is None:
+        if self.image is None and self.label_map is None:
             return
         if self._rendering_image:
             @yield_for_change(self, '_rendering_image')
@@ -382,10 +421,14 @@ class Viewer(ViewerParent):
         self._rendering_image = True
 
         if self._downsampling:
-            dimension = self.image.GetImageDimension()
-            index = self.image.TransformPhysicalPointToIndex(
+            if self.image:
+                image = self.image
+            else:
+                image = self.label_map
+            dimension = image.GetImageDimension()
+            index = image.TransformPhysicalPointToIndex(
                 self.roi[0][:dimension])
-            upper_index = self.image.TransformPhysicalPointToIndex(
+            upper_index = image.TransformPhysicalPointToIndex(
                 self.roi[1][:dimension])
             size = upper_index - index
 
@@ -396,7 +439,10 @@ class Viewer(ViewerParent):
                 scale_factors = self._find_scale_factors(
                     self.size_limit_3d, dimension, size)
             self._scale_factors = np.array(scale_factors, dtype=np.uint8)
-            self.shrinker.SetShrinkFactors(scale_factors[:dimension])
+            if self.image:
+                self.shrinker.SetShrinkFactors(scale_factors[:dimension])
+            if self.label_map:
+                self.label_map_shrinker.SetShrinkFactors(scale_factors[:dimension])
 
             region = itk.ImageRegion[dimension]()
             region.SetIndex(index)
@@ -404,10 +450,14 @@ class Viewer(ViewerParent):
             # Account for rounding
             # truncation issues
             region.PadByRadius(1)
-            region.Crop(self.image.GetLargestPossibleRegion())
+            region.Crop(image.GetLargestPossibleRegion())
 
-            self.extractor.SetInput(self.image)
-            self.extractor.SetExtractionRegion(region)
+            if self.image:
+                self.extractor.SetInput(self.image)
+                self.extractor.SetExtractionRegion(region)
+            if self.label_map:
+                self.label_map_extractor.SetInput(self.label_map)
+                self.label_map_extractor.SetExtractionRegion(region)
 
             size = region.GetSize()
 
@@ -415,24 +465,46 @@ class Viewer(ViewerParent):
             if np.any(self._largest_roi) and np.all(
                     self._largest_roi == self.roi):
                 is_largest = True
-                if self._largest_roi_rendered_image is not None:
-                    self.rendered_image = self._largest_roi_rendered_image
+                if self._largest_roi_rendered_image is not None or self._largest_roi_rendered_label_map is not None:
+                    if self.image:
+                        self.rendered_image = self._largest_roi_rendered_image
+                    if self.label_map:
+                        self.rendered_label_map = self._largest_roi_rendered_label_map
                     return
 
-            self.shrinker.UpdateLargestPossibleRegion()
+            if self.image:
+                self.shrinker.UpdateLargestPossibleRegion()
+            if self.label_map:
+                self.label_map_shrinker.UpdateLargestPossibleRegion()
             if is_largest:
-                self._largest_roi_rendered_image = self.shrinker.GetOutput()
-                self._largest_roi_rendered_image.DisconnectPipeline()
-                self._largest_roi_rendered_image.SetOrigin(
-                    self.roi[0][:dimension])
-                self.rendered_image = self._largest_roi_rendered_image
+                if self.image:
+                    self._largest_roi_rendered_image = self.shrinker.GetOutput()
+                    self._largest_roi_rendered_image.DisconnectPipeline()
+                    self._largest_roi_rendered_image.SetOrigin(
+                        self.roi[0][:dimension])
+                    self.rendered_image = self._largest_roi_rendered_image
+                if self.label_map:
+                    self._largest_roi_rendered_label_map = self.label_map_shrinker.GetOutput()
+                    self._largest_roi_rendered_label_map.DisconnectPipeline()
+                    self._largest_roi_rendered_label_map.SetOrigin(
+                        self.roi[0][:dimension])
+                    self.rendered_label_map = self._largest_roi_rendered_label_map
                 return
-            shrunk = self.shrinker.GetOutput()
-            shrunk.DisconnectPipeline()
-            shrunk.SetOrigin(self.roi[0][:dimension])
-            self.rendered_image = shrunk
+            if self.image:
+                shrunk = self.shrinker.GetOutput()
+                shrunk.DisconnectPipeline()
+                shrunk.SetOrigin(self.roi[0][:dimension])
+                self.rendered_image = shrunk
+            if self.label_map:
+                shrunk = self.label_map_shrinker.GetOutput()
+                shrunk.DisconnectPipeline()
+                shrunk.SetOrigin(self.roi[0][:dimension])
+                self.rendered_label_map = shrunk
         else:
-            self.rendered_image = self.image
+            if self.image:
+                self.rendered_image = self.image
+            if self.label_map:
+                self.rendered_label_map = self.image
 
     @validate('gradient_opacity')
     def _validate_gradient_opacity(self, proposal):
@@ -541,10 +613,14 @@ class Viewer(ViewerParent):
 
     def roi_region(self):
         """Return the itk.ImageRegion corresponding to the roi."""
-        dimension = self.image.GetImageDimension()
-        index = self.image.TransformPhysicalPointToIndex(
+        if self.image:
+            image = self.image
+        else:
+            image = self.label_map
+        dimension = image.GetImageDimension()
+        index = image.TransformPhysicalPointToIndex(
             tuple(self.roi[0][:dimension]))
-        upper_index = self.image.TransformPhysicalPointToIndex(
+        upper_index = image.TransformPhysicalPointToIndex(
             tuple(self.roi[1][:dimension]))
         size = upper_index - index
         for dim in range(dimension):
@@ -552,12 +628,16 @@ class Viewer(ViewerParent):
         region = itk.ImageRegion[dimension]()
         region.SetIndex(index)
         region.SetSize(tuple(size))
-        region.Crop(self.image.GetLargestPossibleRegion())
+        region.Crop(image.GetLargestPossibleRegion())
         return region
 
     def roi_slice(self):
         """Return the numpy array slice corresponding to the roi."""
-        dimension = self.image.GetImageDimension()
+        if self.image:
+            image = self.image
+        else:
+            image = self.label_map
+        dimension = image.GetImageDimension()
         region = self.roi_region()
         index = region.GetIndex()
         upper_index = np.array(index) + np.array(region.GetSize())
@@ -568,7 +648,8 @@ class Viewer(ViewerParent):
 
 
 def view(image=None,  # noqa: C901
-         cmap=cm.viridis,
+         label_map=None,  # noqa: C901
+         cmap=None,
          select_roi=False,
          interpolation=True,
          gradient_opacity=0.22, slicing_planes=False, shadow=True, blend='composite',
@@ -584,7 +665,8 @@ def view(image=None,  # noqa: C901
     Creates and returns an ipywidget to visualize an image, and/or point sets
     and/or geometries .
 
-    The image can be 2D or 3D.
+    The image can be 2D or 3D. A label map that corresponds to the image can
+    also be provided. The image and label map must have the same size.
 
     The type of the image can be an numpy.array, itk.Image,
     vtk.vtkImageData, pyvista.UniformGrid, imglyb.ReferenceGuardingRandomAccessibleInterval,
@@ -634,6 +716,10 @@ def view(image=None,  # noqa: C901
     image : array_like, itk.Image, or vtk.vtkImageData
         The 2D or 3D image to visualize.
 
+    label_map : array_like, itk.Image, or vtk.vtkImageData
+        The 2D or 3D label map to visualize. If an image is also provided, the
+        label map must have the same size.
+
     vmin: float, optional, default: None
         Value that maps to the minimum of image colormap. Defaults to minimum of
         the image pixel buffer.
@@ -642,7 +728,7 @@ def view(image=None,  # noqa: C901
         Value that maps to the minimum of image colormap. Defaults to maximum of
         the image pixel buffer.
 
-    cmap: string, optional, default: 'Viridis (matplotlib)'
+    cmap: string, optional, default: viridis, grayscale with a label map
         Colormap. Some valid values available at itkwidgets.cm.*
 
     select_roi: bool, optional, default: False
@@ -662,6 +748,7 @@ def view(image=None,  # noqa: C901
 
     interpolation: bool, optional, default: True
         Linear as opposed to nearest neighbor interpolation for image slices.
+        Note: Interpolation is not currently supported with label maps.
 
     gradient_opacity: float, optional, default: 0.22
         Gradient opacity for composite volume rendering, in the range (0.0, 1.0].
@@ -798,6 +885,7 @@ def view(image=None,  # noqa: C901
             image = images[0]
 
     viewer = Viewer(image=image,
+                    label_map=label_map,
                     cmap=cmap,
                     select_roi=select_roi,
                     interpolation=interpolation,
