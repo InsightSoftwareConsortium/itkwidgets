@@ -34,8 +34,9 @@ class ITKImage(traitlets.TraitType):
     def validate(self, obj, value):
         self._source_object = value
 
-        image_from_array = to_itk_image(value)
-        if image_from_array:
+        if not isinstance(value, itk.Image) and not isinstance(value,
+                itk.ProcessObject):
+            image_from_array = to_itk_image(value)
             return image_from_array
 
         try:

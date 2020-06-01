@@ -36,11 +36,7 @@ def checkerboard(image1, image2, pattern=3, invert=False, **viewer_kwargs):  # n
     """
 
     itk_image1 = to_itk_image(image1)
-    if not itk_image1:
-        itk_image1 = itk.output(image1)
     itk_image2 = to_itk_image(image2)
-    if not itk_image2:
-        itk_image2 = itk.output(image2)
     input1 = itk_image1
     input2 = itk_image2
 
