@@ -153,12 +153,14 @@ def line_profile(image, order=2, plotter=None,  # noqa: C901
         plotter = 'ipympl'
 
     if plotter == 'plotly':
+        import plotly.graph_objs as go
         layout = go.Layout(
             xaxis=dict(title='Distance'),
             yaxis=dict(title='Intensity')
         )
         fig = go.FigureWidget(layout=layout)
     elif plotter == 'bqplot':
+        import bqplot
         x_scale = bqplot.LinearScale()
         y_scale = bqplot.LinearScale()
         x_axis = bqplot.Axis(

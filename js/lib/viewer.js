@@ -286,8 +286,10 @@ const createRenderingPipeline = (
     const lowerLeft = viewportPosition.getComputedWorldValue(renderer)
     viewportPosition.setValue(1.0, 1.0, 0.0)
     const upperRight = viewportPosition.getComputedWorldValue(renderer)
-    const roi = domWidgetView.model.get('roi').slice()
-    const largestRoi = domWidgetView.model.get('_largest_roi')
+    const modelRoi = domWidgetView.model.get('roi')
+    const roi = !!modelRoi.slice ? modelRoi: new Float32Array(modelRoi.buffer)
+    const modelLargestRoi = domWidgetView.model.get('_largest_roi')
+    const largestRoi = !!modelLargestRoi.slice ? modelLargestRoi: new Float32Array(modelLargestRoi.buffer)
     const padFactor = 0.5
     const xPadding = (upperRight[0] - lowerLeft[0]) * padFactor
     let yPadding = (upperRight[1] - lowerLeft[1]) * padFactor
@@ -724,7 +726,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.save_changes()
       }
     }
-    this.model.itkVtkViewer.subscribeToggleUserInterfaceCollapsed(
+    this.model.itkVtkViewer.on('toggleUserInterfaceCollapsed',
       onUserInterfaceCollapsedToggle
     )
 
@@ -734,7 +736,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.save_changes()
       }
     }
-    this.model.itkVtkViewer.subscribeToggleRotate(onRotateToggle)
+    this.model.itkVtkViewer.on('toggleRotate', onRotateToggle)
 
     const onAnnotationsToggle = (enabled) => {
       if (enabled !== this.model.get('annotations')) {
@@ -742,7 +744,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.save_changes()
       }
     }
-    this.model.itkVtkViewer.subscribeToggleAnnotations(onAnnotationsToggle)
+    this.model.itkVtkViewer.on('toggleAnnotations', onAnnotationsToggle)
 
     const onInterpolationToggle = (enabled) => {
       if (enabled !== this.model.get('interpolation')) {
@@ -750,7 +752,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.save_changes()
       }
     }
-    this.model.itkVtkViewer.subscribeToggleInterpolation(onInterpolationToggle)
+    this.model.itkVtkViewer.on('toggleInterpolation', onInterpolationToggle)
 
     const onSelectColorMap = (component, colorMap) => {
       if (
@@ -761,7 +763,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.save_changes()
       }
     }
-    this.model.itkVtkViewer.subscribeSelectColorMap(onSelectColorMap)
+    this.model.itkVtkViewer.on('selectColorMap', onSelectColorMap)
 
     const onChangeColorRange = (component, colorRange) => {
       const vmin = this.model.get('vmin')
@@ -775,7 +777,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.save_changes()
       }
     }
-    this.model.itkVtkViewer.subscribeChangeColorRange(onChangeColorRange)
+    this.model.itkVtkViewer.on('changeColorRange', onChangeColorRange)
 
     const onCroppingPlanesChanged = (planes, bboxCorners) => {
       if (
@@ -799,7 +801,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.skipOnCroppingPlanesChanged = false
       }
     }
-    this.model.itkVtkViewer.subscribeCroppingPlanesChanged(
+    this.model.itkVtkViewer.on('croppingPlanesChanged',
       onCroppingPlanesChanged
     )
 
@@ -807,7 +809,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.model.set('_reset_crop_requested', true)
       this.model.save_changes()
     }
-    this.model.itkVtkViewer.subscribeResetCrop(onResetCrop)
+    this.model.itkVtkViewer.on('resetCrop', onResetCrop)
 
     const onToggleCroppingPlanes = (enabled) => {
       if (enabled !== this.model.get('select_roi')) {
@@ -815,7 +817,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.save_changes()
       }
     }
-    this.model.itkVtkViewer.subscribeToggleCroppingPlanes(
+    this.model.itkVtkViewer.on('toggleCroppingPlanes',
       onToggleCroppingPlanes
     )
 
@@ -843,7 +845,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
           this.model.save_changes()
         }
       }
-      this.model.itkVtkViewer.subscribeBlendModeChanged(onBlendModeChanged)
+      this.model.itkVtkViewer.on('blendModeChanged', onBlendModeChanged)
 
       const onViewModeChanged = (mode) => {
         let pythonMode = null
@@ -868,7 +870,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
           this.model.save_changes()
         }
       }
-      this.model.itkVtkViewer.subscribeViewModeChanged(onViewModeChanged)
+      this.model.itkVtkViewer.on('viewModeChanged', onViewModeChanged)
 
       const onShadowToggle = (enabled) => {
         if (enabled !== this.model.get('shadow')) {
@@ -876,7 +878,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
           this.model.save_changes()
         }
       }
-      this.model.itkVtkViewer.subscribeToggleShadow(onShadowToggle)
+      this.model.itkVtkViewer.on('toggleShadow', onShadowToggle)
 
       const onSlicingPlanesToggle = (enabled) => {
         if (enabled !== this.model.get('slicing_planes')) {
@@ -884,7 +886,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
           this.model.save_changes()
         }
       }
-      this.model.itkVtkViewer.subscribeToggleSlicingPlanes(
+      this.model.itkVtkViewer.on('toggleSlicingPlanes',
         onSlicingPlanesToggle
       )
 
@@ -894,7 +896,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
           this.model.save_changes()
         }
       }
-      this.model.itkVtkViewer.subscribeXSliceChanged(onXSliceChanged)
+      this.model.itkVtkViewer.on('xSliceChanged', onXSliceChanged)
       if (this.model.get('x_slice') === null) {
         this.model.set('x_slice', this.model.itkVtkViewer.getXSlice())
         this.model.save_changes()
@@ -905,7 +907,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
           this.model.save_changes()
         }
       }
-      this.model.itkVtkViewer.subscribeYSliceChanged(onYSliceChanged)
+      this.model.itkVtkViewer.on('ySliceChanged', onYSliceChanged)
       if (this.model.get('y_slice') === null) {
         this.model.set('y_slice', this.model.itkVtkViewer.getYSlice())
         this.model.save_changes()
@@ -916,7 +918,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
           this.model.save_changes()
         }
       }
-      this.model.itkVtkViewer.subscribeZSliceChanged(onZSliceChanged)
+      this.model.itkVtkViewer.on('zSliceChanged', onZSliceChanged)
       if (this.model.get('z_slice') === null) {
         this.model.set('z_slice', this.model.itkVtkViewer.getZSlice())
         this.model.save_changes()
@@ -928,7 +930,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
           this.model.save_changes()
         }
       }
-      this.model.itkVtkViewer.subscribeGradientOpacityChanged(
+      this.model.itkVtkViewer.on('gradientOpacityChanged',
         onGradientOpacityChange
       )
     } // end use2D
@@ -943,7 +945,9 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.model.save_changes()
     }, 50)
     // If view-up has not been set, set initial value to itk-vtk-viewer default
-    const viewUp = this.model.get('camera').slice(6, 9)
+    const camera = this.model.get('camera')
+    const cameraData = !!camera.slice ? camera: new Float32Array(camera.buffer)
+    const viewUp = cameraData.slice(6, 9)
     if (!viewUp[0] && !viewUp[1] && !viewUp[2]) {
       onCameraChanged()
     } else {
@@ -1365,10 +1369,11 @@ const ViewerView = widgets.DOMWidgetView.extend({
   camera_changed: function () {
     const camera = this.model.get('camera')
     if (this.model.hasOwnProperty('itkVtkViewer')) {
+      const cameraData = !!camera.slice ? camera: new Float32Array(camera.buffer)
       const viewProxy = this.model.itkVtkViewer.getViewProxy()
-      viewProxy.setCameraPosition(...camera.subarray(0, 3))
-      viewProxy.setCameraFocalPoint(...camera.subarray(3, 6))
-      viewProxy.setCameraViewUp(...camera.subarray(6, 9))
+      viewProxy.setCameraPosition(...cameraData.subarray(0, 3))
+      viewProxy.setCameraFocalPoint(...cameraData.subarray(3, 6))
+      viewProxy.setCameraViewUp(...cameraData.subarray(6, 9))
       viewProxy.getCamera().computeDistance()
       viewProxy.renderLater()
     }
