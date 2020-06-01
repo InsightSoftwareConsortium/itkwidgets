@@ -111,10 +111,10 @@ const LineProfilerView = viewer.ViewerView.extend({
     }
     const debouncedOnInteractionEvent = macro.debounce(onInteractionEvent, 200);
     lineWidget.onInteractionEvent(debouncedOnInteractionEvent)
-    this.model.itkVtkViewer.subscribeViewModeChanged(debouncedOnInteractionEvent)
-    this.model.itkVtkViewer.subscribeXSliceChanged(debouncedOnInteractionEvent)
-    this.model.itkVtkViewer.subscribeYSliceChanged(debouncedOnInteractionEvent)
-    this.model.itkVtkViewer.subscribeZSliceChanged(debouncedOnInteractionEvent)
+    this.model.itkVtkViewer.on('viewModeChanged', debouncedOnInteractionEvent)
+    this.model.itkVtkViewer.on('xSliceChanged', debouncedOnInteractionEvent)
+    this.model.itkVtkViewer.on('ySliceChanged', debouncedOnInteractionEvent)
+    this.model.itkVtkViewer.on('zSliceChanged', debouncedOnInteractionEvent)
   },
 
   point1_changed: function() {

@@ -724,7 +724,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.save_changes()
       }
     }
-    this.model.itkVtkViewer.subscribeToggleUserInterfaceCollapsed(
+    this.model.itkVtkViewer.on('toggleUserInterfaceCollapsed',
       onUserInterfaceCollapsedToggle
     )
 
@@ -734,7 +734,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.save_changes()
       }
     }
-    this.model.itkVtkViewer.subscribeToggleRotate(onRotateToggle)
+    this.model.itkVtkViewer.on('toggleRotate', onRotateToggle)
 
     const onAnnotationsToggle = (enabled) => {
       if (enabled !== this.model.get('annotations')) {
@@ -742,7 +742,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.save_changes()
       }
     }
-    this.model.itkVtkViewer.subscribeToggleAnnotations(onAnnotationsToggle)
+    this.model.itkVtkViewer.on('toggleAnnotations', onAnnotationsToggle)
 
     const onInterpolationToggle = (enabled) => {
       if (enabled !== this.model.get('interpolation')) {
@@ -750,7 +750,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.save_changes()
       }
     }
-    this.model.itkVtkViewer.subscribeToggleInterpolation(onInterpolationToggle)
+    this.model.itkVtkViewer.on('toggleInterpolation', onInterpolationToggle)
 
     const onSelectColorMap = (component, colorMap) => {
       if (
@@ -761,7 +761,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.save_changes()
       }
     }
-    this.model.itkVtkViewer.subscribeSelectColorMap(onSelectColorMap)
+    this.model.itkVtkViewer.on('selectColorMap', onSelectColorMap)
 
     const onChangeColorRange = (component, colorRange) => {
       const vmin = this.model.get('vmin')
@@ -775,7 +775,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.save_changes()
       }
     }
-    this.model.itkVtkViewer.subscribeChangeColorRange(onChangeColorRange)
+    this.model.itkVtkViewer.on('changeColorRange', onChangeColorRange)
 
     const onCroppingPlanesChanged = (planes, bboxCorners) => {
       if (
@@ -799,7 +799,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.skipOnCroppingPlanesChanged = false
       }
     }
-    this.model.itkVtkViewer.subscribeCroppingPlanesChanged(
+    this.model.itkVtkViewer.on('croppingPlanesChanged',
       onCroppingPlanesChanged
     )
 
@@ -807,7 +807,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.model.set('_reset_crop_requested', true)
       this.model.save_changes()
     }
-    this.model.itkVtkViewer.subscribeResetCrop(onResetCrop)
+    this.model.itkVtkViewer.on('resetCrop', onResetCrop)
 
     const onToggleCroppingPlanes = (enabled) => {
       if (enabled !== this.model.get('select_roi')) {
@@ -815,7 +815,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.save_changes()
       }
     }
-    this.model.itkVtkViewer.subscribeToggleCroppingPlanes(
+    this.model.itkVtkViewer.on('toggleCroppingPlanes',
       onToggleCroppingPlanes
     )
 
@@ -843,7 +843,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
           this.model.save_changes()
         }
       }
-      this.model.itkVtkViewer.subscribeBlendModeChanged(onBlendModeChanged)
+      this.model.itkVtkViewer.on('blendModeChanged', onBlendModeChanged)
 
       const onViewModeChanged = (mode) => {
         let pythonMode = null
@@ -868,7 +868,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
           this.model.save_changes()
         }
       }
-      this.model.itkVtkViewer.subscribeViewModeChanged(onViewModeChanged)
+      this.model.itkVtkViewer.on('viewModeChanged', onViewModeChanged)
 
       const onShadowToggle = (enabled) => {
         if (enabled !== this.model.get('shadow')) {
@@ -876,7 +876,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
           this.model.save_changes()
         }
       }
-      this.model.itkVtkViewer.subscribeToggleShadow(onShadowToggle)
+      this.model.itkVtkViewer.on('toggleShadow', onShadowToggle)
 
       const onSlicingPlanesToggle = (enabled) => {
         if (enabled !== this.model.get('slicing_planes')) {
@@ -884,7 +884,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
           this.model.save_changes()
         }
       }
-      this.model.itkVtkViewer.subscribeToggleSlicingPlanes(
+      this.model.itkVtkViewer.on('toggleSlicingPlanes',
         onSlicingPlanesToggle
       )
 
@@ -894,7 +894,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
           this.model.save_changes()
         }
       }
-      this.model.itkVtkViewer.subscribeXSliceChanged(onXSliceChanged)
+      this.model.itkVtkViewer.on('xSliceChanged', onXSliceChanged)
       if (this.model.get('x_slice') === null) {
         this.model.set('x_slice', this.model.itkVtkViewer.getXSlice())
         this.model.save_changes()
@@ -905,7 +905,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
           this.model.save_changes()
         }
       }
-      this.model.itkVtkViewer.subscribeYSliceChanged(onYSliceChanged)
+      this.model.itkVtkViewer.on('ySliceChanged', onYSliceChanged)
       if (this.model.get('y_slice') === null) {
         this.model.set('y_slice', this.model.itkVtkViewer.getYSlice())
         this.model.save_changes()
@@ -916,7 +916,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
           this.model.save_changes()
         }
       }
-      this.model.itkVtkViewer.subscribeZSliceChanged(onZSliceChanged)
+      this.model.itkVtkViewer.on('zSliceChanged', onZSliceChanged)
       if (this.model.get('z_slice') === null) {
         this.model.set('z_slice', this.model.itkVtkViewer.getZSlice())
         this.model.save_changes()
@@ -928,7 +928,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
           this.model.save_changes()
         }
       }
-      this.model.itkVtkViewer.subscribeGradientOpacityChanged(
+      this.model.itkVtkViewer.on('gradientOpacityChanged',
         onGradientOpacityChange
       )
     } // end use2D
