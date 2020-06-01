@@ -286,8 +286,10 @@ const createRenderingPipeline = (
     const lowerLeft = viewportPosition.getComputedWorldValue(renderer)
     viewportPosition.setValue(1.0, 1.0, 0.0)
     const upperRight = viewportPosition.getComputedWorldValue(renderer)
-    const roi = domWidgetView.model.get('roi').slice()
-    const largestRoi = domWidgetView.model.get('_largest_roi')
+    const modelRoi = domWidgetView.model.get('roi')
+    const roi = !!modelRoi.slice ? modelRoi: new Float32Array(modelRoi.buffer)
+    const modelLargestRoi = domWidgetView.model.get('_largest_roi')
+    const largestRoi = !!modelLargestRoi.slice ? modelLargestRoi: new Float32Array(modelLargestRoi.buffer)
     const padFactor = 0.5
     const xPadding = (upperRight[0] - lowerLeft[0]) * padFactor
     let yPadding = (upperRight[1] - lowerLeft[1]) * padFactor
@@ -943,7 +945,9 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.model.save_changes()
     }, 50)
     // If view-up has not been set, set initial value to itk-vtk-viewer default
-    const viewUp = this.model.get('camera').slice(6, 9)
+    const camera = this.model.get('camera')
+    const cameraData = !!camera.slice ? camera: new Float32Array(camera.buffer)
+    const viewUp = cameraData.slice(6, 9)
     if (!viewUp[0] && !viewUp[1] && !viewUp[2]) {
       onCameraChanged()
     } else {
@@ -1365,10 +1369,11 @@ const ViewerView = widgets.DOMWidgetView.extend({
   camera_changed: function () {
     const camera = this.model.get('camera')
     if (this.model.hasOwnProperty('itkVtkViewer')) {
+      const cameraData = !!camera.slice ? camera: new Float32Array(camera.buffer)
       const viewProxy = this.model.itkVtkViewer.getViewProxy()
-      viewProxy.setCameraPosition(...camera.subarray(0, 3))
-      viewProxy.setCameraFocalPoint(...camera.subarray(3, 6))
-      viewProxy.setCameraViewUp(...camera.subarray(6, 9))
+      viewProxy.setCameraPosition(...cameraData.subarray(0, 3))
+      viewProxy.setCameraFocalPoint(...cameraData.subarray(3, 6))
+      viewProxy.setCameraViewUp(...cameraData.subarray(6, 9))
       viewProxy.getCamera().computeDistance()
       viewProxy.renderLater()
     }
