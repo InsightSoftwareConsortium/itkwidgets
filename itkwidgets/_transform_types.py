@@ -161,7 +161,7 @@ def _numpy_array_to_point_set(point_set_like):
 def to_itk_image(image_like):
 
     if isinstance(image_like, itk.Image):
-        return None
+        return image_like
 
     if is_arraylike(image_like):
         array = np.asarray(image_like)
@@ -201,6 +201,8 @@ def to_itk_image(image_like):
             array = imglyb.to_numpy(image_like)
             image_from_array = itk.image_view_from_array(array)
             return image_from_array
+    elif isinstance(image_like, itk.ProcessObject):
+        return itk.output(image_like)
 
     return None
 

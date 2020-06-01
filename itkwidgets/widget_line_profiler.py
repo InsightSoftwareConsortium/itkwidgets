@@ -86,18 +86,14 @@ class LineProfiler(Viewer):
             point2 = self.point2
         if order is None:
             order = self.order
-        image_from_array = to_itk_image(image_or_array)
-        if image_from_array:
-            image_ = image_from_array
-        else:
-            image_ = image_or_array
-        image_array = itk.array_view_from_image(image_)
-        dimension = image_.GetImageDimension()
+        image = to_itk_image(image_or_array)
+        image_array = itk.array_view_from_image(image)
+        dimension = image.GetImageDimension()
         distance = np.sqrt(
             sum([(point1[ii] - point2[ii])**2 for ii in range(dimension)]))
-        index1 = tuple(image_.TransformPhysicalPointToIndex(
+        index1 = tuple(image.TransformPhysicalPointToIndex(
             tuple(point1[:dimension])))
-        index2 = tuple(image_.TransformPhysicalPointToIndex(
+        index2 = tuple(image.TransformPhysicalPointToIndex(
             tuple(point2[:dimension])))
         num_points = int(np.round(
             np.sqrt(sum([(index1[ii] - index2[ii])**2 for ii in range(dimension)])) * 2.1))
