@@ -134,6 +134,8 @@ def _numpy_array_to_point_set(point_set_like):
     point_values = np.asarray(point_set_like).astype(np.float32)
     if len(
             point_values.shape) > 1 and point_values.shape[1] == 2 or point_values.shape[1] == 3:
+        if not point_values.flags['CONTIGUOUS']:
+            point_values = np.ascontiguousarray(point_values)
         if point_values.shape[1] == 2:
             point_values = np.hstack(
                 (point_values, -5.0e-6 * np.ones((point_values.shape[0], 1)))).astype(np.float32)
