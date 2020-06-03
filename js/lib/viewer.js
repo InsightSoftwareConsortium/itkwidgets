@@ -16,11 +16,11 @@ import macro from 'vtk.js/Sources/macro'
 const widgets = require('@jupyter-widgets/base')
 
 const ANNOTATION_DEFAULT =
-  '<table style="margin-left: 0;"><tr><td style="margin-left: auto; margin-right: 0;">Index:</td><td>${iIndex},</td><td>${jIndex},</td><td>${kIndex}</td></tr><tr><td style="margin-left: auto; margin-right: 0;">Position:</td><td>${xPosition},</td><td>${yPosition},</td><td>${zPosition}</td></tr><tr><td style="margin-left: auto; margin-right: 0;"">Value:</td><td>${value}</td></tr></table>'
+  '<table style="margin-left: 0;"><tr><td style="margin-left: auto; margin-right: 0;">Index:</td><td>${iIndex},</td><td>${jIndex},</td><td>${kIndex}</td></tr><tr><td style="margin-left: auto; margin-right: 0;">Position:</td><td>${xPosition},</td><td>${yPosition},</td><td>${zPosition}</td></tr><tr><td style="margin-left: auto; margin-right: 0;"">Value:</td><td style="text-align:center;" colspan="3">${value}</td></tr><tr ${annotationLabelStyle}><td style="margin-left: auto; margin-right: 0;">Label:</td><td style="text-align:center;" colspan="3">${annotation}</td></tr></table>'
 const ANNOTATION_CUSTOM_PREFIX =
   '<table style="margin-left: 0;"><tr><td style="margin-left: auto; margin-right: 0;">Scale/Index:</td>'
 const ANNOTATION_CUSTOM_POSTFIX =
-  '</tr><tr><td style="margin-left: auto; margin-right: 0;">Position:</td><td>${xPosition},</td><td>${yPosition},</td><td>${zPosition}</td></tr><tr><td style="margin-left: auto; margin-right: 0;"">Value:</td><td>${value}</td></tr></table>'
+  '</tr><tr><td style="margin-left: auto; margin-right: 0;">Position:</td><td>${xPosition},</td><td>${yPosition},</td><td>${zPosition}</td></tr><tr><td style="margin-left: auto; margin-right: 0;"">Value:</td><td style="text-align:center;" colspan="3">${value}</td></tr><tr ${annotationLabelStyle}><td style="margin-left: auto; margin-right: 0;">Label:</td><td style="text-align:center;" colspan="3">${annotation}</td></tr></table>'
 
 const cores = navigator.hardwareConcurrency ? navigator.hardwareConcurrency : 4
 const numberOfWorkers = cores + Math.floor(Math.sqrt(cores))
@@ -116,6 +116,8 @@ const ViewerModel = widgets.DOMWidgetModel.extend(
         _view_module_version: '0.27.5',
         rendered_image: null,
         rendered_label_map: null,
+        label_map_names: null,
+        label_map_weights: null,
         _rendering_image: false,
         interpolation: true,
         cmap: 'Viridis (matplotlib)',
@@ -162,6 +164,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend(
           serialize: serialize_itkimage,
           deserialize: deserialize_itkimage
         },
+        label_map_weights: simplearray_serialization,
         clicked_slice_point: {
           serialize: serialize_image_point,
           deserialize: deserialize_image_point
@@ -719,6 +722,10 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.select_roi_changed()
       this.scale_factors_changed()
     }
+    if (rendered_label_map) {
+      this.label_map_names_changed()
+      this.label_map_weights_changed()
+    }
 
     const onUserInterfaceCollapsedToggle = (collapsed) => {
       if (collapsed !== this.model.get('ui_collapsed')) {
@@ -819,6 +826,17 @@ const ViewerView = widgets.DOMWidgetView.extend({
     }
     this.model.itkVtkViewer.on('toggleCroppingPlanes',
       onToggleCroppingPlanes
+    )
+
+    const onLabelMapWeightsChanged = ({ weights }) => {
+      const typedWeights = new Float32Array(weights)
+      this.model.set('label_map_weights', { shape: [weights.length],
+        array: typedWeights
+      })
+      this.model.save_changes()
+    }
+    this.model.itkVtkViewer.on('labelMapWeightsChanged',
+      onLabelMapWeightsChanged
     )
 
     if (!this.model.use2D) {
@@ -960,20 +978,12 @@ const ViewerView = widgets.DOMWidgetView.extend({
     interactor.onEndPinch(onCameraChanged)
     const vtkCamera = this.model.itkVtkViewer.getViewProxy().getCamera()
     vtkCamera.onModified(onCameraChanged)
-    const defaultClickCallback = this.model.itkVtkViewer
-      .getViewProxy()
-      .getClickCallback()
-    if (defaultClickCallback) {
-      const widgetModel = this.model
-      function extendedClickCallback (lastPickedValues) {
-        defaultClickCallback(lastPickedValues)
-        widgetModel.set('clicked_slice_point', lastPickedValues)
-        widgetModel.save_changes()
-      }
-      this.model.itkVtkViewer
-        .getViewProxy()
-        .setClickCallback(extendedClickCallback)
+    const onClickSlicePoint = (lastPickedValues) => {
+      this.model.set('clicked_slice_point', lastPickedValues)
+      this.model.save_changes()
     }
+    this.model.itkVtkViewer
+      .on('imagePicked', onClickSlicePoint)
 
     const point_sets = this.model.get('point_sets')
     if (point_sets) {
@@ -1044,6 +1054,8 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:mode', this.mode_changed, this)
     this.model.on('change:units', this.units_changed, this)
     this.model.on('change:camera', this.camera_changed, this)
+    this.model.on('change:label_map_names', this.label_map_names_changed, this)
+    this.model.on('change:label_map_weights', this.label_map_weights_changed, this)
 
     let toDecompress = []
     const rendered_image = this.model.get('rendered_image')
@@ -1159,6 +1171,22 @@ const ViewerView = widgets.DOMWidgetView.extend({
       }
     }
     return Promise.resolve(null)
+  },
+
+  label_map_names_changed: function () {
+    const label_map_names = this.model.get('label_map_names')
+    if (label_map_names && this.model.hasOwnProperty('itkVtkViewer')) {
+      const labelMapNames = new Map(label_map_names)
+      this.model.itkVtkViewer.setLabelMapNames(labelMapNames)
+    }
+  },
+
+  label_map_weights_changed: function () {
+    const label_map_weights = this.model.get('label_map_weights')
+    if (label_map_weights && this.model.hasOwnProperty('itkVtkViewer')) {
+      const labelMapWeights = !!label_map_weights.array ? Array.from(label_map_weights.array) : Array.from(label_map_weights)
+      this.model.itkVtkViewer.setLabelMapWeights(labelMapWeights)
+    }
   },
 
   point_sets_changed: function () {
@@ -1524,7 +1552,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         scaleFactors[1] === 1 &&
         scaleFactors[2] === 1
       ) {
-        viewProxy.setCornerAnnotation('se', `${ANNOTATION_DEFAULT}`)
+        viewProxy.setSeCornerAnnotation(`${ANNOTATION_DEFAULT}`)
       } else {
         let scaleIndex = ''
         if (scaleFactors[0] === 1) {
@@ -1542,8 +1570,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         } else {
           scaleIndex = `${scaleIndex}<td>${scaleFactors[2]}X</td>`
         }
-        viewProxy.setCornerAnnotation(
-          'se',
+        viewProxy.setSeCornerAnnotation(
           `${ANNOTATION_CUSTOM_PREFIX}${scaleIndex}${ANNOTATION_CUSTOM_POSTFIX}`
         )
       }
