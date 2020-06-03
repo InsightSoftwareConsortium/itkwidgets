@@ -149,6 +149,10 @@ class Viewer(ViewerParent):
         default_value=None,
         help="Names for labels in the label map.").tag(
         sync=True)
+    label_map_weights = NDArray(dtype=np.float32, default_value=None, allow_none=True,
+        help="Weights, from 0.0 to 1.0, for every label in the label map.")\
+        .tag(sync=True, **array_serialization)\
+        .valid(shape_constraints(None,))
     interpolation = CBool(
         default_value=True,
         help="Use linear interpolation in slicing planes.").tag(sync=True)
@@ -374,6 +378,7 @@ class Viewer(ViewerParent):
 
         self.observe(self._on_reset_crop_requested, ['_reset_crop_requested'])
         self.observe(self.update_rendered_image, ['image', 'label_map'])
+        self.observe(self.update_rendered_image, ['image', 'label_map'])
 
     def _on_roi_changed(self, change=None):
         if self._downsampling:
@@ -511,6 +516,17 @@ class Viewer(ViewerParent):
                 self.rendered_image = self.image
             if self.label_map:
                 self.rendered_label_map = self.image
+
+    @validate('label_map_weights')
+    def _validate_label_map_weights(self, proposal):
+        """Check the number of weights equals the number of labels."""
+        value = proposal['value']
+        value = np.array(value, dtype=np.float32)
+        if self.rendered_label_map:
+            labels = len(np.unique(itk.array_view_from_image(self.rendered_label_map)))
+            if labels != len(value):
+                raise TraitError('Number of labels, {0}, does not equal number of label weights, {1}'.format(labels, len(value)))
+        return value
 
     @validate('gradient_opacity')
     def _validate_gradient_opacity(self, proposal):
@@ -656,6 +672,7 @@ class Viewer(ViewerParent):
 def view(image=None,  # noqa: C901
          label_map=None,  # noqa: C901
          label_map_names=None,  # noqa: C901
+         label_map_weights=None,  # noqa: C901
          cmap=None,
          select_roi=False,
          interpolation=True,
@@ -691,18 +708,18 @@ def view(image=None,  # noqa: C901
     General Interface
     ^^^^^^^^^^^^^^^^^
 
-    ui_collapsed : bool, optional, default: False
+    ui_collapsed : bool, default: False
         Collapse the native widget user interface.
 
-    rotate : bool, optional, default: False
+    rotate : bool, default: False
         Continuously rotate the camera around the scene in volume rendering
         mode.
 
-    annotations : bool, optional, default: True
+    annotations : bool, default: True
         Display annotations describing orientation and the value of a
         mouse-position-based data probe.
 
-    mode: 'x', 'y', 'z', or 'v', optional, default: 'v'
+    mode: 'x', 'y', 'z', or 'v', default: 'v'
         Only relevant for 3D scenes.
         Viewing mode:
             'x': x-plane
@@ -710,7 +727,7 @@ def view(image=None,  # noqa: C901
             'z': z-plane
             'v': volume rendering
 
-    camera: 3x3 numpy float32 array, optional
+    camera: 3x3 numpy float32 array
         Camera parameters:
             [[position_x,    position_y,    position_z],
              [focal_point_x, focal_point_y, focal_point_z],
@@ -730,89 +747,92 @@ def view(image=None,  # noqa: C901
     label_map_names : OrderedDict of (label_value, label_name)
         String names associated with the integer label values.
 
-    vmin: float, optional, default: None
+    label_map_weights : 1D numpy float32 array, default: None
+        Rendering weights, from 0.0 to 1.0, associated labels in the label map.
+
+    vmin: float, default: None
         Value that maps to the minimum of image colormap. Defaults to minimum of
         the image pixel buffer.
 
-    vmax: float, optional, default: None
+    vmax: float, default: None
         Value that maps to the minimum of image colormap. Defaults to maximum of
         the image pixel buffer.
 
-    cmap: string, optional, default: viridis, grayscale with a label map
+    cmap: string, default: viridis, grayscale with a label map
         Colormap. Some valid values available at itkwidgets.cm.*
 
-    select_roi: bool, optional, default: False
+    select_roi: bool, default: False
         Enable an interactive region of interest widget for the image.
 
-    slicing_planes: bool, optional, default: False
+    slicing_planes: bool, default: False
         Enable slicing planes on the volume rendering.
 
-    x_slice: float, optional, default: None
+    x_slice: float, default: None
         World-space position of the X slicing plane.
 
-    y_slice: float, optional, default: None
+    y_slice: float, default: None
         World-space position of the Y slicing plane.
 
-    z_slice: float, optional, default: None
+    z_slice: float, default: None
         World-space position of the Z slicing plane.
 
-    interpolation: bool, optional, default: True
+    interpolation: bool, default: True
         Linear as opposed to nearest neighbor interpolation for image slices.
         Note: Interpolation is not currently supported with label maps.
 
-    gradient_opacity: float, optional, default: 0.22
+    gradient_opacity: float, default: 0.22
         Gradient opacity for composite volume rendering, in the range (0.0, 1.0].
 
-    shadow: bool, optional, default: True
+    shadow: bool, default: True
         Use shadowing with composite volume rendering.
 
-    blend: 'composite', 'max', 'min', or 'average', optional, default: 'composite'
+    blend: 'composite', 'max', 'min', or 'average', default: 'composite'
         Volume rendering blend mode.
 
     Point Sets
     ^^^^^^^^^^
 
-    point_sets: point set, or sequence of point sets, optional
+    point_sets: point set, or sequence of point sets
         The point sets to visualize.
 
-    point_set_colors: list of RGB colors, optional
+    point_set_colors: list of RGB colors
         Colors for the N geometries. See help(matplotlib.colors) for
         specification. Defaults to the Glasbey series of categorical colors.
 
-    point_set_opacities: list of floats, optional, default: [0.5,]*n
+    point_set_opacities: list of floats, default: [0.5,]*n
         Opacity for the point sets, in the range (0.0, 1.0].
 
-    point_set_representations: list of strings, optional, default: ['points',]*n
+    point_set_representations: list of strings, default: ['points',]*n
         How to represent the point set. One of 'hidden', 'points', or 'spheres'.
 
     Geometries
     ^^^^^^^^^^
 
-    geometries: geometries, or sequence of geometries, optional
+    geometries: geometries, or sequence of geometries
         The geometries to visualize.
 
-    geometry_colors: list of RGB colors, optional
+    geometry_colors: list of RGB colors
         Colors for the N geometries. See help(matplotlib.colors) for
         specification. Defaults to the Glasbey series of categorical colors.
 
-    geometry_opacities: list of floats, optional, default: [1.0,]*n
+    geometry_opacities: list of floats, default: [1.0,]*n
         Opacity for the point sets, in the range (0.0, 1.0].
 
 
     Other Parameters
     ----------------
 
-    units: string, optional, default: ''
+    units: string, default: ''
         Units to display in the scale bar.
 
-    actors: vtkActor, vtkAssembly, vtkVolume, optional, default: None
+    actors: vtkActor, vtkAssembly, vtkVolume, default: None
         List of standard vtk objects, colors are extracted from their properties
 
-    size_limit_2d: 2x1 numpy int64 array, optional, default: [1024, 1024]
+    size_limit_2d: 2x1 numpy int64 array, default: [1024, 1024]
         Size limit for 2D image visualization. If the roi is larger than this
         size, it will be downsampled for visualization
 
-    size_limit_3d: 3x1 numpy int64 array, optional, default: [192, 192, 192]
+    size_limit_3d: 3x1 numpy int64 array, default: [192, 192, 192]
         Size limit for 3D image visualization. If the roi is larger than this
         size, it will be downsampled for visualization.
 
@@ -897,6 +917,7 @@ def view(image=None,  # noqa: C901
     viewer = Viewer(image=image,
                     label_map=label_map,
                     label_map_names=label_map_names,
+                    label_map_weights=label_map_weights,
                     cmap=cmap,
                     select_roi=select_roi,
                     interpolation=interpolation,
