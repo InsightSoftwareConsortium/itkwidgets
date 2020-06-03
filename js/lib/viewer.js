@@ -978,20 +978,12 @@ const ViewerView = widgets.DOMWidgetView.extend({
     interactor.onEndPinch(onCameraChanged)
     const vtkCamera = this.model.itkVtkViewer.getViewProxy().getCamera()
     vtkCamera.onModified(onCameraChanged)
-    const defaultClickCallback = this.model.itkVtkViewer
-      .getViewProxy()
-      .getClickCallback()
-    if (defaultClickCallback) {
-      const widgetModel = this.model
-      function extendedClickCallback (lastPickedValues) {
-        defaultClickCallback(lastPickedValues)
-        widgetModel.set('clicked_slice_point', lastPickedValues)
-        widgetModel.save_changes()
-      }
-      this.model.itkVtkViewer
-        .getViewProxy()
-        .setClickCallback(extendedClickCallback)
+    const onClickSlicePoint = (lastPickedValues) => {
+      this.model.set('clicked_slice_point', lastPickedValues)
+      this.model.save_changes()
     }
+    this.model.itkVtkViewer
+      .on('imagePicked', onClickSlicePoint)
 
     const point_sets = this.model.get('point_sets')
     if (point_sets) {
