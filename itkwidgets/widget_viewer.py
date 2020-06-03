@@ -15,7 +15,7 @@ import time
 import itk
 import numpy as np
 import ipywidgets as widgets
-from traitlets import CBool, CFloat, CInt, Unicode, CaselessStrEnum, List, validate
+from traitlets import CBool, CFloat, CInt, Unicode, CaselessStrEnum, List, validate, TraitError, Tuple
 from ipydatawidgets import NDArray, array_serialization, shape_constraints
 from .trait_types import ITKImage, ImagePointTrait, ImagePoint, PointSetList, PolyDataList, itkimage_serialization, image_point_serialization, polydata_list_serialization, Colormap
 
@@ -143,6 +143,12 @@ class Viewer(ViewerParent):
         allow_none=True).tag(
         sync=True,
         **itkimage_serialization)
+    label_map_names = List(
+        trait=Tuple(),
+        allow_none=True,
+        default_value=None,
+        help="Names for labels in the label map.").tag(
+        sync=True)
     interpolation = CBool(
         default_value=True,
         help="Use linear interpolation in slicing planes.").tag(sync=True)
@@ -649,6 +655,7 @@ class Viewer(ViewerParent):
 
 def view(image=None,  # noqa: C901
          label_map=None,  # noqa: C901
+         label_map_names=None,  # noqa: C901
          cmap=None,
          select_roi=False,
          interpolation=True,
@@ -719,6 +726,9 @@ def view(image=None,  # noqa: C901
     label_map : array_like, itk.Image, or vtk.vtkImageData
         The 2D or 3D label map to visualize. If an image is also provided, the
         label map must have the same size.
+
+    label_map_names : OrderedDict of (label_value, label_name)
+        String names associated with the integer label values.
 
     vmin: float, optional, default: None
         Value that maps to the minimum of image colormap. Defaults to minimum of
@@ -886,6 +896,7 @@ def view(image=None,  # noqa: C901
 
     viewer = Viewer(image=image,
                     label_map=label_map,
+                    label_map_names=label_map_names,
                     cmap=cmap,
                     select_roi=select_roi,
                     interpolation=interpolation,
