@@ -58,9 +58,9 @@ def _image_to_type(itkimage):  # noqa: C901
     component = itk.template(itkimage)[1][0]
     if component == itk.UL:
         if os.name == 'nt':
-            return 'uint32_t',
+            return 'uint32_t', 1
         else:
-            return 'uint64_t',
+            return 'uint64_t', 1
     mangle = None
     pixelType = 1
     if component == itk.SL:
