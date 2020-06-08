@@ -132,14 +132,22 @@ def itkimage_to_json(itkimage, manager=None):
         directionMatrix = direction.GetVnlMatrix()
         directionList = []
         dimension = itkimage.GetImageDimension()
-        pixelArr = itk.array_view_from_image(itkimage)
+        pixel_arr = itk.array_view_from_image(itkimage)
+        componentType, pixelType = _image_to_type(itkimage)
+        if 'int64' in componentType:
+            # JavaScript does not yet support 64-bit integers well
+            if componentType == 'uint64_t':
+                pixel_arr = pixel_arr.astype(np.uint32)
+                componentType = 'uint32_t'
+            else:
+                pixel_arr = pixel_arr.astype(np.int32)
+                componentType = 'int32_t'
         compressor = zstd.ZstdCompressor(level=3)
-        compressed = compressor.compress(pixelArr.data)
-        pixelArrCompressed = memoryview(compressed)
+        compressed = compressor.compress(pixel_arr.data)
+        pixel_arr_compressed = memoryview(compressed)
         for col in range(dimension):
             for row in range(dimension):
                 directionList.append(directionMatrix.get(row, col))
-        componentType, pixelType = _image_to_type(itkimage)
         imageType = dict(
             dimension=dimension,
             componentType=componentType,
@@ -154,7 +162,7 @@ def itkimage_to_json(itkimage, manager=None):
             direction={'data': directionList,
                        'rows': dimension,
                        'columns': dimension},
-            compressedData=pixelArrCompressed
+            compressedData=pixel_arr_compressed
         )
 
 
