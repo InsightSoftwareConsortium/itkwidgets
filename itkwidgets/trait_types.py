@@ -55,65 +55,66 @@ class ITKImage(traitlets.TraitType):
 
 
 def _image_to_type(itkimage):  # noqa: C901
-    component_str = repr(itkimage).split(
-        'itkImagePython.')[1].split(';')[0][8:]
-    if component_str[:2] == 'UL':
+    component = itk.template(itkimage)[1][0]
+    if component == itk.UL:
         if os.name == 'nt':
             return 'uint32_t',
         else:
             return 'uint64_t',
     mangle = None
     pixelType = 1
-    if component_str[:2] == 'SL':
+    if component == itk.SL:
         if os.name == 'nt':
             return 'int32_t', 1,
         else:
             return 'int64_t', 1,
-    if component_str[0] == 'V':
-        # Vector
-        mangle = component_str[1]
+    if component in (itk.SC, itk.UC, itk.SS, itk.US, itk.SI, itk.UI, itk.F,
+            itk.D, itk.B):
+        mangle = component
+    elif component in itk.Vector.iteritems():
+        mangle = itk.template(component)[1][0]
         pixelType = 5
-    elif component_str[:2] == 'CF':
-        # complex flot
+    elif component == itk.CF:
+        # complex float
         return 'float', 10
-    elif component_str[:2] == 'CD':
-        # complex flot
+    elif component == itk.CD:
+        # complex float
         return 'double', 10
-    elif component_str[0] == 'C':
+    elif component in itk.CovariantVector.iteritems():
         # CovariantVector
-        mangle = component_str[1]
+        mangle = itk.template(component)[1][0]
         pixelType = 7
-    elif component_str[0] == 'O':
+    elif component in itk.Offset.iteritems():
         # Offset
         return 'int64_t', 4
-    elif component_str[:2] == 'FA':
+    elif component in itk.FixedArray.iteritems():
         # FixedArray
-        mangle = component_str[2]
+        mangle = itk.template(component)[1][0]
         pixelType = 11
-    elif component_str[:4] == 'RGBA':
+    elif component in itk.RGBAPixel.iteritems():
         # RGBA
-        mangle = component_str[4:-1]
+        mangle = itk.template(component)[1][0]
         pixelType = 3
-    elif component_str[:3] == 'RGB':
+    elif component in itk.RGBPixel.iteritems():
         # RGB
-        mangle = component_str[3:-1]
+        mangle = itk.template(component)[1][0]
         pixelType = 2
-    elif component_str[:4] == 'SSRT':
+    elif component in itk.SymmetricSecondRankTensor.iteritems():
         # SymmetricSecondRankTensor
-        mangle = component_str[4:-1]
+        mangle = itk.template(component)[1][0]
         pixelType = 8
     else:
-        mangle = component_str[:-1]
+        raise RuntimeError('Unrecognized component type: {0}'.format(str(component)))
     _python_to_js = {
-        'SC': 'int8_t',
-        'UC': 'uint8_t',
-        'SS': 'int16_t',
-        'US': 'uint16_t',
-        'SI': 'int32_t',
-        'UI': 'uint32_t',
-        'F': 'float',
-        'D': 'double',
-        'B': 'uint8_t'
+        itk.SC: 'int8_t',
+        itk.UC: 'uint8_t',
+        itk.SS: 'int16_t',
+        itk.US: 'uint16_t',
+        itk.SI: 'int32_t',
+        itk.UI: 'uint32_t',
+        itk.F: 'float',
+        itk.D: 'double',
+        itk.B: 'uint8_t'
     }
     return _python_to_js[mangle], pixelType
 
