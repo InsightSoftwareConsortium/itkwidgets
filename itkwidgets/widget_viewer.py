@@ -515,7 +515,7 @@ class Viewer(ViewerParent):
             if self.image:
                 self.rendered_image = self.image
             if self.label_map:
-                self.rendered_label_map = self.image
+                self.rendered_label_map = self.label_map
 
     @validate('label_map_weights')
     def _validate_label_map_weights(self, proposal):
