@@ -120,7 +120,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend(
         label_map_weights: null,
         _rendering_image: false,
         interpolation: true,
-        cmap: 'Viridis (matplotlib)',
+        cmap: null,
         _custom_cmap: new Float32Array([0, 0, 0]),
         vmin: null,
         vmax: null,
@@ -380,7 +380,7 @@ const createRenderingPipeline = (
         (numberOfComponents === 3 || numberOfComponents === 4)
       ) {
         domWidgetView.model.itkVtkViewer.setColorMap(0, 'Grayscale')
-        domWidgetView.model.set('cmap', 'Grayscale')
+        domWidgetView.model.set('cmap', ['Grayscale'])
         domWidgetView.model.save_changes()
       }
     }
@@ -415,7 +415,7 @@ function replaceRenderedImage (domWidgetView, rendered_image) {
     (numberOfComponents === 3 || numberOfComponents === 4)
   ) {
     domWidgetView.model.itkVtkViewer.setColorMap(0, 'Grayscale')
-    domWidgetView.model.set('cmap', 'Grayscale')
+    domWidgetView.model.set('cmap', ['Grayscale'])
     domWidgetView.model.save_changes()
   }
   domWidgetView.model.set('_rendering_image', false)
@@ -762,11 +762,14 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.itkVtkViewer.on('toggleInterpolation', onInterpolationToggle)
 
     const onSelectColorMap = (component, colorMap) => {
+      let cmap = this.model.get('cmap')
       if (
-        colorMap !== this.model.get('cmap') &&
+        cmap !== null &&
+        colorMap !== cmap[component] &&
         !this.model.colorMapLoopBreak
       ) {
-        this.model.set('cmap', colorMap)
+        cmap[component] = colorMap
+        this.model.set('cmap', cmap)
         this.model.save_changes()
       }
     }
@@ -1416,26 +1419,28 @@ const ViewerView = widgets.DOMWidgetView.extend({
 
   cmap_changed: function () {
     const cmap = this.model.get('cmap')
-    if (this.model.hasOwnProperty('itkVtkViewer')) {
-      const lutProxies = this.model.itkVtkViewer.getLookupTableProxies()
-      const lutProxy = lutProxies[0]
-      if (cmap.startsWith('Custom')) {
-        const customCmap = this.model.get('_custom_cmap')
-        const numPoints = customCmap.shape[0]
-        const rgbPoints = new Array(numPoints)
-        const cmapArray = customCmap.array
-        const step = 1.0 / (numPoints - 1)
-        let xx = 0.0
-        for (let pointIndex = 0; pointIndex < numPoints; pointIndex++) {
-          const rgb = cmapArray.slice(pointIndex * 3, (pointIndex + 1) * 3)
-          rgbPoints[pointIndex] = [xx, rgb[0], rgb[1], rgb[2]]
-          xx += step
+    if (cmap !== null && this.model.hasOwnProperty('itkVtkViewer')) {
+      for (let index = 0; index < cmap.length; index++) {
+        const lutProxies = this.model.itkVtkViewer.getLookupTableProxies()
+        const lutProxy = lutProxies[index]
+        if (cmap[index].startsWith('Custom')) {
+          const customCmap = this.model.get('_custom_cmap')
+          const numPoints = customCmap.shape[0]
+          const rgbPoints = new Array(numPoints)
+          const cmapArray = customCmap.array
+          const step = 1.0 / (numPoints - 1)
+          let xx = 0.0
+          for (let pointIndex = 0; pointIndex < numPoints; pointIndex++) {
+            const rgb = cmapArray.slice(pointIndex * 3, (pointIndex + 1) * 3)
+            rgbPoints[pointIndex] = [xx, rgb[0], rgb[1], rgb[2]]
+            xx += step
+          }
+          lutProxy.setRGBPoints(rgbPoints)
         }
-        lutProxy.setRGBPoints(rgbPoints)
+        this.model.colorMapLoopBreak = true
+        this.model.itkVtkViewer.setColorMap(index, cmap[index])
+        this.model.colorMapLoopBreak = false
       }
-      this.model.colorMapLoopBreak = true
-      this.model.itkVtkViewer.setColorMap(0, cmap)
-      this.model.colorMapLoopBreak = false
     }
   },
 

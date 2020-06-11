@@ -639,6 +639,8 @@ class Colormap(traitlets.Unicode):
                          'Green-Blue Asymmetric Divergent (62Blbc)',
                          'Muted Blue-Green',
 
+                         'BkCy',
+                         'BkMa',
                          'Reds',
                          'Greens',
                          'Blues',
@@ -662,7 +664,9 @@ class Colormap(traitlets.Unicode):
                          )
 
     def validate(self, obj, value):
-        if isinstance(value, np.ndarray):
+        if value is None:
+            return None
+        elif isinstance(value, np.ndarray):
             custom_cmap = value.astype(np.float32)
             custom_cmap = custom_cmap[:, :3]
             obj._custom_cmap = custom_cmap

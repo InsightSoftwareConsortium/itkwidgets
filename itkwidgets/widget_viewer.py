@@ -156,7 +156,10 @@ class Viewer(ViewerParent):
     interpolation = CBool(
         default_value=True,
         help="Use linear interpolation in slicing planes.").tag(sync=True)
-    cmap = Colormap('Viridis (matplotlib)').tag(sync=True)
+    cmap = List(
+        default_value=None,
+        allow_none=True,
+        trait=Colormap('Viridis (matplotlib)', allow_none=True)).tag(sync=True)
     _custom_cmap = NDArray(dtype=np.float32, default_value=None, allow_none=True,
                            help="RGB triples from 0.0 to 1.0 that define a custom linear, sequential colormap")\
         .tag(sync=True, **array_serialization)\
@@ -321,16 +324,15 @@ class Viewer(ViewerParent):
             proposal = {'value': kwargs['geometry_opacities']}
             opacities_array = self._validate_geometry_opacities(proposal)
             kwargs['geometry_opacities'] = opacities_array
+        if 'cmap' in kwargs and kwargs['cmap'] is not None:
+            proposal = {'value': kwargs['cmap']}
+            cmap_list = self._validate_cmap(proposal)
+            kwargs['cmap'] = cmap_list
         self.observe(self._on_geometries_changed, ['geometries'])
         have_label_map = 'label_map' in kwargs and kwargs['label_map'] is not None
         if have_label_map:
             # Interpolation is not currently supported with label maps
             kwargs['interpolation'] = False
-        if not 'cmap' in kwargs or kwargs['cmap'] is None:
-            if have_label_map:
-                kwargs['cmap'] = cm.grayscale
-            else:
-                kwargs['cmap'] = cm.viridis
 
         super(Viewer, self).__init__(**kwargs)
 
@@ -537,6 +539,16 @@ class Viewer(ViewerParent):
         if value > 1.0:
             return 1.0
         return value
+
+    @validate('cmap')
+    def _validate_cmap(self, proposal):
+        value = proposal['value']
+        if value is None:
+            return None
+        elif isinstance(value, list):
+            return value
+        else:
+            return [value]
 
     @validate('point_set_colors')
     def _validate_point_set_colors(self, proposal):
@@ -758,8 +770,12 @@ def view(image=None,  # noqa: C901
         Value that maps to the minimum of image colormap. Defaults to maximum of
         the image pixel buffer.
 
-    cmap: string, default: viridis, grayscale with a label map
-        Colormap. Some valid values available at itkwidgets.cm.*
+    cmap: list of strings
+            default:
+                - single component: 'viridis', 'grayscale' with a label map,
+                - two components: 'BkCy', 'BkMa'
+                - three components: 'Reds', 'Greens', 'Blues'
+        Colormap for each image component. Some valid values available at itkwidgets.cm.*
 
     select_roi: bool, default: False
         Enable an interactive region of interest widget for the image.
