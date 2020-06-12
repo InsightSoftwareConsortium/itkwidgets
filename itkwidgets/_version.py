@@ -1,4 +1,4 @@
-version_info = (0, 29, 0, 'dev', 0)
+version_info = (0, 30, 0, 'dev', 0)
 
 _specifier_ = {
     'dev': 'dev',
