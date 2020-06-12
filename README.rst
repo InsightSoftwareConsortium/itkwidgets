@@ -118,13 +118,14 @@ Data types:
 - `Binder: ITK PointBasedSpatialObject <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/PointBasedSpatialObject.ipynb>`_
 - `Binder: skan segmentation skeleton <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SegmentationSkeleton.ipynb>`_
 
-Tasks:
+Recipes:
 
 - `Binder: Compare images with a checkerboard pattern <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/Checkerboard.ipynb>`_
 - `Binder: Compare images side by side <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/CompareImages.ipynb>`_
 - `Binder: Examine a line profile <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/LineProfile.ipynb>`_
 - `Binder: Interactively explore algorithm parameters <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/InteractiveParameterExploration.ipynb>`_
 - `Binder: Record a video <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/RecordAVideo.ipynb>`_
+- `Binder: Restore a volume opacity transfer function <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/VolumeOpacityTransferFunction.ipynb>`_
 - `Binder: Select a region of interest <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SelectRegionOfInterest.ipynb>`_
 - `Binder: Specify camera parameters <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SpecifyCameraParameters.ipynb>`_
 - `Binder: Specify a colormap <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SpecifyAColormap.ipynb>`_
@@ -288,6 +289,7 @@ or how to:
 - `Examine a line profile <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/LineProfile.ipynb>`_
 - `Interatively explore algorithm parameters <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/InteractiveParameterExploration.ipynb>`_
 - `Record a video <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/RecordAVideo.ipynb>`_
+- `Restore a volume opacity transfer function <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/VolumeOpacityTransferFunction.ipynb>`_
 - `Select a region of interest <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/SelectRegionOfInterest.ipynb>`_
 - `Specify camera parameters <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/SpecifyCameraParameters.ipynb>`_
 - `Specify a colormap <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/SpecifyAColormap.ipynb>`_
