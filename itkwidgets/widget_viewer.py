@@ -149,6 +149,9 @@ class Viewer(ViewerParent):
         default_value=None,
         help="Names for labels in the label map.").tag(
         sync=True)
+    label_map_blend = CFloat(
+        default_value=0.5,
+        help="Blend of the label map with the intensity image.").tag(sync=True)
     label_map_weights = NDArray(dtype=np.float32, default_value=None, allow_none=True,
         help="Weights, from 0.0 to 1.0, for every label in the label map.")\
         .tag(sync=True, **array_serialization)\
@@ -196,7 +199,12 @@ class Viewer(ViewerParent):
         default_value=None,
         allow_none=True,
         help="Volume opacity transfer function Gaussians parameters.").tag(sync=True)
-    blend = CaselessStrEnum(
+    channels = List(
+        default_value=None,
+        allow_none=True,
+        trait=CBool,
+        help="Components or channels enabled in a multi-component image.").tag(sync=True)
+    blend_mode = CaselessStrEnum(
         ('composite',
          'max',
          'min',
@@ -304,6 +312,11 @@ class Viewer(ViewerParent):
                      "[view_up_x, view_up_y, view_up_z]]")\
         .tag(sync=True, **array_serialization)\
         .valid(shape_constraints(3, 3))
+    background = Tuple(
+        trait=CFloat,
+        allow_none=True,
+        default_value=(),
+        help="Background color.").tag(sync=True)
 
     def __init__(self, **kwargs):  # noqa: C901
         if 'point_set_colors' in kwargs:
@@ -534,12 +547,32 @@ class Viewer(ViewerParent):
                 raise TraitError('Number of labels, {0}, does not equal number of label weights, {1}'.format(labels, len(value)))
         return value
 
+    @validate('label_map_blend')
+    def _validate_label_map_blend(self, proposal):
+        """Enforce 0 <= value <= 1.0."""
+        value = proposal['value']
+        if value < 0.0:
+            return 0.0
+        if value > 1.0:
+            return 1.0
+        return value
+
     @validate('gradient_opacity')
     def _validate_gradient_opacity(self, proposal):
         """Enforce 0 < value <= 1.0."""
         value = proposal['value']
         if value <= 0.0:
             return 0.01
+        if value > 1.0:
+            return 1.0
+        return value
+
+    @validate('label_map_blend')
+    def _validate_label_map_blend(self, proposal):
+        """Enforce 0 <= value <= 1.0."""
+        value = proposal['value']
+        if value < 0.0:
+            return 0.0
         if value > 1.0:
             return 1.0
         return value
@@ -689,10 +722,12 @@ def view(image=None,  # noqa: C901
          label_map=None,  # noqa: C901
          label_map_names=None,  # noqa: C901
          label_map_weights=None,  # noqa: C901
+         label_map_blend=0.5,
          cmap=None,
          select_roi=False,
          interpolation=True,
-         gradient_opacity=0.22, slicing_planes=False, shadow=True, blend='composite',
+         gradient_opacity=0.22, opacity_gaussians=None, channels=None,
+         slicing_planes=False, shadow=True, blend_mode='composite',
          point_sets=[],
          point_set_colors=[], point_set_opacities=[], point_set_representations=[],
          # point_set_sizes=[],
@@ -749,6 +784,9 @@ def view(image=None,  # noqa: C901
              [focal_point_x, focal_point_y, focal_point_z],
              [view_up_x,     view_up_y,     view_up_z]]
 
+    background: (red, green, blue) tuple, components from 0.0 to 1.0
+        Background color. Default is based on the current Jupyter theme.
+
 
     Images
     ^^^^^^
@@ -765,6 +803,9 @@ def view(image=None,  # noqa: C901
 
     label_map_weights : 1D numpy float32 array, default: None
         Rendering weights, from 0.0 to 1.0, associated labels in the label map.
+
+    label_map_blend : float, default: 0.5
+        Label map blend with intensity image, from 0.0 to 1.0.
 
     vmin: float, default: None
         Value that maps to the minimum of image colormap. Defaults to minimum of
@@ -809,10 +850,13 @@ def view(image=None,  # noqa: C901
         Default Gaussian parameters:
           {'position': 0.5, 'height': 1, 'width': 0.5, 'xBias': 0.51, 'yBias': 0.4}
 
+    channels: list of booleans
+        For multi-component images, the components or channels that are enabled.
+
     shadow: bool, default: True
         Use shadowing with composite volume rendering.
 
-    blend: 'composite', 'max', 'min', or 'average', default: 'composite'
+    blend_mode: 'composite', 'max', 'min', or 'average', default: 'composite'
         Volume rendering blend mode.
 
     Point Sets
@@ -948,7 +992,7 @@ def view(image=None,  # noqa: C901
                     select_roi=select_roi,
                     interpolation=interpolation,
                     gradient_opacity=gradient_opacity, slicing_planes=slicing_planes,
-                    shadow=shadow, blend=blend,
+                    shadow=shadow, blend_mode=blend_mode,
                     point_sets=point_sets,
                     point_set_colors=point_set_colors,
                     point_set_opacities=point_set_opacities,
