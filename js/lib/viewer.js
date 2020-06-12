@@ -132,6 +132,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend(
         clicked_slice_point: null,
         gradient_opacity: 0.2,
         opacity_gaussians: null,
+        channels: null,
         blend: 'composite',
         roi: new Float64Array([0, 0, 0, 0, 0, 0]),
         _largest_roi: new Float64Array([0, 0, 0, 0, 0, 0]),
@@ -715,6 +716,8 @@ const ViewerView = widgets.DOMWidgetView.extend({
     if (rendered_image) {
       this.shadow_changed()
       this.gradient_opacity_changed()
+      this.opacity_gaussians_changed()
+      this.channels_changed()
       this.blend_changed()
     }
     this.ui_collapsed_changed()
@@ -852,6 +855,17 @@ const ViewerView = widgets.DOMWidgetView.extend({
     const gaussians = this.model.get('opacity_gaussians')
     if (gaussians.length === 0) {
       this.model.set('opacity_gaussians', this.model.itkVtkViewer.getOpacityGaussians())
+    }
+
+    const onChannelsChanged = (channels) => {
+      this.model.set('channels', channels)
+    }
+    this.model.itkVtkViewer.on('componentVisibilitiesChanged',
+      onChannelsChanged
+    )
+    const channels = this.model.get('channels')
+    if (channels.length === 0) {
+      this.model.set('channels', this.model.itkVtkViewer.getComponentVisibilities())
     }
 
     if (!this.model.use2D) {
@@ -1070,6 +1084,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:units', this.units_changed, this)
     this.model.on('change:camera', this.camera_changed, this)
     this.model.on('change:opacity_gaussians', this.opacity_gaussians_changed, this)
+    this.model.on('change:channels', this.channels_changed, this)
     this.model.on('change:label_map_names', this.label_map_names_changed, this)
     this.model.on('change:label_map_weights', this.label_map_weights_changed, this)
 
@@ -1533,6 +1548,13 @@ const ViewerView = widgets.DOMWidgetView.extend({
     const opacity_gaussians = this.model.get('opacity_gaussians')
     if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
       this.model.itkVtkViewer.setOpacityGaussians(opacity_gaussians)
+    }
+  },
+
+  channels_changed: function () {
+    const channels = this.model.get('channels')
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      this.model.itkVtkViewer.setComponentVisibilities(channels)
     }
   },
 

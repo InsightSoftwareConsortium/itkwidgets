@@ -196,6 +196,11 @@ class Viewer(ViewerParent):
         default_value=None,
         allow_none=True,
         help="Volume opacity transfer function Gaussians parameters.").tag(sync=True)
+    channels = List(
+        default_value=None,
+        allow_none=True,
+        trait=CBool,
+        help="Components or channels enabled in a multi-component image.").tag(sync=True)
     blend = CaselessStrEnum(
         ('composite',
          'max',
@@ -808,6 +813,9 @@ def view(image=None,  # noqa: C901
         image component, multiple Gaussians can be specified.
         Default Gaussian parameters:
           {'position': 0.5, 'height': 1, 'width': 0.5, 'xBias': 0.51, 'yBias': 0.4}
+
+    channels: list of booleans
+        For multi-component images, the components or channels that are enabled.
 
     shadow: bool, default: True
         Use shadowing with composite volume rendering.
