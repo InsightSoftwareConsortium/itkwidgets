@@ -1,5 +1,7 @@
 # Some aliases similar to matplotlib.cm
 Blues = "Blues"
+BkCy = "BkCy"
+BkMa = "BkMa"
 BrBG = "BrBG"
 BrOrYl = "BrOrYl"
 BuGn = "BuGn"

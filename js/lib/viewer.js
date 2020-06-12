@@ -120,7 +120,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend(
         label_map_weights: null,
         _rendering_image: false,
         interpolation: true,
-        cmap: 'Viridis (matplotlib)',
+        cmap: null,
         _custom_cmap: new Float32Array([0, 0, 0]),
         vmin: null,
         vmax: null,
@@ -131,6 +131,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend(
         z_slice: null,
         clicked_slice_point: null,
         gradient_opacity: 0.2,
+        opacity_gaussians: null,
         blend: 'composite',
         roi: new Float64Array([0, 0, 0, 0, 0, 0]),
         _largest_roi: new Float64Array([0, 0, 0, 0, 0, 0]),
@@ -380,7 +381,7 @@ const createRenderingPipeline = (
         (numberOfComponents === 3 || numberOfComponents === 4)
       ) {
         domWidgetView.model.itkVtkViewer.setColorMap(0, 'Grayscale')
-        domWidgetView.model.set('cmap', 'Grayscale')
+        domWidgetView.model.set('cmap', ['Grayscale'])
         domWidgetView.model.save_changes()
       }
     }
@@ -415,7 +416,7 @@ function replaceRenderedImage (domWidgetView, rendered_image) {
     (numberOfComponents === 3 || numberOfComponents === 4)
   ) {
     domWidgetView.model.itkVtkViewer.setColorMap(0, 'Grayscale')
-    domWidgetView.model.set('cmap', 'Grayscale')
+    domWidgetView.model.set('cmap', ['Grayscale'])
     domWidgetView.model.save_changes()
   }
   domWidgetView.model.set('_rendering_image', false)
@@ -762,11 +763,14 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.itkVtkViewer.on('toggleInterpolation', onInterpolationToggle)
 
     const onSelectColorMap = (component, colorMap) => {
+      let cmap = this.model.get('cmap')
       if (
-        colorMap !== this.model.get('cmap') &&
+        cmap !== null &&
+        colorMap !== cmap[component] &&
         !this.model.colorMapLoopBreak
       ) {
-        this.model.set('cmap', colorMap)
+        cmap[component] = colorMap
+        this.model.set('cmap', cmap)
         this.model.save_changes()
       }
     }
@@ -838,6 +842,17 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.itkVtkViewer.on('labelMapWeightsChanged',
       onLabelMapWeightsChanged
     )
+
+    const onOpacityGaussiansChanged = macro.throttle((gaussians) => {
+      this.model.set('opacity_gaussians', gaussians)
+    }, 100)
+    this.model.itkVtkViewer.on('opacityGaussiansChanged',
+      onOpacityGaussiansChanged
+    )
+    const gaussians = this.model.get('opacity_gaussians')
+    if (gaussians.length === 0) {
+      this.model.set('opacity_gaussians', this.model.itkVtkViewer.getOpacityGaussians())
+    }
 
     if (!this.model.use2D) {
       const onBlendModeChanged = (blend) => {
@@ -1054,6 +1069,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:mode', this.mode_changed, this)
     this.model.on('change:units', this.units_changed, this)
     this.model.on('change:camera', this.camera_changed, this)
+    this.model.on('change:opacity_gaussians', this.opacity_gaussians_changed, this)
     this.model.on('change:label_map_names', this.label_map_names_changed, this)
     this.model.on('change:label_map_weights', this.label_map_weights_changed, this)
 
@@ -1416,26 +1432,28 @@ const ViewerView = widgets.DOMWidgetView.extend({
 
   cmap_changed: function () {
     const cmap = this.model.get('cmap')
-    if (this.model.hasOwnProperty('itkVtkViewer')) {
-      const lutProxies = this.model.itkVtkViewer.getLookupTableProxies()
-      const lutProxy = lutProxies[0]
-      if (cmap.startsWith('Custom')) {
-        const customCmap = this.model.get('_custom_cmap')
-        const numPoints = customCmap.shape[0]
-        const rgbPoints = new Array(numPoints)
-        const cmapArray = customCmap.array
-        const step = 1.0 / (numPoints - 1)
-        let xx = 0.0
-        for (let pointIndex = 0; pointIndex < numPoints; pointIndex++) {
-          const rgb = cmapArray.slice(pointIndex * 3, (pointIndex + 1) * 3)
-          rgbPoints[pointIndex] = [xx, rgb[0], rgb[1], rgb[2]]
-          xx += step
+    if (cmap !== null && this.model.hasOwnProperty('itkVtkViewer')) {
+      for (let index = 0; index < cmap.length; index++) {
+        const lutProxies = this.model.itkVtkViewer.getLookupTableProxies()
+        const lutProxy = lutProxies[index]
+        if (cmap[index].startsWith('Custom')) {
+          const customCmap = this.model.get('_custom_cmap')
+          const numPoints = customCmap.shape[0]
+          const rgbPoints = new Array(numPoints)
+          const cmapArray = customCmap.array
+          const step = 1.0 / (numPoints - 1)
+          let xx = 0.0
+          for (let pointIndex = 0; pointIndex < numPoints; pointIndex++) {
+            const rgb = cmapArray.slice(pointIndex * 3, (pointIndex + 1) * 3)
+            rgbPoints[pointIndex] = [xx, rgb[0], rgb[1], rgb[2]]
+            xx += step
+          }
+          lutProxy.setRGBPoints(rgbPoints)
         }
-        lutProxy.setRGBPoints(rgbPoints)
+        this.model.colorMapLoopBreak = true
+        this.model.itkVtkViewer.setColorMap(index, cmap[index])
+        this.model.colorMapLoopBreak = false
       }
-      this.model.colorMapLoopBreak = true
-      this.model.itkVtkViewer.setColorMap(0, cmap)
-      this.model.colorMapLoopBreak = false
     }
   },
 
@@ -1508,6 +1526,13 @@ const ViewerView = widgets.DOMWidgetView.extend({
     const gradient_opacity = this.model.get('gradient_opacity')
     if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
       this.model.itkVtkViewer.setGradientOpacity(gradient_opacity)
+    }
+  },
+
+  opacity_gaussians_changed: function () {
+    const opacity_gaussians = this.model.get('opacity_gaussians')
+    if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
+      this.model.itkVtkViewer.setOpacityGaussians(opacity_gaussians)
     }
   },
 
