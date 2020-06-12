@@ -131,6 +131,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend(
         z_slice: null,
         clicked_slice_point: null,
         gradient_opacity: 0.2,
+        opacity_gaussians: null,
         blend: 'composite',
         roi: new Float64Array([0, 0, 0, 0, 0, 0]),
         _largest_roi: new Float64Array([0, 0, 0, 0, 0, 0]),
@@ -842,6 +843,17 @@ const ViewerView = widgets.DOMWidgetView.extend({
       onLabelMapWeightsChanged
     )
 
+    const onOpacityGaussiansChanged = macro.throttle((gaussians) => {
+      this.model.set('opacity_gaussians', gaussians)
+    }, 100)
+    this.model.itkVtkViewer.on('opacityGaussiansChanged',
+      onOpacityGaussiansChanged
+    )
+    const gaussians = this.model.get('opacity_gaussians')
+    if (gaussians.length === 0) {
+      this.model.set('opacity_gaussians', this.model.itkVtkViewer.getOpacityGaussians())
+    }
+
     if (!this.model.use2D) {
       const onBlendModeChanged = (blend) => {
         let pythonMode = null
@@ -1057,6 +1069,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:mode', this.mode_changed, this)
     this.model.on('change:units', this.units_changed, this)
     this.model.on('change:camera', this.camera_changed, this)
+    this.model.on('change:opacity_gaussians', this.opacity_gaussians_changed, this)
     this.model.on('change:label_map_names', this.label_map_names_changed, this)
     this.model.on('change:label_map_weights', this.label_map_weights_changed, this)
 
@@ -1513,6 +1526,13 @@ const ViewerView = widgets.DOMWidgetView.extend({
     const gradient_opacity = this.model.get('gradient_opacity')
     if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
       this.model.itkVtkViewer.setGradientOpacity(gradient_opacity)
+    }
+  },
+
+  opacity_gaussians_changed: function () {
+    const opacity_gaussians = this.model.get('opacity_gaussians')
+    if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
+      this.model.itkVtkViewer.setOpacityGaussians(opacity_gaussians)
     }
   },
 

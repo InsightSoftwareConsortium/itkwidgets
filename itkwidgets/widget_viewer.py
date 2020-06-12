@@ -192,6 +192,10 @@ class Viewer(ViewerParent):
     gradient_opacity = CFloat(
         default_value=0.2,
         help="Volume rendering gradient opacity, from (0.0, 1.0]").tag(sync=True)
+    opacity_gaussians = List(
+        default_value=None,
+        allow_none=True,
+        help="Volume opacity transfer function Gaussians parameters.").tag(sync=True)
     blend = CaselessStrEnum(
         ('composite',
          'max',
@@ -798,6 +802,12 @@ def view(image=None,  # noqa: C901
 
     gradient_opacity: float, default: 0.22
         Gradient opacity for composite volume rendering, in the range (0.0, 1.0].
+
+    opacity_gaussians: list of list of dict
+        Volume rendering opacity transfer function Gaussian parameters. For each
+        image component, multiple Gaussians can be specified.
+        Default Gaussian parameters:
+          {'position': 0.5, 'height': 1, 'width': 0.5, 'xBias': 0.51, 'yBias': 0.4}
 
     shadow: bool, default: True
         Use shadowing with composite volume rendering.
