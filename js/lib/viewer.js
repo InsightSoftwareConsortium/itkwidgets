@@ -118,6 +118,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend(
         rendered_label_map: null,
         label_map_names: null,
         label_map_weights: null,
+        label_map_blend: 0.5,
         _rendering_image: false,
         interpolation: true,
         cmap: null,
@@ -729,6 +730,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
     if (rendered_label_map) {
       this.label_map_names_changed()
       this.label_map_weights_changed()
+      this.label_map_blend_changed()
     }
 
     const onUserInterfaceCollapsedToggle = (collapsed) => {
@@ -844,6 +846,14 @@ const ViewerView = widgets.DOMWidgetView.extend({
     }
     this.model.itkVtkViewer.on('labelMapWeightsChanged',
       onLabelMapWeightsChanged
+    )
+
+    const onLabelMapBlendChanged = (blend) => {
+      this.model.set('label_map_blend', blend)
+      this.model.save_changes()
+    }
+    this.model.itkVtkViewer.on('labelMapBlendChanged',
+      onLabelMapBlendChanged
     )
 
     const onOpacityGaussiansChanged = macro.throttle((gaussians) => {
@@ -1086,6 +1096,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:opacity_gaussians', this.opacity_gaussians_changed, this)
     this.model.on('change:channels', this.channels_changed, this)
     this.model.on('change:label_map_names', this.label_map_names_changed, this)
+    this.model.on('change:label_map_blend', this.label_map_blend_changed, this)
     this.model.on('change:label_map_weights', this.label_map_weights_changed, this)
 
     let toDecompress = []
@@ -1217,6 +1228,13 @@ const ViewerView = widgets.DOMWidgetView.extend({
     if (label_map_weights && this.model.hasOwnProperty('itkVtkViewer')) {
       const labelMapWeights = !!label_map_weights.array ? Array.from(label_map_weights.array) : Array.from(label_map_weights)
       this.model.itkVtkViewer.setLabelMapWeights(labelMapWeights)
+    }
+  },
+
+  label_map_blend_changed: function () {
+    const labelMapBlend = this.model.get('label_map_blend')
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      this.model.itkVtkViewer.setLabelMapBlend(labelMapBlend)
     }
   },
 
