@@ -201,7 +201,7 @@ class Viewer(ViewerParent):
         allow_none=True,
         trait=CBool,
         help="Components or channels enabled in a multi-component image.").tag(sync=True)
-    blend = CaselessStrEnum(
+    blend_mode = CaselessStrEnum(
         ('composite',
          'max',
          'min',
@@ -697,7 +697,7 @@ def view(image=None,  # noqa: C901
          cmap=None,
          select_roi=False,
          interpolation=True,
-         gradient_opacity=0.22, slicing_planes=False, shadow=True, blend='composite',
+         gradient_opacity=0.22, slicing_planes=False, shadow=True, blend_mode='composite',
          point_sets=[],
          point_set_colors=[], point_set_opacities=[], point_set_representations=[],
          # point_set_sizes=[],
@@ -820,7 +820,7 @@ def view(image=None,  # noqa: C901
     shadow: bool, default: True
         Use shadowing with composite volume rendering.
 
-    blend: 'composite', 'max', 'min', or 'average', default: 'composite'
+    blend_mode: 'composite', 'max', 'min', or 'average', default: 'composite'
         Volume rendering blend mode.
 
     Point Sets
@@ -956,7 +956,7 @@ def view(image=None,  # noqa: C901
                     select_roi=select_roi,
                     interpolation=interpolation,
                     gradient_opacity=gradient_opacity, slicing_planes=slicing_planes,
-                    shadow=shadow, blend=blend,
+                    shadow=shadow, blend_mode=blend_mode,
                     point_sets=point_sets,
                     point_set_colors=point_set_colors,
                     point_set_opacities=point_set_opacities,

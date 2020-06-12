@@ -133,7 +133,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend(
         gradient_opacity: 0.2,
         opacity_gaussians: null,
         channels: null,
-        blend: 'composite',
+        blend_mode: 'composite',
         roi: new Float64Array([0, 0, 0, 0, 0, 0]),
         _largest_roi: new Float64Array([0, 0, 0, 0, 0, 0]),
         select_roi: false,
@@ -718,7 +718,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.gradient_opacity_changed()
       this.opacity_gaussians_changed()
       this.channels_changed()
-      this.blend_changed()
+      this.blend_mode_changed()
     }
     this.ui_collapsed_changed()
     this.rotate_changed()
@@ -1050,7 +1050,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.gradient_opacity_changed,
       this
     )
-    this.model.on('change:blend', this.blend_changed, this)
+    this.model.on('change:blend_mode', this.blend_mode_changed, this)
     this.model.on('change:select_roi', this.select_roi_changed, this)
     this.model.on('change:_scale_factors', this.scale_factors_changed, this)
     this.model.on('change:point_sets', this.point_sets_changed, this)
@@ -1558,8 +1558,8 @@ const ViewerView = widgets.DOMWidgetView.extend({
     }
   },
 
-  blend_changed: function () {
-    const blend = this.model.get('blend')
+  blend_mode_changed: function () {
+    const blend = this.model.get('blend_mode')
     if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
       switch (blend) {
         case 'composite':
