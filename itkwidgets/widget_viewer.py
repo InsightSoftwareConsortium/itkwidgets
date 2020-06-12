@@ -312,6 +312,11 @@ class Viewer(ViewerParent):
                      "[view_up_x, view_up_y, view_up_z]]")\
         .tag(sync=True, **array_serialization)\
         .valid(shape_constraints(3, 3))
+    background = Tuple(
+        trait=CFloat,
+        allow_none=True,
+        default_value=(),
+        help="Background color.").tag(sync=True)
 
     def __init__(self, **kwargs):  # noqa: C901
         if 'point_set_colors' in kwargs:
@@ -778,6 +783,9 @@ def view(image=None,  # noqa: C901
             [[position_x,    position_y,    position_z],
              [focal_point_x, focal_point_y, focal_point_z],
              [view_up_x,     view_up_y,     view_up_z]]
+
+    background: (red, green, blue) tuple, components from 0.0 to 1.0
+        Background color. Default is based on the current Jupyter theme.
 
 
     Images

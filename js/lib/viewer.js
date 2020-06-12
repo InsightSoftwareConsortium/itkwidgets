@@ -152,7 +152,8 @@ const ViewerModel = widgets.DOMWidgetModel.extend(
         rotate: false,
         annotations: true,
         mode: 'v',
-        camera: new Float32Array(9)
+        camera: new Float32Array(9),
+        background: null
       })
     }
   },
@@ -212,7 +213,7 @@ const createRenderingPipeline = (
     overflow: 'hidden',
     display: 'block-inline'
   }
-  const backgroundColor = [1.0, 1.0, 1.0]
+  let backgroundColor = [1.0, 1.0, 1.0]
   const bodyBackground = getComputedStyle(document.body).getPropertyValue(
     'background-color'
   )
@@ -224,6 +225,10 @@ const createRenderingPipeline = (
     backgroundColor[0] = rgb[0] / 255.0
     backgroundColor[1] = rgb[1] / 255.0
     backgroundColor[2] = rgb[2] / 255.0
+  }
+  const backgroundTrait = domWidgetView.model.get('background')
+  if (backgroundTrait.length !== 0) {
+    backgroundColor = backgroundTrait
   }
   const viewerStyle = {
     backgroundColor,
@@ -702,6 +707,17 @@ const ViewerView = widgets.DOMWidgetView.extend({
     const rendered_image = this.model.get('rendered_image')
     const rendered_label_map = this.model.get('rendered_label_map')
     this.annotations_changed()
+
+    const onBackgroundChanged = (background) => {
+      this.model.set('background', background)
+      this.model.save_changes()
+    }
+    this.model.itkVtkViewer.on('backgroundColorChanged', onBackgroundChanged)
+    const background = this.model.get('background')
+    if (background.length === 0) {
+      this.model.set('background', this.model.itkVtkViewer.getBackgroundColor())
+    }
+
     if (rendered_image) {
       this.interpolation_changed()
       this.cmap_changed()
@@ -717,7 +733,6 @@ const ViewerView = widgets.DOMWidgetView.extend({
     if (rendered_image) {
       this.shadow_changed()
       this.gradient_opacity_changed()
-      this.opacity_gaussians_changed()
       this.channels_changed()
       this.blend_mode_changed()
     }
@@ -858,6 +873,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
 
     const onOpacityGaussiansChanged = macro.throttle((gaussians) => {
       this.model.set('opacity_gaussians', gaussians)
+      this.model.save_changes()
     }, 100)
     this.model.itkVtkViewer.on('opacityGaussiansChanged',
       onOpacityGaussiansChanged
@@ -866,9 +882,13 @@ const ViewerView = widgets.DOMWidgetView.extend({
     if (gaussians.length === 0) {
       this.model.set('opacity_gaussians', this.model.itkVtkViewer.getOpacityGaussians())
     }
+    if (rendered_image) {
+      this.opacity_gaussians_changed()
+    }
 
     const onChannelsChanged = (channels) => {
       this.model.set('channels', channels)
+      this.model.save_changes()
     }
     this.model.itkVtkViewer.on('componentVisibilitiesChanged',
       onChannelsChanged
@@ -1093,6 +1113,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:mode', this.mode_changed, this)
     this.model.on('change:units', this.units_changed, this)
     this.model.on('change:camera', this.camera_changed, this)
+    this.model.on('change:background', this.background_changed, this)
     this.model.on('change:opacity_gaussians', this.opacity_gaussians_changed, this)
     this.model.on('change:channels', this.channels_changed, this)
     this.model.on('change:label_map_names', this.label_map_names_changed, this)
@@ -1595,6 +1616,13 @@ const ViewerView = widgets.DOMWidgetView.extend({
         default:
           throw new Error('Unexpected blend mode')
       }
+    }
+  },
+
+  background_changed: function () {
+    const background = this.model.get('background')
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      this.model.itkVtkViewer.setBackgroundColor(background)
     }
   },
 
