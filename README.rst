@@ -78,6 +78,7 @@ Interactive Jupyter_ widgets to visualize images, point sets, and meshes.
 - Exquisite volume rendering
 - Tri-plane volume slicing
 - Innovative, powerful opacity transfer function / window / level widget
+- Label map segmentation 2D and 3D rendering
 - Anisotropic voxel spacing supported
 - Image line profile widget
 - Compare images widget
@@ -108,6 +109,7 @@ Data types:
 
 - `Binder: 2D ITK Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples%2F2DImage.ipynb>`_
 - `Binder: 3D ITK Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples%2F3DImage.ipynb>`_
+- `Binder: 3D Label Maps <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples%2FLabelMaps.ipynb>`_
 - `Binder: Dask Array images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/DaskArray.ipynb>`_
 - `Binder: Large volumes <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/LargeVolumes.ipynb>`_
 - `Binder: NumPy array images (processed with SciPy) <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/NumPyArrayImage.ipynb>`_
@@ -262,6 +264,7 @@ After installation, try the following examples that demonstrate how to visualize
 
 - `2D ITK Images <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/2DImage.ipynb>`_
 - `3D ITK Images <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/3DImage.ipynb>`_
+- `3D Label maps <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/LabelMaps.ipynb>`_
 - `Dask Array images <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/DaskArray.ipynb>`_
 - `Large volumes <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/LargeVolumes.ipynb>`_
 - `ImageJ ImgLib2 images <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/ImageJImgLib2.ipynb>`_ (requires `conda <https://conda.io/>`_ and a local `Fiji <https://fiji.sc/>`_ installation)
