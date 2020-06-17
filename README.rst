@@ -129,7 +129,7 @@ Recipes:
 - `Binder: Record a video <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/RecordAVideo.ipynb>`_
 - `Binder: Restore a volume opacity transfer function <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/VolumeOpacityTransferFunction.ipynb>`_
 - `Binder: Select a region of interest <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SelectRegionOfInterest.ipynb>`_
-- `Binder: Specify camera parameters <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SpecifyCameraParameters.ipynb>`_
+- `Binder: Specify camera parameters <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/CameraParameters.ipynb>`_
 - `Binder: Specify a colormap <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SpecifyAColormap.ipynb>`_
 
 Installation
@@ -294,7 +294,7 @@ or how to:
 - `Record a video <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/RecordAVideo.ipynb>`_
 - `Restore a volume opacity transfer function <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/VolumeOpacityTransferFunction.ipynb>`_
 - `Select a region of interest <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/SelectRegionOfInterest.ipynb>`_
-- `Specify camera parameters <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/SpecifyCameraParameters.ipynb>`_
+- `Specify camera parameters <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/CameraParameters.ipynb>`_
 - `Specify a colormap <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/SpecifyAColormap.ipynb>`_
 
 

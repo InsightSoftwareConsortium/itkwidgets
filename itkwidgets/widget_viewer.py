@@ -819,7 +819,7 @@ def view(image=None,  # noqa: C901
             default:
                 - single component: 'viridis', 'grayscale' with a label map,
                 - two components: 'BkCy', 'BkMa'
-                - three components: 'Reds', 'Greens', 'Blues'
+                - three components: 'BkRd', 'BkGn', 'BkBu'
         Colormap for each image component. Some valid values available at itkwidgets.cm.*
 
     select_roi: bool, default: False

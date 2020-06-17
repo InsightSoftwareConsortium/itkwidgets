@@ -1488,9 +1488,9 @@ const ViewerView = widgets.DOMWidgetView.extend({
     const cmap = this.model.get('cmap')
     if (cmap !== null && this.model.hasOwnProperty('itkVtkViewer')) {
       for (let index = 0; index < cmap.length; index++) {
-        const lutProxies = this.model.itkVtkViewer.getLookupTableProxies()
-        const lutProxy = lutProxies[index]
         if (cmap[index].startsWith('Custom')) {
+          const lutProxies = this.model.itkVtkViewer.getLookupTableProxies()
+          const lutProxy = lutProxies[index]
           const customCmap = this.model.get('_custom_cmap')
           const numPoints = customCmap.shape[0]
           const rgbPoints = new Array(numPoints)
