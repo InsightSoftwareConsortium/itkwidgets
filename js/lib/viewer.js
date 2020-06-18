@@ -798,13 +798,21 @@ const ViewerView = widgets.DOMWidgetView.extend({
 
     const onChangeColorRange = (component, colorRange) => {
       const vmin = this.model.get('vmin')
-      if (colorRange[0] !== vmin) {
-        this.model.set('vmin', colorRange[0])
+      if (vmin === null) {
+        vmin = []
+      }
+      if (colorRange[0] !== vmin[component]) {
+        vmin[component] = colorRange[0]
+        this.model.set('vmin', vmin)
         this.model.save_changes()
       }
       const vmax = this.model.get('vmax')
-      if (colorRange[1] !== vmax) {
-        this.model.set('vmax', colorRange[1])
+      if (vmax === null) {
+        vmax = []
+      }
+      if (colorRange[1] !== vmax[component]) {
+        vmax[component] = colorRange[1]
+        this.model.set('vmax', vmax)
         this.model.save_changes()
       }
     }
@@ -1514,18 +1522,24 @@ const ViewerView = widgets.DOMWidgetView.extend({
   vmin_changed: function () {
     const vmin = this.model.get('vmin')
     if (vmin !== null && this.model.hasOwnProperty('itkVtkViewer')) {
-      const colorRange = this.model.itkVtkViewer.getColorRange(0).slice()
-      colorRange[0] = vmin
-      this.model.itkVtkViewer.setColorRange(0, colorRange)
+      const rendered_image = this.model.get('rendered_image')
+      for (let component = 0; component < rendered_image.imageType.components; component++) {
+        const colorRange = this.model.itkVtkViewer.getColorRange(component).slice()
+        colorRange[0] = vmin[component]
+        this.model.itkVtkViewer.setColorRange(component, colorRange)
+      }
     }
   },
 
   vmax_changed: function () {
     const vmax = this.model.get('vmax')
     if (vmax !== null && this.model.hasOwnProperty('itkVtkViewer')) {
-      const colorRange = this.model.itkVtkViewer.getColorRange(0).slice()
-      colorRange[1] = vmax
-      this.model.itkVtkViewer.setColorRange(0, colorRange)
+      const rendered_image = this.model.get('rendered_image')
+      for (let component = 0; component < rendered_image.imageType.components; component++) {
+        const colorRange = this.model.itkVtkViewer.getColorRange(component).slice()
+        colorRange[1] = vmax[component]
+        this.model.itkVtkViewer.setColorRange(component, colorRange)
+      }
     }
   },
 
