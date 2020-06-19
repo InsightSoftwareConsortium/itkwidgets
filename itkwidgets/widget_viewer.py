@@ -215,12 +215,12 @@ class Viewer(ViewerParent):
                   help="Region of interest: [[lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z]]")\
         .tag(sync=True, **array_serialization)\
         .valid(shape_constraints(2, 3))
-    vmin = CFloat(
+    vmin = List(trait=CFloat(),
         default_value=None,
         allow_none=True,
         help="Value that maps to the minimum of image colormap.").tag(
         sync=True)
-    vmax = CFloat(
+    vmax = List(trait=CFloat(),
         default_value=None,
         allow_none=True,
         help="Value that maps to the maximum of image colormap.").tag(
@@ -345,6 +345,14 @@ class Viewer(ViewerParent):
             proposal = {'value': kwargs['cmap']}
             cmap_list = self._validate_cmap(proposal)
             kwargs['cmap'] = cmap_list
+        if 'vmin' in kwargs and kwargs['vmin'] is not None:
+            proposal = {'value': kwargs['vmin']}
+            vmin_list = self._validate_vmin(proposal)
+            kwargs['vmin'] = vmin_list
+        if 'vmax' in kwargs and kwargs['vmax'] is not None:
+            proposal = {'value': kwargs['vmax']}
+            vmax_list = self._validate_vmax(proposal)
+            kwargs['vmax'] = vmax_list
         self.observe(self._on_geometries_changed, ['geometries'])
         have_label_map = 'label_map' in kwargs and kwargs['label_map'] is not None
         if have_label_map:
@@ -587,6 +595,26 @@ class Viewer(ViewerParent):
         else:
             return [value]
 
+    @validate('vmin')
+    def _validate_vmin(self, proposal):
+        value = proposal['value']
+        if value is None:
+            return None
+        elif isinstance(value, list):
+            return value
+        else:
+            return [value]
+
+    @validate('vmax')
+    def _validate_vmax(self, proposal):
+        value = proposal['value']
+        if value is None:
+            return None
+        elif isinstance(value, list):
+            return value
+        else:
+            return [value]
+
     @validate('point_set_colors')
     def _validate_point_set_colors(self, proposal):
         value = proposal['value']
@@ -807,13 +835,13 @@ def view(image=None,  # noqa: C901
     label_map_blend : float, default: 0.5
         Label map blend with intensity image, from 0.0 to 1.0.
 
-    vmin: float, default: None
-        Value that maps to the minimum of image colormap. Defaults to minimum of
-        the image pixel buffer.
+    vmin: list of floats, default: Minimum of the image pixel buffer
+        Value that maps to the minimum of image colormap. A single value
+        can be provided or a list for multi-component images.
 
-    vmax: float, default: None
-        Value that maps to the minimum of image colormap. Defaults to maximum of
-        the image pixel buffer.
+    vmax: list of floats, default: Maximum of the image pixel buffer
+        Value that maps to the minimum of image colormap.  A single value can
+        be provided or a list for multi-component images.
 
     cmap: list of strings
             default:
