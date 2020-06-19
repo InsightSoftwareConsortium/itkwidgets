@@ -746,6 +746,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.label_map_names_changed()
       this.label_map_weights_changed()
       this.label_map_blend_changed()
+      this.lut_changed()
     }
 
     const onUserInterfaceCollapsedToggle = (collapsed) => {
@@ -795,6 +796,17 @@ const ViewerView = widgets.DOMWidgetView.extend({
       }
     }
     this.model.itkVtkViewer.on('selectColorMap', onSelectColorMap)
+
+    const onSelectLookupTable = (lookupTable) => {
+      let lut = this.model.get('lut')
+      if (
+        lut !== null && lookupTable !== lut
+      ) {
+        this.model.set('lut', lookupTable)
+        this.model.save_changes()
+      }
+    }
+    this.model.itkVtkViewer.on('selectLookupTable', onSelectLookupTable)
 
     const onChangeColorRange = (component, colorRange) => {
       const vmin = this.model.get('vmin')
@@ -1076,6 +1088,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this
     )
     this.model.on('change:cmap', this.cmap_changed, this)
+    this.model.on('change:lut', this.lut_changed, this)
     this.model.on('change:vmin', this.vmin_changed, this)
     this.model.on('change:vmax', this.vmax_changed, this)
     this.model.on('change:shadow', this.shadow_changed, this)
@@ -1516,6 +1529,30 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.itkVtkViewer.setColorMap(index, cmap[index])
         this.model.colorMapLoopBreak = false
       }
+    }
+  },
+
+  lut_changed: function () {
+    const lut = this.model.get('lut')
+    if (lut !== null && this.model.hasOwnProperty('itkVtkViewer')) {
+      //if (lut.startsWith('Custom')) {
+      // -> from cmap, to be updated for lookup table
+        //const lutProxies = this.model.itkVtkViewer.getLookupTableProxies()
+        //const lutProxy = lutProxies[index]
+        //const customCmap = this.model.get('_custom_cmap')
+        //const numPoints = customCmap.shape[0]
+        //const rgbPoints = new Array(numPoints)
+        //const cmapArray = customCmap.array
+        //const step = 1.0 / (numPoints - 1)
+        //let xx = 0.0
+        //for (let pointIndex = 0; pointIndex < numPoints; pointIndex++) {
+          //const rgb = cmapArray.slice(pointIndex * 3, (pointIndex + 1) * 3)
+          //rgbPoints[pointIndex] = [xx, rgb[0], rgb[1], rgb[2]]
+          //xx += step
+        //}
+        //lutProxy.setRGBPoints(rgbPoints)
+      //}
+      this.model.itkVtkViewer.setLookupTable(lut)
     }
   },
 
