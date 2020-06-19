@@ -238,6 +238,8 @@ class Viewer(ViewerParent):
                             help="Size limit for 2D image visualization.").tag(sync=False)
     size_limit_3d = NDArray(dtype=np.int64, default_value=np.array([192, 192, 192], dtype=np.int64),
                             help="Size limit for 3D image visualization.").tag(sync=False)
+    sample_distance = CFloat(default_value=0.25,
+                            help="Normalized volume rendering sample distance.").tag(sync=True)
     _scale_factors = NDArray(dtype=np.uint8, default_value=np.array([1, 1, 1], dtype=np.uint8),
                              help="Image downscaling factors.").tag(sync=True, **array_serialization)
     _downsampling = CBool(default_value=False,
@@ -905,6 +907,11 @@ def view(image=None,  # noqa: C901
     size_limit_3d: 3x1 numpy int64 array, default: [192, 192, 192]
         Size limit for 3D image visualization. If the roi is larger than this
         size, it will be downsampled for visualization.
+
+    sample_distance: float, default: 0.25
+        Sampling distance for volume rendering, normalized from 0.0 to 1.0.
+        Lower values result in a higher quality rendering. High values improve
+        the framerate.
 
     Returns
     -------
