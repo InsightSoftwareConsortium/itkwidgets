@@ -1110,7 +1110,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       const modelRepresentation = modelRepresentations[index]
       if (representation !== modelRepresentation) {
         modelRepresentations[index] = representation
-        this.model.set('point_set_representations', modelRepresentation)
+        this.model.set('point_set_representations', modelRepresentations)
         this.model.save_changes()
       }
     }
@@ -1424,7 +1424,6 @@ const ViewerView = widgets.DOMWidgetView.extend({
     if (this.model.hasOwnProperty('itkVtkViewer')) {
       const point_sets = this.model.get('point_sets')
       if (point_sets && !!point_sets.length) {
-        console.log(point_set_representations)
         point_set_representations.forEach((representation, index) => {
           switch (representation.toLowerCase()) {
             case 'hidden':
