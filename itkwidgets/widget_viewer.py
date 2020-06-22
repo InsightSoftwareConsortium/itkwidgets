@@ -5,7 +5,6 @@ Visualization of an image.
 In the future, will add optional segmentation mesh overlay.
 """
 
-from . import cm
 import colorcet
 import matplotlib
 import collections
@@ -17,7 +16,7 @@ import numpy as np
 import ipywidgets as widgets
 from traitlets import CBool, CFloat, CInt, Unicode, CaselessStrEnum, List, validate, TraitError, Tuple
 from ipydatawidgets import NDArray, array_serialization, shape_constraints
-from .trait_types import ITKImage, ImagePointTrait, ImagePoint, PointSetList, PolyDataList, itkimage_serialization, image_point_serialization, polydata_list_serialization, Colormap
+from .trait_types import ITKImage, ImagePointTrait, ImagePoint, PointSetList, PolyDataList, itkimage_serialization, image_point_serialization, polydata_list_serialization, Colormap, LookupTable
 
 try:
     import ipywebrtc
@@ -167,6 +166,12 @@ class Viewer(ViewerParent):
                            help="RGB triples from 0.0 to 1.0 that define a custom linear, sequential colormap")\
         .tag(sync=True, **array_serialization)\
         .valid(shape_constraints(None, 3))
+    lut = LookupTable('glasbey',
+        help='Lookup table for the label map.').tag(sync=True)
+    _custom_cmap = NDArray(dtype=np.float32, default_value=None, allow_none=True,
+                           help="RGB triples from 0.0 to 1.0 that define a custom linear, sequential colormap")\
+        .tag(sync=True, **array_serialization)\
+        .valid(shape_constraints(None, 3))
     shadow = CBool(
         default_value=True,
         help="Use shadowing in the volume rendering.").tag(sync=True)
@@ -267,6 +272,10 @@ class Viewer(ViewerParent):
                                   help="Opacities for the points sets")\
         .tag(sync=True, **array_serialization)\
         .valid(shape_constraints(None,))
+    point_set_sizes = NDArray(dtype=np.uint8, default_value=np.zeros((0,), dtype=np.uint8),
+                              help="Sizes for the points sets")\
+        .tag(sync=True, **array_serialization)\
+        .valid(shape_constraints(None,))
     point_set_representations = List(
         trait=Unicode(),
         default_value=[],
@@ -327,6 +336,10 @@ class Viewer(ViewerParent):
             proposal = {'value': kwargs['point_set_opacities']}
             opacities_array = self._validate_point_set_opacities(proposal)
             kwargs['point_set_opacities'] = opacities_array
+        if 'point_set_sizes' in kwargs:
+            proposal = {'value': kwargs['point_set_sizes']}
+            sizes_array = self._validate_point_set_sizes(proposal)
+            kwargs['point_set_sizes'] = sizes_array
         if 'point_set_representations' in kwargs:
             proposal = {'value': kwargs['point_set_representations']}
             representations_list = self._validate_point_set_representations(
@@ -645,6 +658,21 @@ class Viewer(ViewerParent):
         result[:n_values] = value
         return result
 
+    @validate('point_set_sizes')
+    def _validate_point_set_sizes(self, proposal):
+        value = proposal['value']
+        n_values = 0
+        if isinstance(value, float):
+            n_values = 1
+        else:
+            n_values = len(value)
+        n_sizes = n_values
+        if self.point_sets:
+            n_sizes = len(self.point_sets)
+        result = 3 * np.ones((n_sizes,), dtype=np.uint8)
+        result[:n_values] = value
+        return result
+
     @validate('point_set_representations')
     def _validate_point_set_representations(self, proposal):
         value = proposal['value']
@@ -667,6 +695,9 @@ class Viewer(ViewerParent):
         # Make sure we have a sufficient number of opacities
         old_opacities = self.point_set_opacities
         self.point_set_opacities = old_opacities[:len(self.point_sets)]
+        # Make sure we have a sufficient number of sizes
+        old_sizes = self.point_set_sizes
+        self.point_set_sizes = old_sizes[:len(self.point_sets)]
         # Make sure we have a sufficient number of representations
         old_representations = self.point_set_representations
         self.point_set_representations = old_representations[:len(
@@ -752,13 +783,14 @@ def view(image=None,  # noqa: C901
          label_map_weights=None,  # noqa: C901
          label_map_blend=0.5,
          cmap=None,
+         lut='glasbey',
          select_roi=False,
          interpolation=True,
          gradient_opacity=0.22, opacity_gaussians=None, channels=None,
          slicing_planes=False, shadow=True, blend_mode='composite',
          point_sets=[],
-         point_set_colors=[], point_set_opacities=[], point_set_representations=[],
-         # point_set_sizes=[],
+         point_set_colors=[], point_set_opacities=[],
+         point_set_representations=[], point_set_sizes=[],
          geometries=[],
          geometry_colors=[], geometry_opacities=[],
          ui_collapsed=False, rotate=False, annotations=True, mode='v',
@@ -843,12 +875,20 @@ def view(image=None,  # noqa: C901
         Value that maps to the minimum of image colormap.  A single value can
         be provided or a list for multi-component images.
 
-    cmap: list of strings
+    cmap: list of colormaps
             default:
                 - single component: 'viridis', 'grayscale' with a label map,
                 - two components: 'BkCy', 'BkMa'
                 - three components: 'BkRd', 'BkGn', 'BkBu'
-        Colormap for each image component. Some valid values available at itkwidgets.cm.*
+        Colormap for each image component. Some valid values available at
+        itkwidgets.cm.*
+        Colormaps can also be Nx3 float NumPy arrays from 0.0 to 1.0 for the
+        red, green, blue points on the map or a
+        matplotlib.colors.LinearSegmentedColormap.
+
+    lut: lookup table, default: 'glasbey'
+        Lookup table for the label map. Some valid values available at
+        itkwidgets.lut.*
 
     select_roi: bool, default: False
         Enable an interactive region of interest widget for the image.
@@ -893,12 +933,15 @@ def view(image=None,  # noqa: C901
     point_sets: point set, or sequence of point sets
         The point sets to visualize.
 
-    point_set_colors: list of RGB colors
-        Colors for the N geometries. See help(matplotlib.colors) for
+    point_set_colors: list of (r, g, b) colors
+        Colors for the N points. See help(matplotlib.colors) for
         specification. Defaults to the Glasbey series of categorical colors.
 
-    point_set_opacities: list of floats, default: [0.5,]*n
+    point_set_opacities: array of floats, default: [0.5,]*n
         Opacity for the point sets, in the range (0.0, 1.0].
+
+    point_set_sizes: array of unsigned integers, default: [3,]*n
+        Sizes for the point sets, in pixel size units.
 
     point_set_representations: list of strings, default: ['points',]*n
         How to represent the point set. One of 'hidden', 'points', or 'spheres'.
@@ -1017,6 +1060,7 @@ def view(image=None,  # noqa: C901
                     label_map_names=label_map_names,
                     label_map_weights=label_map_weights,
                     cmap=cmap,
+                    lut=lut,
                     select_roi=select_roi,
                     interpolation=interpolation,
                     gradient_opacity=gradient_opacity, slicing_planes=slicing_planes,

@@ -680,3 +680,38 @@ class Colormap(traitlets.Unicode):
                 'Custom'):
             raise self.error('Invalid colormap')
         return super(Colormap, self).validate(obj, value)
+
+class LookupTable(traitlets.Unicode):
+    """A trait type holding a lookup table."""
+
+    info_text = 'A lookup table, either a itk-vtk-viewer categorical colormap preset, todo: np.ndarray of RGB points, or matplotlib ListedColormap.'
+
+    _lookup_table_presets = ('glasbey',
+                             'glasbey_light',
+                             'glasbey_warm',
+                             'modulate',
+                             'glasbey_bw',
+                             'glasbey_dark',
+                             'glasbey_cool',
+                             'modulate_dark',
+                             )
+
+    def validate(self, obj, value):
+        if value is None:
+            return None
+        # elif isinstance(value, np.ndarray):
+            # custom_cmap = value.astype(np.float32)
+            # custom_cmap = custom_cmap[:, :3]
+            # obj._custom_cmap = custom_cmap
+            # timestamp = str(datetime.timestamp(datetime.now()))
+            # return 'Custom NumPy ' + timestamp
+        # elif isinstance(value, matplotlib.colors.ListedColormap):
+            # custom_cmap = value(np.linspace(0.0, 1.0, 64)).astype(np.float32)
+            # custom_cmap = custom_cmap[:, :3]
+            # obj._custom_cmap = custom_cmap
+            # timestamp = str(datetime.timestamp(datetime.now()))
+            # return 'Custom matplotlib ' + timestamp
+        if value not in self._lookup_table_presets and not value.startswith(
+                'Custom'):
+            raise self.error('Invalid lookup table')
+        return super(LookupTable, self).validate(obj, value)

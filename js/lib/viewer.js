@@ -122,7 +122,8 @@ const ViewerModel = widgets.DOMWidgetModel.extend(
         _rendering_image: false,
         interpolation: true,
         cmap: null,
-        _custom_cmap: new Float32Array([0, 0, 0]),
+        lut: 'glasbey',
+        _custom_cmap: { array: new Float32Array([0, 0, 0]), shape: [1,3] },
         vmin: null,
         vmax: null,
         shadow: true,
@@ -142,8 +143,9 @@ const ViewerModel = widgets.DOMWidgetModel.extend(
         _scale_factors: new Uint8Array([1, 1, 1]),
         units: '',
         point_sets: null,
-        point_set_colors: new Float32Array([0, 0, 0]),
-        point_set_opacities: new Float32Array([1.0]),
+        point_set_colors: { array: new Float32Array([0, 0, 0]), shape: [1,3] },
+        point_set_opacities: { array: new Float32Array([1.0]), shape: [1] },
+        point_set_sizes: { array: new Uint8Array([3]), shape: [1] },
         point_set_representations: new Array(),
         geometries: null,
         geometry_colors: new Float32Array([0, 0, 0]),
@@ -188,6 +190,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend(
         camera: fixed_shape_serialization([3, 3]),
         point_set_colors: simplearray_serialization,
         point_set_opacities: simplearray_serialization,
+        point_set_sizes: simplearray_serialization,
         geometry_colors: simplearray_serialization,
         geometry_opacities: simplearray_serialization
       },
@@ -447,6 +450,7 @@ function replacePointSets (domWidgetView, pointSets) {
   domWidgetView.model.itkVtkViewer.setPointSets(vtkPointSets)
   domWidgetView.point_set_colors_changed()
   domWidgetView.point_set_opacities_changed()
+  domWidgetView.point_set_sizes_changed()
   domWidgetView.point_set_representations_changed()
   domWidgetView.model.itkVtkViewer.renderLater()
 }
@@ -746,6 +750,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.label_map_names_changed()
       this.label_map_weights_changed()
       this.label_map_blend_changed()
+      this.lut_changed()
     }
 
     const onUserInterfaceCollapsedToggle = (collapsed) => {
@@ -796,6 +801,17 @@ const ViewerView = widgets.DOMWidgetView.extend({
     }
     this.model.itkVtkViewer.on('selectColorMap', onSelectColorMap)
 
+    const onSelectLookupTable = (lookupTable) => {
+      let lut = this.model.get('lut')
+      if (
+        lut !== null && lookupTable !== lut
+      ) {
+        this.model.set('lut', lookupTable)
+        this.model.save_changes()
+      }
+    }
+    this.model.itkVtkViewer.on('selectLookupTable', onSelectLookupTable)
+
     const onChangeColorRange = (component, colorRange) => {
       const vmin = this.model.get('vmin')
       if (vmin === null) {
@@ -826,14 +842,15 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.skipOnCroppingPlanesChanged = true
         this.model.set(
           'roi',
-          new Float64Array([
-            bboxCorners[0][0],
-            bboxCorners[0][1],
-            bboxCorners[0][2],
-            bboxCorners[7][0],
-            bboxCorners[7][1],
-            bboxCorners[7][2]
-          ])
+          { array: new Float64Array([
+              bboxCorners[0][0],
+              bboxCorners[0][1],
+              bboxCorners[0][2],
+              bboxCorners[7][0],
+              bboxCorners[7][1],
+              bboxCorners[7][2]
+          ]),
+          shape: [2,3] }
         )
         this.model.save_changes()
       } else {
@@ -1056,8 +1073,65 @@ const ViewerView = widgets.DOMWidgetView.extend({
     if (point_sets) {
       this.point_set_colors_changed()
       this.point_set_opacities_changed()
+      this.point_set_sizes_changed()
       this.point_set_representations_changed()
     }
+
+    const onPointSetColorChanged = (index, color) => {
+      const modelColors = this.model.get('point_set_colors')
+      const modelColor = modelColors.array[index]
+      if (color !== modelColor) {
+        const newColors = modelColors.array.slice()
+        newColors[index] = color
+        this.model.set('point_set_colors', { array: newColors, shape: modelColors.shape })
+        this.model.save_changes()
+      }
+    }
+    this.model.itkVtkViewer.on('pointSetColorChanged',
+      onPointSetColorChanged
+    )
+
+    const onPointSetOpacityChanged = (index, opacity) => {
+      const modelOpacities = this.model.get('point_set_opacities')
+      const modelOpacity = modelOpacities.array[index]
+      if (opacity !== modelOpacity) {
+        const newOpacities = modelOpacities.array.slice()
+        newOpacities[index] = opacity
+        this.model.set('point_set_opacities', { array: newOpacities, shape: modelOpacities.shape })
+        this.model.save_changes()
+      }
+    }
+    this.model.itkVtkViewer.on('pointSetOpacityChanged',
+      onPointSetOpacityChanged
+    )
+
+    const onPointSetRepresentationChanged = (index, representation) => {
+      const modelRepresentations = this.model.get('point_set_representations')
+      const modelRepresentation = modelRepresentations[index]
+      if (representation !== modelRepresentation) {
+        modelRepresentations[index] = representation
+        this.model.set('point_set_representations', modelRepresentations)
+        this.model.save_changes()
+      }
+    }
+    this.model.itkVtkViewer.on('pointSetRepresentationChanged',
+      onPointSetRepresentationChanged
+    )
+
+    const onPointSetSizeChanged = (index, size) => {
+      const modelSizes = this.model.get('point_set_sizes')
+      const modelSize = modelSizes.array[index]
+      if (size !== modelSize) {
+        const newSize = modelSizes.array.slice()
+        newSize[index] = size
+        this.model.set('point_set_sizes', { array: newSize, shape: modelSizes.shape })
+        this.model.save_changes()
+      }
+    }
+    this.model.itkVtkViewer.on('pointSetSizeChanged',
+      onPointSetSizeChanged
+    )
+
     const geometries = this.model.get('geometries')
     if (geometries) {
       this.geometry_colors_changed()
@@ -1076,6 +1150,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this
     )
     this.model.on('change:cmap', this.cmap_changed, this)
+    this.model.on('change:lut', this.lut_changed, this)
     this.model.on('change:vmin', this.vmin_changed, this)
     this.model.on('change:vmax', this.vmax_changed, this)
     this.model.on('change:shadow', this.shadow_changed, this)
@@ -1100,6 +1175,11 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on(
       'change:point_set_opacities',
       this.point_set_opacities_changed,
+      this
+    )
+    this.model.on(
+      'change:point_set_sizes',
+      this.point_set_sizes_changed,
       this
     )
     this.model.on(
@@ -1295,12 +1375,12 @@ const ViewerView = widgets.DOMWidgetView.extend({
   },
 
   point_set_colors_changed: function () {
-    const point_setColors = this.model.get('point_set_colors').array
     if (this.model.hasOwnProperty('itkVtkViewer')) {
+      const point_set_colors = this.model.get('point_set_colors').array
       const point_sets = this.model.get('point_sets')
       if (point_sets && !!point_sets.length) {
         point_sets.forEach((point_set, index) => {
-          const color = point_setColors.slice(index * 3, (index + 1) * 3)
+          const color = point_set_colors.slice(index * 3, (index + 1) * 3)
           this.model.itkVtkViewer.setPointSetColor(index, color)
         })
       }
@@ -1308,14 +1388,29 @@ const ViewerView = widgets.DOMWidgetView.extend({
   },
 
   point_set_opacities_changed: function () {
-    const point_setOpacities = this.model.get('point_set_opacities').array
     if (this.model.hasOwnProperty('itkVtkViewer')) {
+      const point_set_opacities = this.model.get('point_set_opacities').array
       const point_sets = this.model.get('point_sets')
       if (point_sets && !!point_sets.length) {
         point_sets.forEach((point_set, index) => {
           this.model.itkVtkViewer.setPointSetOpacity(
             index,
-            point_setOpacities[index]
+            point_set_opacities[index]
+          )
+        })
+      }
+    }
+  },
+
+  point_set_sizes_changed: function () {
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      const point_set_sizes = this.model.get('point_set_sizes').array
+      const point_sets = this.model.get('point_sets')
+      if (point_sets && !!point_sets.length) {
+        point_sets.forEach((point_set, index) => {
+          this.model.itkVtkViewer.setPointSetSize(
+            index,
+            point_set_sizes[index]
           )
         })
       }
@@ -1516,6 +1611,30 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.itkVtkViewer.setColorMap(index, cmap[index])
         this.model.colorMapLoopBreak = false
       }
+    }
+  },
+
+  lut_changed: function () {
+    const lut = this.model.get('lut')
+    if (lut !== null && this.model.hasOwnProperty('itkVtkViewer')) {
+      //if (lut.startsWith('Custom')) {
+      // -> from cmap, to be updated for lookup table
+        //const lutProxies = this.model.itkVtkViewer.getLookupTableProxies()
+        //const lutProxy = lutProxies[index]
+        //const customCmap = this.model.get('_custom_cmap')
+        //const numPoints = customCmap.shape[0]
+        //const rgbPoints = new Array(numPoints)
+        //const cmapArray = customCmap.array
+        //const step = 1.0 / (numPoints - 1)
+        //let xx = 0.0
+        //for (let pointIndex = 0; pointIndex < numPoints; pointIndex++) {
+          //const rgb = cmapArray.slice(pointIndex * 3, (pointIndex + 1) * 3)
+          //rgbPoints[pointIndex] = [xx, rgb[0], rgb[1], rgb[2]]
+          //xx += step
+        //}
+        //lutProxy.setRGBPoints(rgbPoints)
+      //}
+      this.model.itkVtkViewer.setLookupTable(lut)
     }
   },
 
