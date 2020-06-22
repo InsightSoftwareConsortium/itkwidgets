@@ -133,6 +133,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend(
         z_slice: null,
         clicked_slice_point: null,
         gradient_opacity: 0.2,
+        sample_distance: 0.25,
         opacity_gaussians: null,
         channels: null,
         blend_mode: 'composite',
@@ -737,6 +738,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
     if (rendered_image) {
       this.shadow_changed()
       this.gradient_opacity_changed()
+      this.sample_distance_changed()
       this.channels_changed()
       this.blend_mode_changed()
     }
@@ -1035,6 +1037,16 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.model.itkVtkViewer.on('gradientOpacityChanged',
         onGradientOpacityChange
       )
+
+      const onVolumeSampleDistanceChange = (distance) => {
+        if (distance !== this.model.get('sample_distance')) {
+          this.model.set('sample_distance', distance)
+          this.model.save_changes()
+        }
+      }
+      this.model.itkVtkViewer.on('volumeSampleDistanceChanged',
+        onVolumeSampleDistanceChange
+      )
     } // end use2D
 
     const onCameraChanged = macro.throttle(() => {
@@ -1161,6 +1173,11 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on(
       'change:gradient_opacity',
       this.gradient_opacity_changed,
+      this
+    )
+    this.model.on(
+      'change:sample_distance',
+      this.sample_distance_changed,
       this
     )
     this.model.on('change:blend_mode', this.blend_mode_changed, this)
@@ -1713,6 +1730,13 @@ const ViewerView = widgets.DOMWidgetView.extend({
     const gradient_opacity = this.model.get('gradient_opacity')
     if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
       this.model.itkVtkViewer.setGradientOpacity(gradient_opacity)
+    }
+  },
+
+  sample_distance_changed: function () {
+    const sample_distance = this.model.get('sample_distance')
+    if (this.model.hasOwnProperty('itkVtkViewer') && !this.model.use2D) {
+      this.model.itkVtkViewer.setVolumeSampleDistance(sample_distance)
     }
   },
 
