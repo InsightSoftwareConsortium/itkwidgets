@@ -1,4 +1,4 @@
-__all__ = ['to_itk_image', 'to_point_set', 'to_geometry']
+__all__ = ['to_itk_image', 'to_point_set', 'to_geometry', 'vtkjs_to_zarr', 'zarr_to_vtkjs']
 
 import itk
 import numpy as np
@@ -41,6 +41,77 @@ try:
     have_skan = True
 except ImportError:
     pass
+have_zarr = False
+try:
+    import zarr
+    have_zarr = True
+except ImportError:
+    pass
+
+def vtkjs_to_zarr(vtkjs, group, chunks=True):
+    """Convert a vtk.js-like Python object to a Zarr Group.
+
+    Parameters
+    ----------
+
+    vtkjs: dictionary, required
+        The vtk.js-like data structure to convert.
+
+    group: zarr.Group, required
+        The Zarr group to store the result.
+
+    chunks: bool or int or tuple of ints, optional
+        The chunk size passed to zarr.creation.create.
+    """
+    for key, value in vtkjs.items():
+        if key == 'vtkClass':
+            group.attrs[key] = value
+        elif key == 'arrays':
+            for index, arr in enumerate(value):
+                vtkjs_to_zarr(arr,
+                              group.create_group('arrays/' + str(index), True),
+                              chunks=chunks)
+        elif isinstance(value, dict):
+            vtkjs_to_zarr(value,
+                          group.create_group(key, True),
+                          chunks=chunks)
+        elif isinstance(value, np.ndarray):
+            group.array(key, value, chunks=chunks)
+        else:
+            group.attrs[key] = value
+    return group
+
+def zarr_to_vtkjs(group):
+    """Convert Zarr Group that contains vtk.js data structure to a Python-like object.
+
+    Parameters
+    ----------
+
+    group: zarr.Group, required
+        The Zarr group to convert.
+    """
+
+    def process_group(group, result):
+        for key, value in group.attrs.items():
+            result[key] = value
+        for name, value in group.arrays():
+            result[name] = np.asarray(value)
+        for name, value in group.groups():
+            if name == 'arrays':
+                nested = []
+                for index, subgroup in value.groups():
+                    subresult = dict()
+                    process_group(subgroup, subresult)
+                    nested.append(subresult)
+                result[name] = nested
+            else:
+                nested = dict()
+                process_group(value, nested)
+                result[name] = nested
+    result = dict()
+    process_group(group, result)
+    return result
+
 
 _itk_pixel_to_vtkjs_type_components = {
     itk.SC: ('Int8Array', 1),
@@ -52,7 +123,6 @@ _itk_pixel_to_vtkjs_type_components = {
     itk.F: ('Float32Array', 1),
     itk.D: ('Float64Array', 1),
 }
-
 
 def _vtk_to_vtkjs(data_array):
     from vtk.util.numpy_support import vtk_to_numpy
@@ -315,6 +385,8 @@ def to_point_set(point_set_like):  # noqa: C901
             point_set['cellData'] = vtkjs_cell_data
 
         return point_set
+    elif isinstance(point_set_like, zarr.Group):
+        return zarr_to_vtkjs(point_set_like)
 
     return None
 
@@ -542,5 +614,7 @@ def to_geometry(geometry_like):  # noqa: C901
         geometry_filter.Update()
         geometry = to_geometry(geometry_filter.GetOutput())
         return geometry
+    elif isinstance(geometry_like, zarr.Group):
+        return zarr_to_vtkjs(geometry_like)
 
     return None
