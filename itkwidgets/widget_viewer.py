@@ -115,8 +115,8 @@ class Viewer(ViewerParent):
     _model_name = Unicode('ViewerModel').tag(sync=True)
     _view_module = Unicode('itkwidgets').tag(sync=True)
     _model_module = Unicode('itkwidgets').tag(sync=True)
-    _view_module_version = Unicode('^0.29.0').tag(sync=True)
-    _model_module_version = Unicode('^0.29.0').tag(sync=True)
+    _view_module_version = Unicode('^0.30.0').tag(sync=True)
+    _model_module_version = Unicode('^0.30.0').tag(sync=True)
     image = ITKImage(
         default_value=None,
         allow_none=True,
