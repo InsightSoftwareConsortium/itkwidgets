@@ -385,6 +385,8 @@ def to_point_set(point_set_like):  # noqa: C901
             point_set['cellData'] = vtkjs_cell_data
 
         return point_set
+    elif isinstance(point_set_like, zarr.Group):
+        return zarr_to_vtkjs(point_set_like)
 
     return None
 
@@ -612,5 +614,7 @@ def to_geometry(geometry_like):  # noqa: C901
         geometry_filter.Update()
         geometry = to_geometry(geometry_filter.GetOutput())
         return geometry
+    elif isinstance(geometry_like, zarr.Group):
+        return zarr_to_vtkjs(geometry_like)
 
     return None
