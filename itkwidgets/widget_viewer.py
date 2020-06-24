@@ -939,7 +939,7 @@ def view(image=None,  # noqa: C901
         Colors for the N points. See help(matplotlib.colors) for
         specification. Defaults to the Glasbey series of categorical colors.
 
-    point_set_opacities: array of floats, default: [0.5,]*n
+    point_set_opacities: array of floats, default: [1.0,]*n
         Opacity for the point sets, in the range (0.0, 1.0].
 
     point_set_sizes: array of unsigned integers, default: [3,]*n
