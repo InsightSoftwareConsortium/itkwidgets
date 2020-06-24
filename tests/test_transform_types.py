@@ -2,7 +2,7 @@ import itk
 import numpy as np
 import pytest
 
-from itkwidgets._transform_types import to_point_set, to_geometry, to_itk_image
+from itkwidgets._transform_types import to_point_set, to_geometry, to_itk_image, vtkjs_to_zarr, zarr_to_vtkjs
 
 
 def test_mesh_to_geometry():
@@ -78,6 +78,71 @@ def test_mesh_to_geometry():
     # assert(np.alltrue(geometry['points']['values'] ==
     # geometry_array.astype(np.float32)))
 
+def test_vtkjs_to_zarr():
+    zarr = pytest.importorskip("zarr")
+
+    # 3D
+    Dimension = 3
+    PixelType = itk.ctype('double')
+    MeshType = itk.Mesh[PixelType, Dimension]
+    mesh = MeshType.New()
+    PointType = itk.Point[itk.F, Dimension]
+    point0 = PointType()
+    point0[0] = -1
+    point0[1] = -1
+    point0[2] = 0
+    mesh.SetPoint(0, point0)
+    mesh.SetPointData(0, 8.0)
+    point1 = PointType()
+    point1[0] = 1
+    point1[1] = -1
+    point1[2] = 0
+    mesh.SetPointData(1, 9.0)
+    mesh.SetPoint(1, point1)
+    point2 = PointType()
+    point2[0] = 1
+    point2[1] = 1
+    point2[2] = 0
+    mesh.SetPoint(2, point2)
+    mesh.SetPointData(2, 19.0)
+    point3 = PointType()
+    point3[0] = 1
+    point3[1] = 1
+    point3[2] = 0
+    mesh.SetPoint(3, point3)
+    mesh.SetPointData(3, 24.0)
+
+    vtkjs = to_geometry(mesh)
+
+    store = zarr.group()
+
+    vtkjs_to_zarr(vtkjs, store)
+    geometry = zarr_to_vtkjs(store)
+
+    points = mesh.GetPoints()
+    point_template = itk.template(points)
+    element_type = point_template[1][1]
+    point_values = itk.PyVectorContainer[element_type].array_from_vector_container(
+        points)
+
+    assert(geometry['vtkClass'] == 'vtkPolyData')
+    assert(geometry['points']['vtkClass'] == 'vtkPoints')
+    assert(geometry['points']['numberOfComponents'] == 3)
+    assert(geometry['points']['dataType'] == 'Float32Array')
+    assert(geometry['points']['size'] == 4 * 3)
+    assert(np.array_equal(geometry['points']['values'],
+                          point_values.astype(np.float32)))
+    assert(geometry['pointData']['vtkClass'] == 'vtkDataSetAttributes')
+    assert(geometry['pointData']['arrays'][0]
+           ['data']['vtkClass'] == 'vtkDataArray')
+    assert(geometry['pointData']['arrays'][0]['data']['name'] == 'Point Data')
+    assert(geometry['pointData']['arrays'][0]
+           ['data']['numberOfComponents'] == 1)
+    assert(geometry['pointData']['arrays'][0]['data']['size'] == 4)
+    assert(geometry['pointData']['arrays'][0]
+           ['data']['dataType'] == 'Float64Array')
+    assert(np.array_equal(geometry['pointData']['arrays'][0]['data']['values'],
+                          np.array([8.0, 9.0, 19.0, 24.0], dtype=np.float64)))
 
 def test_vtkpolydata_to_geometry():
     vtk = pytest.importorskip("vtk")
