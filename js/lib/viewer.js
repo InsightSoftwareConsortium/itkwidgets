@@ -115,10 +115,10 @@ const ViewerModel = widgets.DOMWidgetModel.extend(
         _model_module_version: '0.29.0',
         _view_module_version: '0.29.0',
         rendered_image: null,
-        rendered_label_map: null,
-        label_map_names: null,
-        label_map_weights: null,
-        label_map_blend: 0.5,
+        rendered_label_image: null,
+        label_image_names: null,
+        label_image_weights: null,
+        label_image_blend: 0.5,
         _rendering_image: false,
         interpolation: true,
         cmap: null,
@@ -167,11 +167,11 @@ const ViewerModel = widgets.DOMWidgetModel.extend(
           serialize: serialize_itkimage,
           deserialize: deserialize_itkimage
         },
-        rendered_label_map: {
+        rendered_label_image: {
           serialize: serialize_itkimage,
           deserialize: deserialize_itkimage
         },
-        label_map_weights: simplearray_serialization,
+        label_image_weights: simplearray_serialization,
         clicked_slice_point: {
           serialize: serialize_image_point,
           deserialize: deserialize_image_point
@@ -202,7 +202,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend(
 
 const createRenderingPipeline = (
   domWidgetView,
-  { rendered_image, rendered_label_map, point_sets, geometries }
+  { rendered_image, rendered_label_image, point_sets, geometries }
 ) => {
   const containerStyle = {
     position: 'relative',
@@ -245,9 +245,9 @@ const createRenderingPipeline = (
     imageData = vtkITKHelper.convertItkToVtkImage(rendered_image)
     is3D = rendered_image.imageType.dimension === 3
   }
-  if (rendered_label_map) {
-    labelMapData = vtkITKHelper.convertItkToVtkImage(rendered_label_map)
-    is3D = rendered_label_map.imageType.dimension === 3
+  if (rendered_label_image) {
+    labelMapData = vtkITKHelper.convertItkToVtkImage(rendered_label_image)
+    is3D = rendered_label_image.imageType.dimension === 3
   }
   let pointSets = null
   if (point_sets) {
@@ -377,7 +377,7 @@ const createRenderingPipeline = (
     domWidgetView.model.save_changes()
   }
 
-  if (rendered_image || rendered_label_map) {
+  if (rendered_image || rendered_label_image) {
     const interactor = viewProxy.getInteractor()
     interactor.onEndMouseWheel(cropROIByViewport)
     interactor.onEndPan(cropROIByViewport)
@@ -434,8 +434,8 @@ function replaceRenderedImage (domWidgetView, rendered_image) {
   domWidgetView.model.save_changes()
 }
 
-function replaceRenderedLabelMap (domWidgetView, rendered_label_map) {
-  const labelMapData = vtkITKHelper.convertItkToVtkImage(rendered_label_map)
+function replaceRenderedLabelMap (domWidgetView, rendered_label_image) {
+  const labelMapData = vtkITKHelper.convertItkToVtkImage(rendered_label_image)
 
   domWidgetView.model.itkVtkViewer.setLabelMap(labelMapData)
 
@@ -710,7 +710,7 @@ async function decompressPolyData (polyData) {
 const ViewerView = widgets.DOMWidgetView.extend({
   initialize_itkVtkViewer: function () {
     const rendered_image = this.model.get('rendered_image')
-    const rendered_label_map = this.model.get('rendered_label_map')
+    const rendered_label_image = this.model.get('rendered_label_image')
     this.annotations_changed()
 
     const onBackgroundChanged = (background) => {
@@ -729,7 +729,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       this.vmin_changed()
       this.vmax_changed()
     }
-    if (rendered_image || rendered_label_map) {
+    if (rendered_image || rendered_label_image) {
       this.slicing_planes_changed()
       this.x_slice_changed()
       this.y_slice_changed()
@@ -744,14 +744,14 @@ const ViewerView = widgets.DOMWidgetView.extend({
     }
     this.ui_collapsed_changed()
     this.rotate_changed()
-    if (rendered_image || rendered_label_map) {
+    if (rendered_image || rendered_label_image) {
       this.select_roi_changed()
       this.scale_factors_changed()
     }
-    if (rendered_label_map) {
-      this.label_map_names_changed()
-      this.label_map_weights_changed()
-      this.label_map_blend_changed()
+    if (rendered_label_image) {
+      this.label_image_names_changed()
+      this.label_image_weights_changed()
+      this.label_image_blend_changed()
       this.lut_changed()
     }
 
@@ -881,7 +881,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
 
     const onLabelMapWeightsChanged = ({ weights }) => {
       const typedWeights = new Float32Array(weights)
-      this.model.set('label_map_weights', { shape: [weights.length],
+      this.model.set('label_image_weights', { shape: [weights.length],
         array: typedWeights
       })
       this.model.save_changes()
@@ -891,7 +891,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
     )
 
     const onLabelMapBlendChanged = (blend) => {
-      this.model.set('label_map_blend', blend)
+      this.model.set('label_image_blend', blend)
       this.model.save_changes()
     }
     this.model.itkVtkViewer.on('labelMapBlendChanged',
@@ -1157,8 +1157,8 @@ const ViewerView = widgets.DOMWidgetView.extend({
   render: function () {
     this.model.on('change:rendered_image', this.rendered_image_changed, this)
     this.model.on(
-      'change:rendered_label_map',
-      this.rendered_label_map_changed,
+      'change:rendered_label_image',
+      this.rendered_label_image_changed,
       this
     )
     this.model.on('change:cmap', this.cmap_changed, this)
@@ -1221,18 +1221,18 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:background', this.background_changed, this)
     this.model.on('change:opacity_gaussians', this.opacity_gaussians_changed, this)
     this.model.on('change:channels', this.channels_changed, this)
-    this.model.on('change:label_map_names', this.label_map_names_changed, this)
-    this.model.on('change:label_map_blend', this.label_map_blend_changed, this)
-    this.model.on('change:label_map_weights', this.label_map_weights_changed, this)
+    this.model.on('change:label_image_names', this.label_image_names_changed, this)
+    this.model.on('change:label_image_blend', this.label_image_blend_changed, this)
+    this.model.on('change:label_image_weights', this.label_image_weights_changed, this)
 
     let toDecompress = []
     const rendered_image = this.model.get('rendered_image')
     if (rendered_image) {
       toDecompress.push(decompressImage(rendered_image))
     }
-    const rendered_label_map = this.model.get('rendered_label_map')
-    if (rendered_label_map) {
-      toDecompress.push(decompressImage(rendered_label_map))
+    const rendered_label_image = this.model.get('rendered_label_image')
+    if (rendered_label_image) {
+      toDecompress.push(decompressImage(rendered_label_image))
     }
     const point_sets = this.model.get('point_sets')
     if (point_sets && !!point_sets.length) {
@@ -1251,7 +1251,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
         decompressedRenderedImage = decompressedData[index]
         index++
       }
-      if (rendered_label_map) {
+      if (rendered_label_image) {
         decompressedRenderedLabelMap = decompressedData[index]
         index++
       }
@@ -1274,7 +1274,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
 
       return createRenderingPipeline(domWidgetView, {
         rendered_image: decompressedRenderedImage,
-        rendered_label_map: decompressedRenderedLabelMap,
+        rendered_label_image: decompressedRenderedLabelMap,
         point_sets: decompressedPointSets,
         geometries: decompressedGeometries
       })
@@ -1310,30 +1310,30 @@ const ViewerView = widgets.DOMWidgetView.extend({
     return Promise.resolve(null)
   },
 
-  rendered_label_map_changed: function () {
-    const rendered_label_map = this.model.get('rendered_label_map')
-    if (rendered_label_map) {
-      if (!rendered_label_map.data) {
+  rendered_label_image_changed: function () {
+    const rendered_label_image = this.model.get('rendered_label_image')
+    if (rendered_label_image) {
+      if (!rendered_label_image.data) {
         const domWidgetView = this
-        decompressImage(rendered_label_map).then((decompressed) => {
+        decompressImage(rendered_label_image).then((decompressed) => {
           if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
             return Promise.resolve(
               replaceRenderedLabelMap(domWidgetView, decompressed)
             )
           } else {
             return createRenderingPipeline(domWidgetView, {
-              rendered_label_map: decompressed
+              rendered_label_image: decompressed
             })
           }
         })
       } else {
         if (domWidgetView.model.hasOwnProperty('itkVtkViewer')) {
           return Promise.resolve(
-            replaceRenderedLabelMap(this, rendered_label_map)
+            replaceRenderedLabelMap(this, rendered_label_image)
           )
         } else {
           return Promise.resolve(
-            createRenderingPipeline(this, { rendered_label_map })
+            createRenderingPipeline(this, { rendered_label_image })
           )
         }
       }
@@ -1341,24 +1341,24 @@ const ViewerView = widgets.DOMWidgetView.extend({
     return Promise.resolve(null)
   },
 
-  label_map_names_changed: function () {
-    const label_map_names = this.model.get('label_map_names')
-    if (label_map_names && this.model.hasOwnProperty('itkVtkViewer')) {
-      const labelMapNames = new Map(label_map_names)
+  label_image_names_changed: function () {
+    const label_image_names = this.model.get('label_image_names')
+    if (label_image_names && this.model.hasOwnProperty('itkVtkViewer')) {
+      const labelMapNames = new Map(label_image_names)
       this.model.itkVtkViewer.setLabelMapNames(labelMapNames)
     }
   },
 
-  label_map_weights_changed: function () {
-    const label_map_weights = this.model.get('label_map_weights')
-    if (label_map_weights && this.model.hasOwnProperty('itkVtkViewer')) {
-      const labelMapWeights = !!label_map_weights.array ? Array.from(label_map_weights.array) : Array.from(label_map_weights)
+  label_image_weights_changed: function () {
+    const label_image_weights = this.model.get('label_image_weights')
+    if (label_image_weights && this.model.hasOwnProperty('itkVtkViewer')) {
+      const labelMapWeights = !!label_image_weights.array ? Array.from(label_image_weights.array) : Array.from(label_image_weights)
       this.model.itkVtkViewer.setLabelMapWeights(labelMapWeights)
     }
   },
 
-  label_map_blend_changed: function () {
-    const labelMapBlend = this.model.get('label_map_blend')
+  label_image_blend_changed: function () {
+    const labelMapBlend = this.model.get('label_image_blend')
     if (this.model.hasOwnProperty('itkVtkViewer')) {
       this.model.itkVtkViewer.setLabelMapBlend(labelMapBlend)
     }

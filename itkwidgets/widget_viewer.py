@@ -131,27 +131,27 @@ class Viewer(ViewerParent):
     _rendering_image = CBool(
         default_value=False,
         help="We are currently volume rendering the image.").tag(sync=True)
-    label_map = ITKImage(
+    label_image = ITKImage(
         default_value=None,
         allow_none=True,
         help="Label map for the image.").tag(
         sync=False,
         **itkimage_serialization)
-    rendered_label_map = ITKImage(
+    rendered_label_image = ITKImage(
         default_value=None,
         allow_none=True).tag(
         sync=True,
         **itkimage_serialization)
-    label_map_names = List(
+    label_image_names = List(
         trait=Tuple(),
         allow_none=True,
         default_value=None,
         help="Names for labels in the label map.").tag(
         sync=True)
-    label_map_blend = CFloat(
+    label_image_blend = CFloat(
         default_value=0.5,
         help="Blend of the label map with the intensity image.").tag(sync=True)
-    label_map_weights = NDArray(dtype=np.float32, default_value=None, allow_none=True,
+    label_image_weights = NDArray(dtype=np.float32, default_value=None, allow_none=True,
         help="Weights, from 0.0 to 1.0, for every label in the label map.")\
         .tag(sync=True, **array_serialization)\
         .valid(shape_constraints(None,))
@@ -369,19 +369,19 @@ class Viewer(ViewerParent):
             vmax_list = self._validate_vmax(proposal)
             kwargs['vmax'] = vmax_list
         self.observe(self._on_geometries_changed, ['geometries'])
-        have_label_map = 'label_map' in kwargs and kwargs['label_map'] is not None
-        if have_label_map:
+        have_label_image = 'label_image' in kwargs and kwargs['label_image'] is not None
+        if have_label_image:
             # Interpolation is not currently supported with label maps
             kwargs['interpolation'] = False
 
         super(Viewer, self).__init__(**kwargs)
 
-        if not self.image and not self.label_map:
+        if not self.image and not self.label_image:
             return
         if self.image:
             image = self.image
         else:
-            image = self.label_map
+            image = self.label_image
         dimension = image.GetImageDimension()
         largest_region = image.GetLargestPossibleRegion()
         size = largest_region.GetSize()
@@ -389,7 +389,7 @@ class Viewer(ViewerParent):
         # Cache this so we do not need to recompute on it when resetting the
         # roi
         self._largest_roi_rendered_image = None
-        self._largest_roi_rendered_label_map = None
+        self._largest_roi_rendered_label_image = None
         self._largest_roi = np.zeros((2, 3), dtype=np.float64)
         if not np.any(self.roi):
             largest_index = largest_region.GetIndex()
@@ -411,16 +411,16 @@ class Viewer(ViewerParent):
         if self._downsampling and self.image:
             self.extractor = itk.ExtractImageFilter.New(self.image)
             self.shrinker = itk.BinShrinkImageFilter.New(self.extractor)
-        if self._downsampling and self.label_map:
-            self.label_map_extractor = itk.ExtractImageFilter.New(self.label_map)
-            self.label_map_shrinker = itk.ShrinkImageFilter.New(self.label_map_extractor)
+        if self._downsampling and self.label_image:
+            self.label_image_extractor = itk.ExtractImageFilter.New(self.label_image)
+            self.label_image_shrinker = itk.ShrinkImageFilter.New(self.label_image_extractor)
         self._update_rendered_image()
         if self._downsampling:
             self.observe(self._on_roi_changed, ['roi'])
 
         self.observe(self._on_reset_crop_requested, ['_reset_crop_requested'])
-        self.observe(self.update_rendered_image, ['image', 'label_map'])
-        self.observe(self.update_rendered_image, ['image', 'label_map'])
+        self.observe(self.update_rendered_image, ['image', 'label_image'])
+        self.observe(self.update_rendered_image, ['image', 'label_image'])
 
     def _on_roi_changed(self, change=None):
         if self._downsampling:
@@ -431,7 +431,7 @@ class Viewer(ViewerParent):
             if self.image:
                 image = self.image
             else:
-                image = self.label_map
+                image = self.label_image
             dimension = image.GetImageDimension()
             largest_region = image.GetLargestPossibleRegion()
             size = largest_region.GetSize()
@@ -450,7 +450,7 @@ class Viewer(ViewerParent):
     @debounced(delay_seconds=0.2, method=True)
     def update_rendered_image(self, change=None):
         self._largest_roi_rendered_image = None
-        self._largest_roi_rendered_label_map = None
+        self._largest_roi_rendered_label_image = None
         self._largest_roi = np.zeros((2, 3), dtype=np.float64)
         self._update_rendered_image()
 
@@ -463,7 +463,7 @@ class Viewer(ViewerParent):
         return scale_factors
 
     def _update_rendered_image(self):
-        if self.image is None and self.label_map is None:
+        if self.image is None and self.label_image is None:
             return
         if self._rendering_image:
             @yield_for_change(self, '_rendering_image')
@@ -477,7 +477,7 @@ class Viewer(ViewerParent):
             if self.image:
                 image = self.image
             else:
-                image = self.label_map
+                image = self.label_image
             dimension = image.GetImageDimension()
             index = image.TransformPhysicalPointToIndex(
                 self.roi[0][:dimension])
@@ -494,8 +494,8 @@ class Viewer(ViewerParent):
             self._scale_factors = np.array(scale_factors, dtype=np.uint8)
             if self.image:
                 self.shrinker.SetShrinkFactors(scale_factors[:dimension])
-            if self.label_map:
-                self.label_map_shrinker.SetShrinkFactors(scale_factors[:dimension])
+            if self.label_image:
+                self.label_image_shrinker.SetShrinkFactors(scale_factors[:dimension])
 
             region = itk.ImageRegion[dimension]()
             region.SetIndex(index)
@@ -508,9 +508,9 @@ class Viewer(ViewerParent):
             if self.image:
                 self.extractor.SetInput(self.image)
                 self.extractor.SetExtractionRegion(region)
-            if self.label_map:
-                self.label_map_extractor.SetInput(self.label_map)
-                self.label_map_extractor.SetExtractionRegion(region)
+            if self.label_image:
+                self.label_image_extractor.SetInput(self.label_image)
+                self.label_image_extractor.SetExtractionRegion(region)
 
             size = region.GetSize()
 
@@ -518,17 +518,17 @@ class Viewer(ViewerParent):
             if np.any(self._largest_roi) and np.all(
                     self._largest_roi == self.roi):
                 is_largest = True
-                if self._largest_roi_rendered_image is not None or self._largest_roi_rendered_label_map is not None:
+                if self._largest_roi_rendered_image is not None or self._largest_roi_rendered_label_image is not None:
                     if self.image:
                         self.rendered_image = self._largest_roi_rendered_image
-                    if self.label_map:
-                        self.rendered_label_map = self._largest_roi_rendered_label_map
+                    if self.label_image:
+                        self.rendered_label_image = self._largest_roi_rendered_label_image
                     return
 
             if self.image:
                 self.shrinker.UpdateLargestPossibleRegion()
-            if self.label_map:
-                self.label_map_shrinker.UpdateLargestPossibleRegion()
+            if self.label_image:
+                self.label_image_shrinker.UpdateLargestPossibleRegion()
             if is_largest:
                 if self.image:
                     self._largest_roi_rendered_image = self.shrinker.GetOutput()
@@ -536,42 +536,42 @@ class Viewer(ViewerParent):
                     self._largest_roi_rendered_image.SetOrigin(
                         self.roi[0][:dimension])
                     self.rendered_image = self._largest_roi_rendered_image
-                if self.label_map:
-                    self._largest_roi_rendered_label_map = self.label_map_shrinker.GetOutput()
-                    self._largest_roi_rendered_label_map.DisconnectPipeline()
-                    self._largest_roi_rendered_label_map.SetOrigin(
+                if self.label_image:
+                    self._largest_roi_rendered_label_image = self.label_image_shrinker.GetOutput()
+                    self._largest_roi_rendered_label_image.DisconnectPipeline()
+                    self._largest_roi_rendered_label_image.SetOrigin(
                         self.roi[0][:dimension])
-                    self.rendered_label_map = self._largest_roi_rendered_label_map
+                    self.rendered_label_image = self._largest_roi_rendered_label_image
                 return
             if self.image:
                 shrunk = self.shrinker.GetOutput()
                 shrunk.DisconnectPipeline()
                 shrunk.SetOrigin(self.roi[0][:dimension])
                 self.rendered_image = shrunk
-            if self.label_map:
-                shrunk = self.label_map_shrinker.GetOutput()
+            if self.label_image:
+                shrunk = self.label_image_shrinker.GetOutput()
                 shrunk.DisconnectPipeline()
                 shrunk.SetOrigin(self.roi[0][:dimension])
-                self.rendered_label_map = shrunk
+                self.rendered_label_image = shrunk
         else:
             if self.image:
                 self.rendered_image = self.image
-            if self.label_map:
-                self.rendered_label_map = self.label_map
+            if self.label_image:
+                self.rendered_label_image = self.label_image
 
-    @validate('label_map_weights')
-    def _validate_label_map_weights(self, proposal):
+    @validate('label_image_weights')
+    def _validate_label_image_weights(self, proposal):
         """Check the number of weights equals the number of labels."""
         value = proposal['value']
         value = np.array(value, dtype=np.float32)
-        if self.rendered_label_map:
-            labels = len(np.unique(itk.array_view_from_image(self.rendered_label_map)))
+        if self.rendered_label_image:
+            labels = len(np.unique(itk.array_view_from_image(self.rendered_label_image)))
             if labels != len(value):
                 raise TraitError('Number of labels, {0}, does not equal number of label weights, {1}'.format(labels, len(value)))
         return value
 
-    @validate('label_map_blend')
-    def _validate_label_map_blend(self, proposal):
+    @validate('label_image_blend')
+    def _validate_label_image_blend(self, proposal):
         """Enforce 0 <= value <= 1.0."""
         value = proposal['value']
         if value < 0.0:
@@ -590,8 +590,8 @@ class Viewer(ViewerParent):
             return 1.0
         return value
 
-    @validate('label_map_blend')
-    def _validate_label_map_blend(self, proposal):
+    @validate('label_image_blend')
+    def _validate_label_image_blend(self, proposal):
         """Enforce 0 <= value <= 1.0."""
         value = proposal['value']
         if value < 0.0:
@@ -748,7 +748,7 @@ class Viewer(ViewerParent):
         if self.image:
             image = self.image
         else:
-            image = self.label_map
+            image = self.label_image
         dimension = image.GetImageDimension()
         index = image.TransformPhysicalPointToIndex(
             tuple(self.roi[0][:dimension]))
@@ -768,7 +768,7 @@ class Viewer(ViewerParent):
         if self.image:
             image = self.image
         else:
-            image = self.label_map
+            image = self.label_image
         dimension = image.GetImageDimension()
         region = self.roi_region()
         index = region.GetIndex()
@@ -780,10 +780,10 @@ class Viewer(ViewerParent):
 
 
 def view(image=None,  # noqa: C901
-         label_map=None,  # noqa: C901
-         label_map_names=None,  # noqa: C901
-         label_map_weights=None,  # noqa: C901
-         label_map_blend=0.5,
+         label_image=None,  # noqa: C901
+         label_image_names=None,  # noqa: C901
+         label_image_weights=None,  # noqa: C901
+         label_image_blend=0.5,
          cmap=None,
          lut='glasbey',
          select_roi=False,
@@ -856,17 +856,17 @@ def view(image=None,  # noqa: C901
     image : array_like, itk.Image, or vtk.vtkImageData
         The 2D or 3D image to visualize.
 
-    label_map : array_like, itk.Image, or vtk.vtkImageData
+    label_image : array_like, itk.Image, or vtk.vtkImageData
         The 2D or 3D label map to visualize. If an image is also provided, the
         label map must have the same size.
 
-    label_map_names : OrderedDict of (label_value, label_name)
+    label_image_names : OrderedDict of (label_value, label_name)
         String names associated with the integer label values.
 
-    label_map_weights : 1D numpy float32 array, default: None
+    label_image_weights : 1D numpy float32 array, default: None
         Rendering weights, from 0.0 to 1.0, associated labels in the label map.
 
-    label_map_blend : float, default: 0.5
+    label_image_blend : float, default: 0.5
         Label map blend with intensity image, from 0.0 to 1.0.
 
     vmin: list of floats, default: Minimum of the image pixel buffer
@@ -1063,9 +1063,9 @@ def view(image=None,  # noqa: C901
             image = images[0]
 
     viewer = Viewer(image=image,
-                    label_map=label_map,
-                    label_map_names=label_map_names,
-                    label_map_weights=label_map_weights,
+                    label_image=label_image,
+                    label_image_names=label_image_names,
+                    label_image_weights=label_image_weights,
                     cmap=cmap,
                     lut=lut,
                     select_roi=select_roi,
