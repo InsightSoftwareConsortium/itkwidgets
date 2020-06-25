@@ -1660,9 +1660,11 @@ const ViewerView = widgets.DOMWidgetView.extend({
     if (vmin !== null && this.model.hasOwnProperty('itkVtkViewer')) {
       const rendered_image = this.model.get('rendered_image')
       for (let component = 0; component < rendered_image.imageType.components; component++) {
-        const colorRange = this.model.itkVtkViewer.getColorRange(component).slice()
-        colorRange[0] = vmin[component]
-        this.model.itkVtkViewer.setColorRange(component, colorRange)
+        let colorRange = this.model.itkVtkViewer.getColorRange(component)
+        if (colorRange) {
+          colorRange[0] = vmin[component]
+          this.model.itkVtkViewer.setColorRange(component, colorRange)
+        }
       }
     }
   },
@@ -1672,9 +1674,11 @@ const ViewerView = widgets.DOMWidgetView.extend({
     if (vmax !== null && this.model.hasOwnProperty('itkVtkViewer')) {
       const rendered_image = this.model.get('rendered_image')
       for (let component = 0; component < rendered_image.imageType.components; component++) {
-        const colorRange = this.model.itkVtkViewer.getColorRange(component).slice()
-        colorRange[1] = vmax[component]
-        this.model.itkVtkViewer.setColorRange(component, colorRange)
+        let colorRange = this.model.itkVtkViewer.getColorRange(component)
+        if (colorRange) {
+          colorRange[1] = vmax[component]
+          this.model.itkVtkViewer.setColorRange(component, colorRange)
+        }
       }
     }
   },
