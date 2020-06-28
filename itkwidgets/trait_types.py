@@ -295,23 +295,29 @@ def image_point_from_json(js, manager=None):
     if js is None:
         return None
     else:
+        label = None
+        if js['label'] is not None:
+            label = int(js['label'])
         return ImagePoint(
             index = array_serialization['from_json'](js['index'], manager),
             position = array_serialization['from_json'](js['position'], manager),
             value = array_serialization['from_json'](js['value'], manager),
-            label = int(js['label']),
+            label = label,
         )
 
 def image_point_to_json(image_point, manager=None):
     if image_point is None:
         return None
     else:
+        label = None
+        if image_point.label is not None:
+            label = int(image_point.label)
         return {
             'index': array_serialization['to_json'](image_point.index, manager),
             'position': array_serialization['to_json'](image_point.position,
                 manager),
             'value': array_serialization['to_json'](image_point.value, manager),
-            'label': int(image_point.label, manager),
+            'label': label,
         }
 
 image_point_serialization = {
