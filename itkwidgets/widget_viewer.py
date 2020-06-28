@@ -1074,6 +1074,7 @@ def view(image=None,  # noqa: C901
                     point_set_colors=point_set_colors,
                     point_set_opacities=point_set_opacities,
                     point_set_representations=point_set_representations,
+                    point_set_sizes=point_set_sizes,
                     geometries=geometries, geometry_colors=geometry_colors, geometry_opacities=geometry_opacities,
                     rotate=rotate, ui_collapsed=ui_collapsed, annotations=annotations, mode=mode,
                     **kwargs)
