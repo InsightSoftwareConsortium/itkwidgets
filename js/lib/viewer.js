@@ -1661,7 +1661,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       const rendered_image = this.model.get('rendered_image')
       for (let component = 0; component < rendered_image.imageType.components; component++) {
         let colorRange = this.model.itkVtkViewer.getColorRange(component)
-        if (colorRange) {
+        if (colorRange[0] && vmin.length > component) {
           colorRange[0] = vmin[component]
           this.model.itkVtkViewer.setColorRange(component, colorRange)
         }
@@ -1675,7 +1675,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       const rendered_image = this.model.get('rendered_image')
       for (let component = 0; component < rendered_image.imageType.components; component++) {
         let colorRange = this.model.itkVtkViewer.getColorRange(component)
-        if (colorRange) {
+        if (colorRange[1] && vmax.length > component) {
           colorRange[1] = vmax[component]
           this.model.itkVtkViewer.setColorRange(component, colorRange)
         }
