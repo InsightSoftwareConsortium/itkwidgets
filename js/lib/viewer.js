@@ -905,11 +905,11 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.itkVtkViewer.on('opacityGaussiansChanged',
       onOpacityGaussiansChanged
     )
-    const gaussians = this.model.get('opacity_gaussians')
-    if (gaussians.length === 0) {
-      this.model.set('opacity_gaussians', this.model.itkVtkViewer.getOpacityGaussians())
-    }
     if (rendered_image) {
+      const gaussians = this.model.get('opacity_gaussians')
+      if (gaussians === null || gaussians.length === 0) {
+        this.model.set('opacity_gaussians', this.model.itkVtkViewer.getOpacityGaussians())
+      }
       this.opacity_gaussians_changed()
     }
 
