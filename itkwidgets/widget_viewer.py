@@ -143,11 +143,10 @@ class Viewer(ViewerParent):
         sync=True,
         **itkimage_serialization)
     label_image_names = List(
-        trait=Tuple(),
         allow_none=True,
         default_value=None,
         help="Names for labels in the label map.").tag(
-        sync=True)
+        trait=Tuple(), sync=True)
     label_image_blend = CFloat(
         default_value=0.5,
         help="Blend of the label map with the intensity image.").tag(sync=True)
@@ -161,7 +160,7 @@ class Viewer(ViewerParent):
     cmap = List(
         default_value=None,
         allow_none=True,
-        trait=Colormap('Viridis (matplotlib)', allow_none=True)).tag(sync=True)
+        ).tag(trait=Colormap('Viridis (matplotlib)', allow_none=True), sync=True)
     _custom_cmap = NDArray(dtype=np.float32, default_value=None, allow_none=True,
                            help="RGB triples from 0.0 to 1.0 that define a custom linear, sequential colormap")\
         .tag(sync=True, **array_serialization)\
@@ -207,8 +206,7 @@ class Viewer(ViewerParent):
     channels = List(
         default_value=None,
         allow_none=True,
-        trait=CBool,
-        help="Components or channels enabled in a multi-component image.").tag(sync=True)
+        help="Components or channels enabled in a multi-component image.").tag(trait=CBool(), sync=True)
     blend_mode = CaselessStrEnum(
         ('composite',
          'max',
@@ -220,16 +218,16 @@ class Viewer(ViewerParent):
                   help="Region of interest: [[lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z]]")\
         .tag(sync=True, **array_serialization)\
         .valid(shape_constraints(2, 3))
-    vmin = List(trait=CFloat(),
+    vmin = List(
         default_value=None,
         allow_none=True,
         help="Value that maps to the minimum of image colormap.").tag(
-        sync=True)
-    vmax = List(trait=CFloat(),
+        trait=CFloat(), sync=True)
+    vmax = List(
         default_value=None,
         allow_none=True,
         help="Value that maps to the maximum of image colormap.").tag(
-        sync=True)
+        trait=CFloat(), sync=True)
     _largest_roi = NDArray(dtype=np.float64, default_value=np.zeros((2, 3), dtype=np.float64),
                            help="Largest possible region of interest: "
                            "[[lower_x, lower_y, lower_z), (upper_x, upper_y, upper_z]]")\
@@ -256,10 +254,9 @@ class Viewer(ViewerParent):
         help="Units to display in the scale bar.").tag(
         sync=True)
     point_set_representations = List(
-        trait=Unicode(),
         default_value=[],
         help="Point set representation").tag(
-        sync=True)
+        trait=Unicode(), sync=True)
     point_sets = PointSetList(
         default_value=None,
         allow_none=True,
@@ -279,10 +276,9 @@ class Viewer(ViewerParent):
         .tag(sync=True, **array_serialization)\
         .valid(shape_constraints(None,))
     point_set_representations = List(
-        trait=Unicode(),
         default_value=[],
         help="Point set representation").tag(
-        sync=True)
+        trait=Unicode(), sync=True)
     geometries = PolyDataList(
         default_value=None,
         allow_none=True,
@@ -324,10 +320,9 @@ class Viewer(ViewerParent):
         .tag(sync=True, **array_serialization)\
         .valid(shape_constraints(3, 3))
     background = Tuple(
-        trait=CFloat,
         allow_none=True,
         default_value=(),
-        help="Background color.").tag(sync=True)
+        help="Background color.").tag(trait=CFloat(), sync=True)
 
     def __init__(self, **kwargs):  # noqa: C901
         if 'point_set_colors' in kwargs:
