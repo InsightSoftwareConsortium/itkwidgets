@@ -109,7 +109,7 @@ Data types:
 
 - `Binder: 2D ITK Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples%2F2DImage.ipynb>`_
 - `Binder: 3D ITK Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples%2F3DImage.ipynb>`_
-- `Binder: 3D Label Maps <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples%2FLabelImages.ipynb>`_
+- `Binder: 3D Label Images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples%2FLabelImages.ipynb>`_
 - `Binder: Dask Array images <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/DaskArray.ipynb>`_
 - `Binder: Large volumes <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/LargeVolumes.ipynb>`_
 - `Binder: NumPy array images (processed with SciPy) <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/NumPyArrayImage.ipynb>`_
