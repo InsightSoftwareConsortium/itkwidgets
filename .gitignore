@@ -27,6 +27,7 @@ examples/Bunny.vtp
 examples/uGridEx.vtk
 examples/input.tiff
 examples/Normal071-VascularNetwork.tre
+examples/video.mp4
 
 js/lib/ZstdDecompress/web-build/
 .pytest_cache/
