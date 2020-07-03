@@ -14,5 +14,4 @@ jobs:
           docker-username: thewtex
           docker-password: "${{ secrets.DOCKER_PASSWORD }}"
           docker-image-name: insighttoolkit/itkwidgets
-          notebooks:
-            - examples/3DImage.ipynb
+          notebooks: "examples/3DImage.ipynb"
