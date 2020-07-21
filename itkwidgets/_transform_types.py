@@ -237,11 +237,16 @@ def to_itk_image(image_like):
 
     if is_arraylike(image_like):
         array = np.asarray(image_like)
-        case_use_view = array.flags['OWNDATA']
+        can_use_view = array.flags['OWNDATA']
         if have_dask and isinstance(image_like, dask.array.core.Array):
-            case_use_view = False
+            can_use_view = False
         array = np.ascontiguousarray(array)
-        if case_use_view:
+        # JavaScript does not support 64-bit integers
+        if array.dtype == np.int64:
+            array = array.astype(np.float32)
+        elif array.dtype == np.uint64:
+            array = array.astype(np.float32)
+        if can_use_view:
             image_from_array = itk.image_view_from_array(array)
         else:
             image_from_array = itk.image_from_array(array)

@@ -403,12 +403,6 @@ class Viewer(ViewerParent):
             for dim in range(dimension):
                 if size[dim] > self.size_limit_3d[dim]:
                     self._downsampling = True
-        if self._downsampling and self.image:
-            self.extractor = itk.ExtractImageFilter.New(self.image)
-            self.shrinker = itk.BinShrinkImageFilter.New(self.extractor)
-        if self._downsampling and self.label_image:
-            self.label_image_extractor = itk.ExtractImageFilter.New(self.label_image)
-            self.label_image_shrinker = itk.ShrinkImageFilter.New(self.label_image_extractor)
         self._update_rendered_image()
         if self._downsampling:
             self.observe(self._on_roi_changed, ['roi'])
@@ -488,8 +482,12 @@ class Viewer(ViewerParent):
                     self.size_limit_3d, dimension, size)
             self._scale_factors = np.array(scale_factors, dtype=np.uint8)
             if self.image:
+                self.extractor = itk.ExtractImageFilter.New(self.image)
+                self.shrinker = itk.ShrinkImageFilter.New(self.extractor)
                 self.shrinker.SetShrinkFactors(scale_factors[:dimension])
             if self.label_image:
+                self.label_image_extractor = itk.ExtractImageFilter.New(self.label_image)
+                self.label_image_shrinker = itk.ShrinkImageFilter.New(self.label_image_extractor)
                 self.label_image_shrinker.SetShrinkFactors(scale_factors[:dimension])
 
             region = itk.ImageRegion[dimension]()
