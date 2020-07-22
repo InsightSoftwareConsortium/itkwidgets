@@ -844,15 +844,14 @@ const ViewerView = widgets.DOMWidgetView.extend({
         this.model.skipOnCroppingPlanesChanged = true
         this.model.set(
           'roi',
-          { array: new Float64Array([
+          new Float64Array([
               bboxCorners[0][0],
               bboxCorners[0][1],
               bboxCorners[0][2],
               bboxCorners[7][0],
               bboxCorners[7][1],
               bboxCorners[7][2]
-          ]),
-          shape: [2,3] }
+          ])
         )
         this.model.save_changes()
       } else {
