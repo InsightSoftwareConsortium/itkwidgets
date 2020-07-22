@@ -9,7 +9,7 @@ if len(sys.argv) < 2:
 output_file = sys.argv[1]
 
 with open(output_file, 'w') as fp:
-    tags = subprocess.check_output(['git', 'tag', '--sort=taggerdate']).decode('utf-8')
+    tags = subprocess.check_output(['git', 'tag', '--sort=creatordate']).decode('utf-8')
     recent_tags = tags.split()[-2:]
     previous_tag = recent_tags[0]
     current_tag = recent_tags[1]
