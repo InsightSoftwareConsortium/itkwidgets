@@ -1,6 +1,6 @@
 {
   "name": "itkwidgets",
-  "version": "0.31.3",
+  "version": "0.31.4",
   "description": "Interactive Jupyter widgets to visualize images in 2D and 3D",
   "author": "Matthew McCormick",
   "license": "Apache-2.0",
