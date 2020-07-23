@@ -4,6 +4,7 @@ __all__ = ['version_info', '__version__',
            'compare',
            'line_profile',
            'cm',
+           'lut',
            '_jupyter_nbextension_paths']
 
 from ._version import version_info, __version__
@@ -12,7 +13,7 @@ from .widget_viewer import Viewer, view
 from .widget_compare import compare
 from .widget_checkerboard import checkerboard
 from .widget_line_profiler import line_profile
-from . import cm
+from . import cm, lut
 
 
 def _jupyter_nbextension_paths():
