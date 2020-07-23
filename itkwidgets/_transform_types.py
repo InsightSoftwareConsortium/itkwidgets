@@ -232,7 +232,7 @@ def _numpy_array_to_point_set(point_set_like):
 
 def to_itk_image(image_like):
 
-    if isinstance(image_like, itk.Image):
+    if isinstance(image_like, (itk.Image, itk.VectorImage)):
         return image_like
 
     if is_arraylike(image_like):
