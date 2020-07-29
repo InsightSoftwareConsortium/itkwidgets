@@ -16,7 +16,7 @@ import numpy as np
 import ipywidgets as widgets
 from traitlets import CBool, CFloat, CInt, Unicode, CaselessStrEnum, List, validate, TraitError, Tuple
 from ipydatawidgets import NDArray, array_serialization, shape_constraints
-from .trait_types import ITKImage, ImagePointTrait, ImagePoint, PointSetList, PolyDataList, itkimage_serialization, image_point_serialization, polydata_list_serialization, Colormap, LookupTable
+from .trait_types import ITKImage, ImagePointTrait, ImagePoint, PointSetList, PolyDataList, itkimage_serialization, image_point_serialization, polydata_list_serialization, Colormap, LookupTable, Camera
 
 try:
     import ipywebrtc
@@ -313,7 +313,7 @@ class Viewer(ViewerParent):
         default_value='v',
         help="View mode: x: x plane, y: y plane, z: z plane, v: volume rendering").tag(
         sync=True)
-    camera = NDArray(dtype=np.float32, default_value=np.zeros((3, 3), dtype=np.float32),
+    camera = Camera(dtype=np.float32, default_value=np.zeros((3, 3), dtype=np.float32),
                      help="Camera parameters: [[position_x, position_y, position_z], "
                      "[focal_point_x, focal_point_y, focal_point_z], "
                      "[view_up_x, view_up_y, view_up_z]]")\
@@ -833,7 +833,7 @@ def view(image=None,  # noqa: C901
             'z': z-plane
             'v': volume rendering
 
-    camera: 3x3 numpy float32 array
+    camera: 3x3 numpy float32 array, or vtk.vtkCamera
         Camera parameters:
             [[position_x,    position_y,    position_z],
              [focal_point_x, focal_point_y, focal_point_z],
