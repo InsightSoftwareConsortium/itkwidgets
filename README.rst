@@ -78,9 +78,10 @@ Interactive Jupyter_ widgets to visualize images, point sets, and meshes.
 - Exquisite volume rendering
 - Tri-plane volume slicing
 - Innovative, powerful opacity transfer function / window / level widget
-- Label map segmentation 2D and 3D rendering
+- Label image segmentation 2D and 3D rendering
 - Anisotropic voxel spacing supported
 - Image line profile widget
+- Image statistics widget
 - Compare images widget
 - Widgets to select solid colors for geometry or colormaps when point data or
   cell data is availble
@@ -119,12 +120,14 @@ Data types:
 - `Binder: ITK Mesh <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/Mesh.ipynb>`_
 - `Binder: ITK PointBasedSpatialObject <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/PointBasedSpatialObject.ipynb>`_
 - `Binder: skan segmentation skeleton <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SegmentationSkeleton.ipynb>`_
+- `Binder: skan segmentation skeleton <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/SegmentationSkeleton.ipynb>`_
 
 Recipes:
 
 - `Binder: Compare images with a checkerboard pattern <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/Checkerboard.ipynb>`_
 - `Binder: Compare images side by side <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/CompareImages.ipynb>`_
 - `Binder: Examine a line profile <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/LineProfile.ipynb>`_
+- `Binder: Inspect image label statistics <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/ImageLabelStatistics.ipynb>`_
 - `Binder: Interactively explore algorithm parameters <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/InteractiveParameterExploration.ipynb>`_
 - `Binder: Record a video <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/RecordAVideo.ipynb>`_
 - `Binder: Restore a volume opacity transfer function <https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/master?urlpath=lab/tree/examples/VolumeOpacityTransferFunction.ipynb>`_
@@ -290,6 +293,7 @@ or how to:
 - `Compares images with a checkerboard pattern <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/Checkerboard.ipynb>`_
 - `Compares images side by side <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/CompareImages.ipynb>`_
 - `Examine a line profile <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/LineProfile.ipynb>`_
+- `Inspect image label statistcs <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/ImageLabelStatistics.ipynb>`_
 - `Interatively explore algorithm parameters <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/InteractiveParameterExploration.ipynb>`_
 - `Record a video <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/RecordAVideo.ipynb>`_
 - `Restore a volume opacity transfer function <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/VolumeOpacityTransferFunction.ipynb>`_
