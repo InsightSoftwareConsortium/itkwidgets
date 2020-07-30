@@ -2,3 +2,4 @@ notebooks:
     - examples/2DImage.ipynb
     - examples/3DImage.ipynb
     - examples/ImageLabelStatistics.ipynb
+    - examples/LineProfile.ipynb

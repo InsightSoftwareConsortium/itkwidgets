@@ -7,6 +7,5 @@ ipywidgets>=7.5.1
 ipympl>=0.4.1
 matplotlib
 numpy
-scipy
 six
 zstandard

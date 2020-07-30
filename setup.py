@@ -162,7 +162,6 @@ setup_args = {
         'ipympl>=0.4.1',
         'matplotlib',
         'numpy',
-        'scipy',
         'six',
         'zstandard',
     ],
