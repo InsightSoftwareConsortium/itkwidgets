@@ -305,6 +305,10 @@ class Viewer(ViewerParent):
         default_value=True,
         help="Show annotations.").tag(
         sync=True)
+    axes = CBool(
+        default_value=False,
+        help="Display axes.").tag(
+        sync=True)
     mode = CaselessStrEnum(
         ('x',
          'y',
@@ -788,7 +792,7 @@ def view(image=None,  # noqa: C901
          point_set_representations=[], point_set_sizes=[],
          geometries=[],
          geometry_colors=[], geometry_opacities=[],
-         ui_collapsed=False, rotate=False, annotations=True, mode='v',
+         ui_collapsed=False, rotate=False, annotations=True, axes=False, mode='v',
          **kwargs):
     """View the image and/or point sets and/or geometries.
 
@@ -824,6 +828,9 @@ def view(image=None,  # noqa: C901
     annotations : bool, default: True
         Display annotations describing orientation and the value of a
         mouse-position-based data probe.
+
+    axes : bool, default: False
+        Display axes.
 
     mode: 'x', 'y', 'z', or 'v', default: 'v'
         Only relevant for 3D scenes.
@@ -1074,6 +1081,7 @@ def view(image=None,  # noqa: C901
                     point_set_representations=point_set_representations,
                     point_set_sizes=point_set_sizes,
                     geometries=geometries, geometry_colors=geometry_colors, geometry_opacities=geometry_opacities,
-                    rotate=rotate, ui_collapsed=ui_collapsed, annotations=annotations, mode=mode,
+                    rotate=rotate, ui_collapsed=ui_collapsed,
+                    annotations=annotations, axes=axes, mode=mode,
                     **kwargs)
     return viewer

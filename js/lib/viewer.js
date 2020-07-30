@@ -154,6 +154,7 @@ const ViewerModel = widgets.DOMWidgetModel.extend(
         ui_collapsed: false,
         rotate: false,
         annotations: true,
+        axes: true,
         mode: 'v',
         camera: new Float32Array(9),
         background: null
@@ -712,6 +713,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
     const rendered_image = this.model.get('rendered_image')
     const rendered_label_image = this.model.get('rendered_label_image')
     this.annotations_changed()
+    this.axes_changed()
 
     const onBackgroundChanged = (background) => {
       this.model.set('background', background)
@@ -780,6 +782,14 @@ const ViewerView = widgets.DOMWidgetView.extend({
       }
     }
     this.model.itkVtkViewer.on('toggleAnnotations', onAnnotationsToggle)
+
+    const onAxesToggle = (enabled) => {
+      if (enabled !== this.model.get('axes')) {
+        this.model.set('axes', enabled)
+        this.model.save_changes()
+      }
+    }
+    this.model.itkVtkViewer.on('toggleAxes', onAxesToggle)
 
     const onInterpolationToggle = (enabled) => {
       if (enabled !== this.model.get('interpolation')) {
@@ -1214,6 +1224,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
     this.model.on('change:ui_collapsed', this.ui_collapsed_changed, this)
     this.model.on('change:rotate', this.rotate_changed, this)
     this.model.on('change:annotations', this.annotations_changed, this)
+    this.model.on('change:axes', this.axes_changed, this)
     this.model.on('change:mode', this.mode_changed, this)
     this.model.on('change:units', this.units_changed, this)
     this.model.on('change:camera', this.camera_changed, this)
@@ -1544,6 +1555,13 @@ const ViewerView = widgets.DOMWidgetView.extend({
     const annotations = this.model.get('annotations')
     if (this.model.hasOwnProperty('itkVtkViewer')) {
       this.model.itkVtkViewer.setAnnotationsEnabled(annotations)
+    }
+  },
+
+  axes_changed: function () {
+    const axes = this.model.get('axes')
+    if (this.model.hasOwnProperty('itkVtkViewer')) {
+      this.model.itkVtkViewer.setAxesEnabled(axes)
     }
   },
 
