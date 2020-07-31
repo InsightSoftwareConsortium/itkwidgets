@@ -15,9 +15,15 @@ try:
     from functools import reduce
 except ImportError:
     pass
+have_vtk = False
+try:
+    import vtk
+    have_vtk = True
+except ImportError:
+    pass
 
 from ._transform_types import to_itk_image, to_point_set, to_geometry
-from ipydatawidgets import array_serialization
+from ipydatawidgets import array_serialization, NDArray
 
 # from IPython.core.debugger import set_trace
 
@@ -721,3 +727,19 @@ class LookupTable(traitlets.Unicode):
                 'Custom'):
             raise self.error('Invalid lookup table')
         return super(LookupTable, self).validate(obj, value)
+
+class Camera(NDArray):
+    """A trait type holding visualization camera parameters."""
+
+    info_text = 'Camera parameters: [[position_x, position_y, position_z], '\
+                                    '[focal_point_x, focal_point_y, focal_point_z], '\
+                                    '[view_up_x, view_up_y, view_up_z]]'
+
+    def validate(self, obj, value):
+        result = value
+        if have_vtk and isinstance(value, vtk.vtkCamera):
+            result = np.zeros((3,3), dtype=np.float32)
+            result[0,:] = value.GetPosition()
+            result[1,:] = value.GetFocalPoint()
+            result[2,:] = value.GetViewUp()
+        return super(Camera, self).validate(obj, result)
