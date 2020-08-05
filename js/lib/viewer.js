@@ -824,27 +824,27 @@ const ViewerView = widgets.DOMWidgetView.extend({
     }
     this.model.itkVtkViewer.on('selectLookupTable', onSelectLookupTable)
 
-    const onChangeColorRange = (component, colorRange) => {
-      const vmin = this.model.get('vmin')
+    const onColorRangesChanged = (colorRanges) => {
+      let vmin = this.model.get('vmin')
       if (vmin === null) {
         vmin = []
       }
-      if (colorRange[0] !== vmin[component]) {
-        vmin[component] = colorRange[0]
-        this.model.set('vmin', vmin)
-        this.model.save_changes()
-      }
-      const vmax = this.model.get('vmax')
+      let vmax = this.model.get('vmax')
       if (vmax === null) {
         vmax = []
       }
-      if (colorRange[1] !== vmax[component]) {
+      const rendered_image = this.model.get('rendered_image')
+      const components = rendered_image.imageType.components
+      for (let component = 0; component < components; component++) {
+        const colorRange = colorRanges[component]
+        vmin[component] = colorRange[0]
         vmax[component] = colorRange[1]
-        this.model.set('vmax', vmax)
-        this.model.save_changes()
       }
+      this.model.set('vmax', vmax)
+      this.model.set('vmin', vmin)
+      this.model.save_changes()
     }
-    this.model.itkVtkViewer.on('changeColorRange', onChangeColorRange)
+    this.model.itkVtkViewer.on('colorRangesChanged', onColorRangesChanged)
 
     const onCroppingPlanesChanged = (planes, bboxCorners) => {
       if (
