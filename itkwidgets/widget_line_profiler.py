@@ -36,8 +36,8 @@ class LineProfiler(Viewer):
     _model_name = Unicode('LineProfilerModel').tag(sync=True)
     _view_module = Unicode('itkwidgets').tag(sync=True)
     _model_module = Unicode('itkwidgets').tag(sync=True)
-    _view_module_version = Unicode('^0.31.4').tag(sync=True)
-    _model_module_version = Unicode('^0.31.4').tag(sync=True)
+    _view_module_version = Unicode('^0.32.0').tag(sync=True)
+    _model_module_version = Unicode('^0.32.0').tag(sync=True)
     point1 = NDArray(dtype=np.float64, default_value=np.zeros((3,), dtype=np.float64),
                      help="First point in physical space that defines the line profile")\
         .tag(sync=True, **array_serialization)\
