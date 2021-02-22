@@ -251,15 +251,31 @@ def to_itk_image(image_like):
         else:
             image_from_array = itk.image_from_array(array)
         return image_from_array
+
     elif have_vtk and isinstance(image_like, vtk.vtkImageData):
         from vtk.util import numpy_support as vtk_numpy_support
         array = vtk_numpy_support.vtk_to_numpy(
             image_like.GetPointData().GetScalars())
-        array.shape = tuple(image_like.GetDimensions())[::-1]
+        dims = list(image_like.GetDimensions())
+        spacing = list(image_like.GetSpacing())
+        origin = list(image_like.GetOrigin())
+
+        # Check for zdim==1
+        zdim = dims.pop()
+        if zdim>1:
+            # zdim>1, put it back in the dims array
+            dims.append(zdim)
+        else:
+            #zdim==1, remove z-spacing and z-origin
+            spacing.pop()
+            origin.pop()
+
+        array.shape = dims[::-1]
         image_from_array = itk.image_view_from_array(array)
-        image_from_array.SetSpacing(image_like.GetSpacing())
-        image_from_array.SetOrigin(image_like.GetOrigin())
+        image_from_array.SetSpacing(spacing)
+        image_from_array.SetOrigin(origin)
         return image_from_array
+
     elif have_simpleitk and isinstance(image_like, sitk.Image):
         array = sitk.GetArrayViewFromImage(image_like)
         image_from_array = itk.image_view_from_array(array)
@@ -271,6 +287,7 @@ def to_itk_image(image_like):
         itkdirection = itk.matrix_from_array(npdirection)
         image_from_array.SetDirection(itkdirection)
         return image_from_array
+
     elif have_imagej:
         import imglyb
         if isinstance(image_like,
@@ -278,6 +295,7 @@ def to_itk_image(image_like):
             array = imglyb.to_numpy(image_like)
             image_from_array = itk.image_view_from_array(array)
             return image_from_array
+
     elif isinstance(image_like, itk.ProcessObject):
         return itk.output(image_like)
 
