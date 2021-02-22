@@ -267,7 +267,7 @@ def to_itk_image(image_like):
         image_from_array.SetOrigin(image_like.GetOrigin())
         direction = image_like.GetDirection()
         npdirection = np.asarray(direction)
-        npdirection = np.reshape(npdirection, (-1, 3))
+        npdirection = np.reshape(npdirection, (-1, image_like.GetDimension()))
         itkdirection = itk.matrix_from_array(npdirection)
         image_from_array.SetDirection(itkdirection)
         return image_from_array
