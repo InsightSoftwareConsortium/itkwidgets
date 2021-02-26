@@ -139,6 +139,7 @@ def _vtk_to_vtkjs(data_array):
         9: 'BigUint64Array',
         10: 'Float32Array',
         11: 'Float64Array',
+        12: 'BigInt64Array',
         16: 'BigInt64Array',
         17: 'BigUint64Array',
     }
