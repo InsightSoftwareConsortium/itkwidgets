@@ -33,7 +33,7 @@ itkwidgets
     :target: https://zenodo.org/badge/latestdoi/121581663
     :alt: Software citation DOI
 
-Interactive Jupyter_ widgets to visualize images, point sets, and meshes.
+Interactive Jupyter_ widgets to visualize images, point sets, and meshes on the web.
 
 .. image:: https://i.imgur.com/d8aXycW.png
     :width: 800px
