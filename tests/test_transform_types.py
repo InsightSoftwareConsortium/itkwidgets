@@ -41,9 +41,13 @@ def test_mesh_to_geometry():
 
     points = mesh.GetPoints()
     point_template = itk.template(points)
+    identifier_type = point_template[1][0]
     element_type = point_template[1][1]
-    point_values = itk.PyVectorContainer[element_type].array_from_vector_container(
-        points)
+    
+    if hasattr(itk, 'array_from_vector_container'):
+        point_values = itk.array_from_vector_container(points)
+    else:
+        point_values = itk.PyVectorContainer[element_type].array_from_vector_container(points)
 
     assert(geometry['vtkClass'] == 'vtkPolyData')
     assert(geometry['points']['vtkClass'] == 'vtkPoints')
@@ -121,9 +125,13 @@ def test_vtkjs_to_zarr():
 
     points = mesh.GetPoints()
     point_template = itk.template(points)
+    identifier_type = point_template[1][0]
     element_type = point_template[1][1]
-    point_values = itk.PyVectorContainer[element_type].array_from_vector_container(
-        points)
+    
+    if hasattr(itk, 'array_from_vector_container'):
+        point_values = itk.array_from_vector_container(points)
+    else:
+        point_values = itk.PyVectorContainer[element_type].array_from_vector_container(points)
 
     assert(geometry['vtkClass'] == 'vtkPolyData')
     assert(geometry['points']['vtkClass'] == 'vtkPoints')
