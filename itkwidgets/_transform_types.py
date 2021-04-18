@@ -313,13 +313,14 @@ def to_point_set(point_set_like):  # noqa: C901
         point_set = {'vtkClass': 'vtkPolyData'}
 
         points = itk_polydata.GetPoints()
+        
         point_template = itk.template(points)
         element_type = point_template[1][1]
+        
         # todo: test array_view here and below
-        point_values = itk.PyVectorContainer[element_type].array_from_vector_container(
-            points)
-        if len(
-                point_values.shape) > 1 and point_values.shape[1] == 2 or point_values.shape[1] == 3:
+        point_values = itk.array_from_vector_container(points)
+
+        if len(point_values.shape) > 1 and point_values.shape[1] == 2 or point_values.shape[1] == 3:
             if point_values.shape[1] == 2:
                 point_values = np.hstack(
                     (point_values, -5.0e-6 * np.ones((point_values.shape[0], 1)))).astype(np.float32)
@@ -334,10 +335,13 @@ def to_point_set(point_set_like):  # noqa: C901
 
         itk_point_data = itk_polydata.GetPointData()
         if itk_point_data and itk_point_data.Size():
-            pixel_type = itk.template(itk_polydata)[1][0]
-            data_type, number_of_components = _itk_pixel_to_vtkjs_type_components[pixel_type]
-            data = itk.PyVectorContainer[pixel_type].array_from_vector_container(
-                itk_point_data)
+            point_data_template = itk.template(itk_point_data)
+            element_type = point_data_template[1][1]
+
+            # Make use of functional interface if available
+            data = itk.array_from_vector_container(itk_point_data)
+
+            data_type, number_of_components = _itk_pixel_to_vtkjs_type_components[element_type]
             point_data = {
                 "vtkClass": "vtkDataSetAttributes",
                 "activeScalars": 0,
@@ -423,13 +427,15 @@ def to_geometry(geometry_like):  # noqa: C901
         itk_polydata = itk.mesh_to_poly_data_filter(geometry_like)
 
         geometry = {'vtkClass': 'vtkPolyData'}
-
+        
         points = itk_polydata.GetPoints()
         point_template = itk.template(points)
         element_type = point_template[1][1]
+        
         # todo: test array_view here and below
-        point_values = itk.PyVectorContainer[element_type].array_from_vector_container(
-            points)
+        # Make use of functional interface if available
+        point_values = itk.array_from_vector_container(points)
+
         if len(
                 point_values.shape) > 1 and point_values.shape[1] == 2 or point_values.shape[1] == 3:
             if point_values.shape[1] == 2:
@@ -451,8 +457,8 @@ def to_geometry(geometry_like):  # noqa: C901
         for cell_type, itk_cells in [('verts', itk_verts), ('lines', itk_lines),
                                      ('polys', itk_polys), ('strips', itk_strips)]:
             if itk_cells.Size():
-                data = itk.PyVectorContainer[itk.UI].array_from_vector_container(
-                    itk_cells)
+                # Make use of functional interface if available
+                data = itk.array_from_vector_container(itk_cells)
                 cells = {'vtkClass': 'vtkCellArray',
                          'name': '_' + cell_type,
                          'numberOfComponents': 1,
@@ -460,13 +466,18 @@ def to_geometry(geometry_like):  # noqa: C901
                          'dataType': 'Uint32Array',
                          'values': data}
                 geometry[cell_type] = cells
-
+            
         itk_point_data = itk_polydata.GetPointData()
         if itk_point_data and itk_point_data.Size():
-            pixel_type = itk.template(itk_polydata)[1][0]
-            data_type, number_of_components = _itk_pixel_to_vtkjs_type_components[pixel_type]
-            data = itk.PyVectorContainer[pixel_type].array_from_vector_container(
-                itk_point_data)
+            
+            # Template parameter list [identifier_type, element_type]
+            point_data_template = itk.template(itk_point_data)
+            element_type = point_data_template[1][1]
+
+            # Make use of functional interface if available
+            data = itk.array_from_vector_container(itk_point_data)
+
+            data_type, number_of_components = _itk_pixel_to_vtkjs_type_components[element_type]
             point_data = {
                 "vtkClass": "vtkDataSetAttributes",
                 "activeScalars": 0,
@@ -483,10 +494,12 @@ def to_geometry(geometry_like):  # noqa: C901
             geometry['pointData'] = point_data
         itk_cell_data = itk_polydata.GetCellData()
         if itk_cell_data and itk_cell_data.Size():
-            pixel_type = itk.template(itk_polydata)[1][0]
-            data_type, number_of_components = _itk_pixel_to_vtkjs_type_components[pixel_type]
-            data = itk.PyVectorContainer[pixel_type].array_from_vector_container(
-                itk_cell_data)
+            point_data_template = itk.template(itk_point_data)
+            element_type = point_data_template[1][1]
+
+            data = itk.array_from_vector_container(itk_cell_data)
+
+            data_type, number_of_components = _itk_pixel_to_vtkjs_type_components[element_type]
             cell_data = {
                 "vtkClass": "vtkDataSetAttributes",
                 "activeScalars": 0,
