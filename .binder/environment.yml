@@ -2,15 +2,15 @@ name: itkwidgets
 channels:
   - conda-forge
 dependencies:
-  - python=3.6
+  - python=3.8
   - numpy
-  - itk
   - pip
   - pip:
     - ipywidgets>=7.1.2
     - jupyterlab
     - numpy
     - six
+    - itk
     - zstandard
     - ipywebrtc
     - bqplot
