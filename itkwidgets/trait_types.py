@@ -77,7 +77,7 @@ def _image_to_type(itkimage):  # noqa: C901
     if component in (itk.SC, itk.UC, itk.SS, itk.US, itk.SI, itk.UI, itk.F,
             itk.D, itk.B):
         mangle = component
-    elif component in [i[1] for i in itk.Vector.iteritems()]:
+    elif component in [i[1] for i in itk.Vector.items()]:
         mangle = itk.template(component)[1][0]
         pixelType = 5
     elif component == itk.complex[itk.F]:
@@ -86,26 +86,26 @@ def _image_to_type(itkimage):  # noqa: C901
     elif component == itk.complex[itk.D]:
         # complex float
         return 'double', 10
-    elif component in [i[1] for i in itk.CovariantVector.iteritems()]:
+    elif component in [i[1] for i in itk.CovariantVector.items()]:
         # CovariantVector
         mangle = itk.template(component)[1][0]
         pixelType = 7
-    elif component in [i[1] for i in itk.Offset.iteritems()]:
+    elif component in [i[1] for i in itk.Offset.items()]:
         # Offset
         return 'int64_t', 4
-    elif component in [i[1] for i in itk.FixedArray.iteritems()]:
+    elif component in [i[1] for i in itk.FixedArray.items()]:
         # FixedArray
         mangle = itk.template(component)[1][0]
         pixelType = 11
-    elif component in [i[1] for i in itk.RGBAPixel.iteritems()]:
+    elif component in [i[1] for i in itk.RGBAPixel.items()]:
         # RGBA
         mangle = itk.template(component)[1][0]
         pixelType = 3
-    elif component in [i[1] for i in itk.RGBPixel.iteritems()]:
+    elif component in [i[1] for i in itk.RGBPixel.items()]:
         # RGB
         mangle = itk.template(component)[1][0]
         pixelType = 2
-    elif component in [i[1] for i in itk.SymmetricSecondRankTensor.iteritems()]:
+    elif component in [i[1] for i in itk.SymmetricSecondRankTensor.items()]:
         # SymmetricSecondRankTensor
         mangle = itk.template(component)[1][0]
         pixelType = 8
