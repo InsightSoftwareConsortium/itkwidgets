@@ -154,9 +154,9 @@ setup_args = {
     ],
     'install_requires': [
         'colorcet>=2.0.0',
-        'itk-core>=5.2.0',
-        'itk-filtering>=5.2.0',
-        'itk-meshtopolydata>=0.6.2',
+        'itk-core>=5.2.0.post1',
+        'itk-filtering>=5.2.0.post1',
+        'itk-meshtopolydata>=0.7.0',
         'ipydatawidgets>=4.0.1',
         'ipywidgets>=7.5.1',
         'ipympl>=0.4.1',
@@ -196,9 +196,10 @@ setup_args = {
         'Intended Audience :: Science/Research',
         'Topic :: Multimedia :: Graphics',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
 }
 
