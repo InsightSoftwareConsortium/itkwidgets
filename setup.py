@@ -154,8 +154,8 @@ setup_args = {
     ],
     'install_requires': [
         'colorcet>=2.0.0',
-        'itk-core>=5.2.0.post1',
-        'itk-filtering>=5.2.0.post1',
+        'itk-core>=5.2.0.post2',
+        'itk-filtering>=5.2.0.post2',
         'itk-meshtopolydata>=0.7.0',
         'ipydatawidgets>=4.0.1',
         'ipywidgets>=7.5.1',
