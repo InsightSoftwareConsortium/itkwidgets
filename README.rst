@@ -364,6 +364,7 @@ Participation is welcome! For a development installation (requires `Node.js <htt
   jupyter nbextension enable --py --sys-prefix itkwidgets
   jupyter nbextension enable --py --sys-prefix widgetsnbextension
   python -m pytest
+  python -m pytest --nbmake examples/*.ipynb
 
 The above commands will setup your system for development with the Jupyter
 Notebook. In one terminal, start Jupyter::
