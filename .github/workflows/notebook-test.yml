@@ -11,6 +11,7 @@ jobs:
       - uses: actions/setup-python@v2
       - uses: treebeardtech/nbmake-action@v0.2.1
         with:
-          docker-username: thewtex
+          docker-username: "${{ secrets.DOCKER_USERNAME }}"
           docker-password: "${{ secrets.DOCKER_PASSWORD }}"
           docker-image-name: insighttoolkit/itkwidgets
+          notebooks: examples/*.ipynb

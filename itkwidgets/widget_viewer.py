@@ -477,6 +477,7 @@ class Viewer(ViewerParent):
             upper_index = image.TransformPhysicalPointToIndex(
                 self.roi[1][:dimension])
             size = upper_index - index
+            size = [max(s, 1) for s in size]
 
             if dimension == 2:
                 scale_factors = self._find_scale_factors(
