@@ -39,7 +39,7 @@ except ImportError:
     pass
 
 
-# from IPython.core.debugger import set_trace
+from IPython.core.debugger import set_trace
 
 
 def get_ioloop():
@@ -167,10 +167,6 @@ class Viewer(ViewerParent):
         .valid(shape_constraints(None, 3))
     lut = LookupTable('glasbey',
         help='Lookup table for the label map.').tag(sync=True)
-    _custom_cmap = NDArray(dtype=np.float32, default_value=None, allow_none=True,
-                           help="RGB triples from 0.0 to 1.0 that define a custom linear, sequential colormap")\
-        .tag(sync=True, **array_serialization)\
-        .valid(shape_constraints(None, 3))
     shadow = CBool(
         default_value=True,
         help="Use shadowing in the volume rendering.").tag(sync=True)
@@ -600,13 +596,14 @@ class Viewer(ViewerParent):
 
     @validate('cmap')
     def _validate_cmap(self, proposal):
+        validator = Colormap()
         value = proposal['value']
         if value is None:
             return None
         elif isinstance(value, list):
-            return value
+            return [validator.validate(self, v) for v in value]
         else:
-            return [value]
+            return [validator.validate(self, value),]
 
     @validate('vmin')
     def _validate_vmin(self, proposal):
