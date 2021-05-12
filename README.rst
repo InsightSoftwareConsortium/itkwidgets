@@ -49,7 +49,7 @@ Interactive Jupyter_ widgets to visualize images, point sets, and meshes on the 
   - `Dask array <https://docs.dask.org/en/latest/array.html>`_ images
   - `vtk.vtkImageData <https://vtk.org>`_
   - `pyvista.UniformGrid <https://pyvista.org>`_
-  - `vtkplotter.Volume <https://vtkplotter.embl.es/index.html>`_
+  - `vedo.Volume <https://vedo.embl.es/index.html>`_
   - `pyimagej ImageJ / Fiji / ImageJ2 images <https://github.com/imagej/pyimagej>`_
   - Additional NumPy array-like objects
   - `SimpleITK.Image <https://simpleitk-prototype.readthedocs.io/en/latest/user_guide/plot_image.html#sphx-glr-user-guide-plot-image-py>`_
@@ -71,8 +71,8 @@ Interactive Jupyter_ widgets to visualize images, point sets, and meshes on the 
   - `pyvista.PolyData <https://docs.pyvista.org/core/points.html>`_
   - `pyvista.StructuredGrid <https://docs.pyvista.org/core/point-grids.html#structured-grid-creation>`_
   - `pyvista.UnstructuredGrid <https://docs.pyvista.org/core/point-grids.html#unstructured-grid-creation>`_
-  - `vtkplotter.Actor <https://vtkplotter.embl.es/index.html>`_
-  - `vtkplotter.Assembly <https://vtkplotter.embl.es/index.html>`_
+  - `vedo.Actor <https://vedo.embl.es/index.html>`_
+  - `vedo.Assembly <https://vedo.embl.es/index.html>`_
   - `skan.csr.Skeleton <https://jni.github.io/skan/api/skan.csr.html#module-skan.csr>`_
 
 - Exquisite volume rendering
@@ -285,7 +285,7 @@ After installation, try the following examples that demonstrate how to visualize
 - `pyvista StructuredGrid <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/pyvista.StructuredGrid.ipynb>`_
 - `pyvista UnstructuredGrid <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/pyvista.UnstructuredGrid.ipynb>`_
 - `pyvista LiDAR <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/pyvistaLiDAR.ipynb>`_
-- `vtkplotter actors and volumes <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/vtkplotter.ipynb>`_
+- `vedo actors and volumes <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/vedo.ipynb>`_
 - `skan segmentation skeleton <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/SegmentationSkeleton.ipynb>`_
 
 or how to:
