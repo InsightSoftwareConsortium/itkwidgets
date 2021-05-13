@@ -129,6 +129,13 @@ version_ns = {}
 with open(os.path.join(here, 'itkwidgets', '_version.py')) as f:
     exec(f.read(), {}, version_ns)
 
+requirements = []
+with open('requirements.txt') as f:
+    for line in f:
+        stripped = line.split("#")[0].strip()
+        if len(stripped) > 0:
+            requirements.append(stripped)
+
 setup_args = {
     'name': 'itkwidgets',
     'version': version_ns['__version__'],
@@ -152,19 +159,7 @@ setup_args = {
             'itkwidgets/static/itk/WebWorkers/Pipeline.worker.js'
         ]),
     ],
-    'install_requires': [
-        'colorcet>=2.0.0',
-        'itk-core>=5.2.0.post1',
-        'itk-filtering>=5.2.0.post1',
-        'itk-meshtopolydata>=0.7.0',
-        'ipydatawidgets>=4.0.1',
-        'ipywidgets>=7.5.1',
-        'ipympl>=0.4.1',
-        'matplotlib',
-        'numpy',
-        'six',
-        'zstandard',
-    ],
+    'install_requires': requirements,
     'packages': find_packages(),
     'zip_safe': False,
     'cmdclass': {
