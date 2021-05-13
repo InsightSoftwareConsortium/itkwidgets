@@ -29,6 +29,36 @@ jobs:
           docker-username: "${{ secrets.DOCKER_USERNAME }}"
           docker-password: "${{ secrets.DOCKER_PASSWORD }}"
           docker-image-name: insighttoolkit/itkwidgets
-          notebooks: examples/*.ipynb
+          notebooks: |
+            examples/2DImage.ipynb
+            examples/3DImage.ipynb
+            examples/CameraParameters.ipynb
+            examples/Checkerboard.ipynb
+            examples/CompareImages.ipynb
+            examples/DaskArray.ipynb
+            examples/ImageLabelStatistics.ipynb
+            examples/ImageWithAnisotropicPixelSpacing.ipynb
+            examples/InteractiveParameterExploration.ipynb
+            examples/LabelImages.ipynb
+            examples/LineProfile.ipynb
+            examples/Mesh.ipynb
+            examples/NumPyArrayImage.ipynb
+            examples/NumPyArrayPointSet.ipynb
+            examples/PointBasedSpatialObject.ipynb
+            examples/pyvista.PolyData.ipynb
+            examples/pyvista.PolyDataAndImageData.ipynb
+            examples/pyvista.StructuredGrid.ipynb
+            examples/pyvista.UniformGrid.ipynb
+            examples/pyvista.UnstructuredGrid.ipynb
+            examples/pyvistaLiDAR.ipynb
+            examples/RecordAVideo.ipynb
+            examples/scikit-image.ipynb
+            examples/SegmentationSkeleton.ipynb
+            examples/SelectRegionOfInterest.ipynb
+            examples/SpecifyAColormap.ipynb
+            examples/VolumeOpacityTransferFunction.ipynb
+            examples/vtkImageData.ipynb
+            examples/vtkPolyData.ipynb
+            examples/vtkUnstructuredGrid.ipynb
         env:
           MPLBACKEND: Qt5Agg
