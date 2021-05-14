@@ -5,10 +5,6 @@ itkwidgets
     :target: https://pypi.python.org/pypi/itkwidgets
     :alt: PyPI version
 
-.. image:: https://img.shields.io/conda/vn/conda-forge/itkwidgets.svg
-    :target: https://anaconda.org/conda-forge/itkwidgets
-    :alt: Conda version
-
 .. image:: https://img.shields.io/npm/v/itkwidgets/latest
     :target: https://www.npmjs.com/package/itkwidgets
     :alt: npm
@@ -137,10 +133,6 @@ Installation
 To install the widgets for the Jupyter Notebook with pip::
 
   pip install itkwidgets
-
-or with conda::
-
-  conda install -c conda-forge itkwidgets
 
 For Jupyter Lab, additionally run::
 
