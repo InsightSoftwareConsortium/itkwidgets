@@ -138,6 +138,10 @@ For Jupyter Lab, additionally run::
 
   jupyter labextension install @jupyter-widgets/jupyterlab-manager jupyter-matplotlib jupyterlab-datawidgets itkwidgets
 
+.. note::
+  JupyterLab 3 support is not yet available. JupyterLab 2 or the Jupyter
+  Notebook are possible alternatives.
+
 Usage
 -----
 
