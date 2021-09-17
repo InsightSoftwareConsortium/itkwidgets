@@ -76,7 +76,7 @@ Interactive Jupyter_ widgets to visualize images, point sets, and meshes on the 
 - Image statistics widget
 - Compare images widget
 - Widgets to select solid colors for geometry or colormaps when point data or
-  cell data is availble
+  cell data is available
 - Visualize point sets as points or spheres and interactively adjust the point
   size
 - Combine with other *ipywidgets* to quickly create graphical interfaces
@@ -134,7 +134,7 @@ To install the widgets for the Jupyter Notebook with pip::
 
   pip install itkwidgets
 
-For Jupyter Lab, additionally run::
+For Jupyter Lab, additionally, run::
 
   jupyter labextension install @jupyter-widgets/jupyterlab-manager jupyter-matplotlib jupyterlab-datawidgets itkwidgets
 
@@ -285,8 +285,8 @@ or how to:
 - `Compares images with a checkerboard pattern <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/Checkerboard.ipynb>`_
 - `Compares images side by side <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/CompareImages.ipynb>`_
 - `Examine a line profile <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/LineProfile.ipynb>`_
-- `Inspect image label statistcs <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/ImageLabelStatistics.ipynb>`_
-- `Interatively explore algorithm parameters <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/InteractiveParameterExploration.ipynb>`_
+- `Inspect image label statistics <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/ImageLabelStatistics.ipynb>`_
+- `Interactively explore algorithm parameters <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/InteractiveParameterExploration.ipynb>`_
 - `Record a video <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/RecordAVideo.ipynb>`_
 - `Restore a volume opacity transfer function <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/VolumeOpacityTransferFunction.ipynb>`_
 - `Select a region of interest <https://github.com/InsightSoftwareConsortium/itkwidgets/blob/master/examples/SelectRegionOfInterest.ipynb>`_
@@ -335,7 +335,7 @@ application directory by setting the environmental variable,
   export JUPYTERLAB_DIR=$HOME/.local/share/jupyter/lab
 
 Check that this is picked up in the value of the *Application directory*
-reportred by::
+reported by::
 
   jupyter lab path
 
@@ -386,7 +386,6 @@ To develop for Jupyter Lab, additionally run::
 
 .. warning::
 
-  This project is under active development. Its API and behavior may change at
-  any time. We mean it.
+  This project is under active development. Its API and behavior may change at any time. We mean it.
 
 .. _Jupyter: https://jupyter.org/
