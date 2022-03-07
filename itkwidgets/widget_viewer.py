@@ -33,13 +33,10 @@ except ImportError:
 
 have_mayavi = False
 try:
-    import mayavi.modules  # noqa: F401
+    from mayavi.core.pipeline_base import PipelineBase  # noqa: F401
     have_mayavi = True
 except ImportError:
     pass
-
-
-from IPython.core.debugger import set_trace
 
 
 def get_ioloop():
@@ -774,6 +771,25 @@ class Viewer(ViewerParent):
         return tuple(slices)
 
 
+def _process_mayavi_actors(objects):
+    from tvtk.api import tvtk
+    from mayavi.core.scene import Scene
+    from tvtk.pyface.tvtk_scene import TVTKScene
+    actors = []
+    for a in objects:
+        if isinstance(a, Scene) and a.scene is not None:
+            actors.extend([tvtk.to_vtk(x) for x in a.scene.renderer.actors])
+        elif isinstance(a, TVTKScene):
+            actors.extend([tvtk.to_vtk(x) for x in a.renderer.actors])
+        elif isinstance(a, PipelineBase):
+            actors.extend([tvtk.to_vtk(x) for x in a.actors])
+            if hasattr(a, 'actor'):
+                actors.extend([tvtk.to_vtk(x) for x in a.actor.actors])
+        else:
+            actors.append(a)
+    return actors
+
+
 def view(image=None,  # noqa: C901
          label_image=None,  # noqa: C901
          label_image_names=None,  # noqa: C901
@@ -785,11 +801,11 @@ def view(image=None,  # noqa: C901
          interpolation=True,
          gradient_opacity=0.22, opacity_gaussians=None, channels=None,
          slicing_planes=False, shadow=True, blend_mode='composite',
-         point_sets=[],
-         point_set_colors=[], point_set_opacities=[],
-         point_set_representations=[], point_set_sizes=[],
-         geometries=[],
-         geometry_colors=[], geometry_opacities=[],
+         point_sets=None,
+         point_set_colors=None, point_set_opacities=None,
+         point_set_representations=None, point_set_sizes=None,
+         geometries=None,
+         geometry_colors=None, geometry_opacities=None,
          ui_collapsed=False, rotate=False, annotations=True, axes=False, mode='v',
          **kwargs):
     """View the image and/or point sets and/or geometries.
@@ -991,6 +1007,23 @@ def view(image=None,  # noqa: C901
         widget.
     """
 
+    if point_sets is None:
+        point_sets = []
+    if point_set_colors is None:
+        point_set_colors = []
+    if point_set_opacities is None:
+        point_set_opacities = []
+    if point_set_representations is None:
+        point_set_representations = []
+    if point_set_sizes is None:
+        point_set_sizes = []
+    if geometries is None:
+        geometries = []
+    if geometry_colors is None:
+        geometry_colors = []
+    if geometry_opacities is None:
+        geometry_opacities = []
+
     # this block allows the user to pass already formed vtkActor vtkVolume
     # objects
     actors = kwargs.pop("actors", None)
@@ -1000,17 +1033,10 @@ def view(image=None,  # noqa: C901
             actors = [actors]
 
         images = []
+        if have_mayavi:
+            actors = _process_mayavi_actors(actors)
 
         for a in actors:
-            if have_mayavi:
-                from mayavi.modules import surface
-                from mayavi.modules import iso_surface
-                from tvtk.api import tvtk
-                if isinstance(a, surface.Surface):
-                    a = tvtk.to_vtk(a.actor.actor)
-                elif isinstance(a, iso_surface.IsoSurface):
-                    a = tvtk.to_vtk(a.actor.actor)
-
             if isinstance(a, vtk.vtkAssembly):  # unpack assemblies
                 cl = vtk.vtkPropCollection()
                 a.GetActors(cl)
@@ -1045,7 +1071,8 @@ def view(image=None,  # noqa: C901
                 tp.Update()
                 poly = tp.GetOutput()
                 prop = a.GetProperty()
-                if poly.GetNumberOfPolys() or poly.GetNumberOfStrips() or poly.GetNumberOfLines():
+                if (poly.GetNumberOfPolys() or poly.GetNumberOfStrips()
+                   or poly.GetNumberOfLines()):
                     geometries.insert(0, poly)
                     geometry_colors.insert(0, prop.GetColor())
                     geometry_opacities.insert(0, prop.GetOpacity())
@@ -1078,7 +1105,8 @@ def view(image=None,  # noqa: C901
                     point_set_opacities=point_set_opacities,
                     point_set_representations=point_set_representations,
                     point_set_sizes=point_set_sizes,
-                    geometries=geometries, geometry_colors=geometry_colors, geometry_opacities=geometry_opacities,
+                    geometries=geometries, geometry_colors=geometry_colors,
+                    geometry_opacities=geometry_opacities,
                     rotate=rotate, ui_collapsed=ui_collapsed,
                     annotations=annotations, axes=axes, mode=mode,
                     **kwargs)
