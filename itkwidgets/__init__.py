@@ -1,5 +1,6 @@
 __all__ = ['version_info', '__version__',
            'Viewer', 'view',
+           'ImJoyViewer', 'imjoy_view',
            'checkerboard',
            'compare',
            'line_profile',
@@ -11,6 +12,7 @@ __all__ = ['version_info', '__version__',
 from ._version import version_info, __version__
 
 from .widget_viewer import Viewer, view
+from .widget_imjoy_viewer import ImJoyViewer, imjoy_view
 from .widget_compare import compare
 from .widget_checkerboard import checkerboard
 from .widget_line_profiler import line_profile
