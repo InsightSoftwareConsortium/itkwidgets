@@ -7,8 +7,32 @@ name = "itkwidgets"
 authors = [{name = "Matt McCormick", email = "matt.mccormick@kitware.com"}]
 readme = "README.md"
 license = {file = "LICENSE"}
-classifiers = ["License :: OSI Approved :: Apache Software License"]
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python",
+    'Development Status :: 3 - Alpha',
+    'Framework :: IPython',
+    'Intended Audience :: Developers',
+    'Intended Audience :: Science/Research',
+    'Topic :: Multimedia :: Graphics',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+]
 dynamic = ["version", "description"]
+requires-python = ">=3.7"
+keywords = [
+    "jupyter",
+    "jupyterlab-extension",
+    "widgets",
+    "itk",
+    "imaging",
+    "visualization",
+    "webgl",
+    "webgpu",
+]
 
 [project.urls]
 Home = "https://itkwidgets.readthedocs.io/en/latest/"
