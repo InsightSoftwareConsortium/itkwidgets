@@ -1,5 +1,8 @@
+import imjoy import api
+
 __all__ = [
   "Viewer",
+  "view",
 ]
 
 class Viewer:
@@ -25,3 +28,6 @@ class Viewer:
               src='https://kitware.github.io/itk-vtk-viewer/app',
           )
       await viewer.setImage(self.image)
+
+def view(image=None):
+    return api.export(Viewer(image=image))
