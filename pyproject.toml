@@ -7,6 +7,7 @@ name = "itkwidgets"
 authors = [{name = "Matt McCormick", email = "matt.mccormick@kitware.com"}]
 readme = "README.md"
 license = {file = "LICENSE"}
+dynamic = ["version", "description"]
 classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python",
@@ -21,8 +22,6 @@ classifiers = [
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
 ]
-dynamic = ["version", "description"]
-requires-python = ">=3.7"
 keywords = [
     "jupyter",
     "jupyterlab-extension",
@@ -34,5 +33,23 @@ keywords = [
     "webgpu",
 ]
 
+requires-python = ">=3.7"
+dependencies = [
+    "imjoy-rpc >= 0.5.13",
+    "imjoy-utils >= 0.1.2",
+]
+
+
 [project.urls]
 Home = "https://itkwidgets.readthedocs.io/en/latest/"
+Documentation = "https://itkwidgets.readthedocs.io/en/latest/"
+Source = "https://github.com/InsightSoftwareConsortium/itkwidgets"
+
+[project.optional-dependencies]
+jupyterlab = [
+    "imjoy-jupyterlab-extension >=0.1.13",
+]
+test = [
+    "pytest >=2.7.3",
+]
+doc = ["sphinx"]
