@@ -1,0 +1,14 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "itkwidgets"
+authors = [{name = "Matt McCormick", email = "matt.mccormick@kitware.com"}]
+readme = "README.md"
+license = {file = "LICENSE"}
+classifiers = ["License :: OSI Approved :: Apache Software License"]
+dynamic = ["version", "description"]
+
+[project.urls]
+Home = "https://itkwidgets.readthedocs.io/en/latest/"
