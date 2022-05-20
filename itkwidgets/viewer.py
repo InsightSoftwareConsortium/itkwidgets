@@ -1,4 +1,4 @@
-import imjoy import api
+from imjoy import api
 
 __all__ = [
   "Viewer",

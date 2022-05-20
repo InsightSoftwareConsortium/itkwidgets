@@ -2,7 +2,7 @@
 
 __version__ = "1.0a1"
 
-from viewer import Viewer, view
+from .viewer import Viewer, view
 
 __all__ = [
   "Viewer",
