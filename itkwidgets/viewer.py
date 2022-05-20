@@ -27,7 +27,11 @@ class Viewer:
               type='itk-vtk-viewer',
               src='https://kitware.github.io/itk-vtk-viewer/app',
           )
-      await viewer.setImage(self.image)
+      if not self.image is None:
+        await viewer.setImage(self.image)
+        await viewer.setUICollapsed(True)
 
 def view(image=None):
-    return api.export(Viewer(image=image))
+    viewer = Viewer(image=image)
+    api.export(viewer)
+    return viewer
