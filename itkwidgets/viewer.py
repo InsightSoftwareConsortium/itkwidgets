@@ -1,37 +1,79 @@
 from imjoy import api
 
+from typing import Optional
+
+from .integrations import _detect_render_type, _set_viewer_image
+from .render_types import RenderType
+
 __all__ = [
   "Viewer",
   "view",
 ]
 
+_viewer_count = 1
+
+class ViewerRPC:
+    """Viewer remote procedure interface."""
+
+    def __init__(self, ui_collapsed=True, rotate=False, **add_data_kwargs):
+        """Create a viewer."""
+        self._init_viewer_kwargs = dict(ui_collapsed=ui_collapsed, rotate=rotate)
+        self._init_viewer_kwargs.update(**add_data_kwargs)
+
+    async def setup(self):
+        """ImJoy plugin setup function."""
+        global _viewer_count
+        try:
+            from google.colab import output
+            running_in_colab = True
+        except ModuleNotFoundError:
+            running_in_colab = False
+        if running_in_colab:
+            itk_viewer = await api.showDialog(
+                name =f'itkwidgets viewer {_viewer_count}',
+                type='itk-vtk-viewer',
+                src='https://kitware.github.io/itk-vtk-viewer/app',
+            )
+        else:
+            itk_viewer = await api.createWindow(
+                name =f'itkwidgets viewer {_viewer_count}',
+                type='itk-vtk-viewer',
+                src='http://localhost:8082',
+              #   src='https://kitware.github.io/itk-vtk-viewer/app',
+            )
+        _viewer_count += 1
+
+        data = self._init_viewer_kwargs.get('data', None)
+        if data is not None:
+            render_type = _detect_render_type(data)
+            if render_type is RenderType.IMAGE:
+                await _set_viewer_image(itk_viewer, data)
+
+            itk_viewer.setUICollapsed(self._init_viewer_kwargs['ui_collapsed'])
+            itk_viewer.setRotateEnabled(self._init_viewer_kwargs['rotate'])
+
+        self.itk_viewer = itk_viewer
+
 class Viewer:
-  """Viewer class."""
+    """Pythonic Viewer class."""
 
-  def __init__(self, **kwargs):
-      try:
-          from google.colab import output
-          self.running_in_colab = True
-      except ModuleNotFoundError:
-          self.running_in_colab = False
-      self.image = kwargs.get('image', None)
+    def __init__(self, ui_collapsed=True, rotate=False, **add_data_kwargs):
+        """Create a viewer."""
+        self.viewer_rpc = ViewerRPC(ui_collapsed=ui_collapsed, rotate=rotate, **add_data_kwargs)
+        api.export(self.viewer_rpc)
 
-  async def setup(self):
-      if self.running_in_colab:
-          viewer = await api.showDialog(
-              type='itk-vtk-viewer',
-              src='https://kitware.github.io/itk-vtk-viewer/app',
-          )
-      else:
-          viewer = await api.createWindow(
-              type='itk-vtk-viewer',
-              src='https://kitware.github.io/itk-vtk-viewer/app',
-          )
-      if not self.image is None:
-        await viewer.setImage(self.image)
-        await viewer.setUICollapsed(True)
+    def set_ui_collapsed(self, collapsed: bool):
+        self.viewer_rpc.itk_viewer.setUICollapsed(collapsed)
 
-def view(image=None):
-    viewer = Viewer(image=image)
-    api.export(viewer)
+    def set_rotate(self, rotate: bool):
+        self.viewer_rpc.itk_viewer.setRotateEnabled(rotate)
+
+    def set_image_gradient_opacity(self, opacity:float):
+        self.viewer_rpc.itk_viewer.setImageGradientOpacity(opacity)
+
+
+def view(data=None, **kwargs):
+    """View the data provided and return the resulting Viewer object."""
+    viewer = Viewer(data=data, **kwargs)
+
     return viewer
