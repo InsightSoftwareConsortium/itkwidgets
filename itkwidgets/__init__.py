@@ -2,6 +2,9 @@
 
 __version__ = "1.0a2"
 
+from imjoy_rpc import register_default_codecs
+register_default_codecs()
+
 from .imjoy import register_itkwasm_imjoy_codecs
 register_itkwasm_imjoy_codecs()
 

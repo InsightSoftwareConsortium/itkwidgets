@@ -1,5 +1,6 @@
 import itkwasm
 import numpy as np
+import zarr
 from .itk import HAVE_ITK, itk_image_to_wasm_image
 from ..render_types import RenderType
 
@@ -19,6 +20,11 @@ async def _set_viewer_image(itk_viewer, image, name=None):
             name = f"image {_image_count}"
             _image_count += 1
         await itk_viewer.setImage(image, name)
+    elif isinstance(image, zarr.Group):
+        if not name:
+            name = f"image {_image_count}"
+            _image_count += 1
+        await itk_viewer.setImage(image, name)
     elif HAVE_ITK:
         import itk
         if isinstance(image, itk.Image):
@@ -34,6 +40,8 @@ def _detect_render_type(data) -> RenderType:
     if isinstance(data, itkwasm.Image):
         return RenderType.IMAGE
     elif isinstance(data, np.ndarray):
+        return RenderType.IMAGE
+    elif isinstance(data, zarr.Group):
         return RenderType.IMAGE
     elif HAVE_ITK:
         import itk
