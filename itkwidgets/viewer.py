@@ -38,8 +38,8 @@ class ViewerRPC:
             itk_viewer = await api.createWindow(
                 name =f'itkwidgets viewer {_viewer_count}',
                 type='itk-vtk-viewer',
-                src='http://localhost:8082',
-              #   src='https://kitware.github.io/itk-vtk-viewer/app',
+                # src='http://localhost:8082',
+                src='https://kitware.github.io/itk-vtk-viewer/app',
             )
         _viewer_count += 1
 

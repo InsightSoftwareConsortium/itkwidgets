@@ -15,7 +15,7 @@ if HAVE_ITK:
     def itk_image_to_wasm_image(image):
         image_dict = itk.dict_from_image(image)
         wasm_image = itkwasm.Image(**image_dict)
-        return image_dict
+        return wasm_image
 
 else:
     def itk_image_to_wasm_image(image):
