@@ -1,6 +1,6 @@
 """itkwidgets: Interactive widgets to visualize images, point sets, and 3D geometry on the web."""
 
-__version__ = "1.0a2"
+__version__ = "1.0a3"
 
 from imjoy_rpc import register_default_codecs
 register_default_codecs()
