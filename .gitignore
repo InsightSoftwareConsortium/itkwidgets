@@ -1,3 +1,4 @@
 dist/
 .ipynb_checkpoints/
 Untitled.ipynb
+examples/integrations/itk/005_32months_T2_RegT1_Reg2Atlas_ManualBrainMask_Stripped.nrrd
