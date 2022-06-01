@@ -1,7 +1,5 @@
 from imjoy import api
 
-from typing import Optional
-
 from .integrations import _detect_render_type, _set_viewer_image
 from .render_types import RenderType
 
@@ -23,24 +21,12 @@ class ViewerRPC:
     async def setup(self):
         """ImJoy plugin setup function."""
         global _viewer_count
-        try:
-            from google.colab import output
-            running_in_colab = True
-        except ModuleNotFoundError:
-            running_in_colab = False
-        if running_in_colab:
-            itk_viewer = await api.showDialog(
-                name =f'itkwidgets viewer {_viewer_count}',
-                type='itk-vtk-viewer',
-                src='https://kitware.github.io/itk-vtk-viewer/app',
-            )
-        else:
-            itk_viewer = await api.createWindow(
-                name =f'itkwidgets viewer {_viewer_count}',
-                type='itk-vtk-viewer',
-                # src='http://localhost:8082',
-                src='https://kitware.github.io/itk-vtk-viewer/app',
-            )
+        itk_viewer = await api.createWindow(
+            name =f'itkwidgets viewer {_viewer_count}',
+            type='itk-vtk-viewer',
+            src='https://kitware.github.io/itk-vtk-viewer/app',
+            fullscreen=True,
+        )
         _viewer_count += 1
 
         data = self._init_viewer_kwargs.get('data', None)
