@@ -48,15 +48,97 @@ class Viewer:
         self.viewer_rpc = ViewerRPC(ui_collapsed=ui_collapsed, rotate=rotate, **add_data_kwargs)
         api.export(self.viewer_rpc)
 
-    def set_ui_collapsed(self, collapsed: bool):
-        self.viewer_rpc.itk_viewer.setUICollapsed(collapsed)
+    def set_annotations_enabled(self, enabled):
+        self.viewer_rpc.itk_viewer.setAnnotationsEnabled(enabled)
 
-    def set_rotate(self, rotate: bool):
-        self.viewer_rpc.itk_viewer.setRotateEnabled(rotate)
+    def set_axes_enabled(self, enabled):
+        self.viewer_rpc.itk_viewer.setAxesEnabled(enabled)
+
+    def set_background_color(self, bgColor):
+        self.viewer_rpc.itk_viewer.setBackgroundColor(bgColor)
+
+    def set_image(self, image):
+        self.viewer_rpc.itk_viewer.setImage(image)
+
+    def set_image_blend_mode(self, mode):
+        self.viewer_rpc.itk_viewer.setImageBlendMode(mode)
+
+    def set_image_color_map(self, colorMap):
+        self.viewer_rpc.itk_viewer.setImageColorMap(colorMap)
+
+    def set_image_color_range(self, range):
+        self.viewer_rpc.itk_viewer.setImageColorRange(range)
+
+    def set_image_color_range_bounds(self, range):
+        self.viewer_rpc.itk_viewer.setImageColorRangeBounds(range)
+
+    def set_image_component_visibility(self, visibility):
+        self.viewer_rpc.itk_viewer.setImageComponentVisibility(visibility)
 
     def set_image_gradient_opacity(self, opacity:float):
         self.viewer_rpc.itk_viewer.setImageGradientOpacity(opacity)
 
+    def set_image_gradient_opacity_scale(self, min):
+        self.viewer_rpc.itk_viewer.setImageGradientOpacityScale(min)
+
+    def set_image_interpolation_enabled(self, enabled):
+        self.viewer_rpc.itk_viewer.setImageInterpolationEnabled(enabled)
+
+    def set_image_piecewise_function_gaussians(self, gaussians):
+        self.viewer_rpc.itk_viewer.setImagePiecewiseFunctionGaussians(gaussians)
+
+    def set_image_shadow_enabled(self, enabled):
+        self.viewer_rpc.itk_viewer.setImageShadowEnabled(enabled)
+
+    def set_image_volume_sample_distance(self, distance):
+        self.viewer_rpc.itk_viewer.setImageVolumeSampleDistance(distance)
+
+    def set_label_image_blend(self, blend):
+        self.viewer_rpc.itk_viewer.setLabelImageBlend(blend)
+
+    def set_label_image_label_names(self, names):
+        self.viewer_rpc.itk_viewer.setLabelImageLabelNames(names)
+
+    def set_label_image_lookup_table(self, lookupTable):
+        self.viewer_rpc.itk_viewer.setLabelImageLookupTable(lookupTable)
+
+    def set_label_image_weights(self, names):
+        self.viewer_rpc.itk_viewer.setLabelImageWeights(names)
+
+    def select_layer(self):
+        self.viewer_rpc.itk_viewer.selectLayer()
+
+    def set_layer_visibility(self, visible):
+        self.viewer_rpc.itk_viewer.setLayerVisibility(visible)
+
+    def set_point_sets(self, pointSets):
+        self.viewer_rpc.itk_viewer.setPointSets(pointSets)
+
+    def set_rendering_view_container_style(self, containerStyle):
+        self.viewer_rpc.itk_viewer.setRenderingViewContainerStyle(
+            containerStyle
+        )
+
+    def set_rotate(self, enabled):
+        self.viewer_rpc.itk_viewer.setRotateEnabled(enabled)
+
+    def set_ui_collapsed(self, collapsed: bool):
+        self.viewer_rpc.itk_viewer.setUICollapsed(collapsed)
+
+    def set_units(self, units):
+        self.viewer_rpc.itk_viewer.setUnits(units)
+
+    def set_view_mode(self, mode):
+        self.viewer_rpc.itk_viewer.setViewMode(mode)
+
+    def set_x_slice(self, position):
+        self.viewer_rpc.itk_viewer.setXSlice(position)
+
+    def set_y_slice(self, position):
+        self.viewer_rpc.itk_viewer.setYSlice(position)
+
+    def set_z_slice(self, position):
+        self.viewer_rpc.itk_viewer.setZSlice(position)
 
 def view(data=None, **kwargs):
     """View the data provided and return the resulting Viewer object."""
