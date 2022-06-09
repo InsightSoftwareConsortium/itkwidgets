@@ -1,7 +1,7 @@
 import itkwasm
 import numpy as np
 import zarr
-from .itk import HAVE_ITK, itk_image_to_wasm_image
+from .itk import HAVE_ITK, itk_image_to_wasm_image, itk_group_spatial_object_to_wasm_point_set
 from ..render_types import RenderType
 
 _image_count = 1
@@ -36,14 +36,42 @@ async def _set_viewer_image(itk_viewer, image, name=None):
             await itk_viewer.setImage(wasm_image, name)
 
 
-def _detect_render_type(data) -> RenderType:
+async def _set_viewer_point_sets(itk_viewer, point_sets):
+    if isinstance(point_sets, itkwasm.PointSet):
+        await itk_viewer.setPointSets(point_sets)
+    elif isinstance(point_sets, np.ndarray):
+        await itk_viewer.setPointSets(point_sets)
+    elif isinstance(point_sets, list):
+        await itk_viewer.setPointSets(point_sets)
+    elif isinstance(point_sets, zarr.Group):
+        await itk_viewer.setPointSets(point_sets)
+    elif HAVE_ITK:
+        import itk
+        if isinstance(point_sets, itk.GroupSpatialObject):
+            wasm_point_sets = itk_group_spatial_object_to_wasm_point_set(point_sets)
+            await itk_viewer.setPointSets(wasm_point_sets)
+
+
+def _detect_render_type(data, input_type) -> RenderType:
     if isinstance(data, itkwasm.Image):
         return RenderType.IMAGE
+    elif isinstance(data, itkwasm.PointSet):
+        return RenderType.POINT_SET
+    elif isinstance(data, list):
+        return RenderType.POINT_SET
     elif isinstance(data, np.ndarray):
-        return RenderType.IMAGE
+        if input_type == 'point_sets':
+            return RenderType.POINT_SET
+        else:
+            return RenderType.IMAGE
     elif isinstance(data, zarr.Group):
-        return RenderType.IMAGE
+        if input_type == 'point_sets':
+            return RenderType.POINT_SET
+        else:
+            return RenderType.IMAGE
     elif HAVE_ITK:
         import itk
         if isinstance(data, itk.Image):
             return RenderType.IMAGE
+        elif isinstance(data, itk.GroupSpatialObject):
+            return RenderType.POINT_SET

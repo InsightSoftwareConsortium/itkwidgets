@@ -1,6 +1,6 @@
 from imjoy import api
 
-from .integrations import _detect_render_type, _set_viewer_image
+from .integrations import _detect_render_type, _set_viewer_image, _set_viewer_point_sets
 from .render_types import RenderType
 
 __all__ = [
@@ -18,6 +18,14 @@ class ViewerRPC:
         self._init_viewer_kwargs = dict(ui_collapsed=ui_collapsed, rotate=rotate)
         self._init_viewer_kwargs.update(**add_data_kwargs)
 
+    def _get_input_data(self):
+        input_options = ['data', 'image', 'point_sets']
+        for option in input_options:
+            data = self._init_viewer_kwargs.get(option, None)
+            if data is not None:
+                break
+        return data, option
+
     async def setup(self):
         """ImJoy plugin setup function."""
         global _viewer_count
@@ -29,11 +37,13 @@ class ViewerRPC:
         )
         _viewer_count += 1
 
-        data = self._init_viewer_kwargs.get('data', None)
+        data, input_type = self._get_input_data()
         if data is not None:
-            render_type = _detect_render_type(data)
+            render_type = _detect_render_type(data, input_type)
             if render_type is RenderType.IMAGE:
                 await _set_viewer_image(itk_viewer, data)
+            elif render_type is RenderType.POINT_SET:
+                await _set_viewer_point_sets(itk_viewer, data)
 
             itk_viewer.setUICollapsed(self._init_viewer_kwargs['ui_collapsed'])
             itk_viewer.setRotateEnabled(self._init_viewer_kwargs['rotate'])
