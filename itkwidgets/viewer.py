@@ -45,10 +45,23 @@ class ViewerRPC:
             elif render_type is RenderType.POINT_SET:
                 await _set_viewer_point_sets(itk_viewer, data)
 
-            itk_viewer.setUICollapsed(self._init_viewer_kwargs['ui_collapsed'])
-            itk_viewer.setRotateEnabled(self._init_viewer_kwargs['rotate'])
+            self.set_default_ui_values(itk_viewer)
 
         self.itk_viewer = itk_viewer
+
+    def set_default_ui_values(self, itk_viewer):
+        settings = {
+            'annotations': itk_viewer.setAnnotationsEnabled,
+            'axes': itk_viewer.setAxesEnabled,
+            'bg_color': itk_viewer.setBackgroundColor,
+            'cmap': itk_viewer.setImageColorMap,
+            'rotate': itk_viewer.setRotateEnabled,
+            'ui_collapsed': itk_viewer.setUICollapsed,
+        }
+        for key, value in self._init_viewer_kwargs.items():
+            if key in settings.keys():
+                settings[key](value)
+
 
 class Viewer:
     """Pythonic Viewer class."""
