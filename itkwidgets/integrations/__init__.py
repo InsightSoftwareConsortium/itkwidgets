@@ -41,8 +41,6 @@ async def _set_viewer_point_sets(itk_viewer, point_sets):
         await itk_viewer.setPointSets(point_sets)
     elif isinstance(point_sets, np.ndarray):
         await itk_viewer.setPointSets(point_sets)
-    elif isinstance(point_sets, list):
-        await itk_viewer.setPointSets(point_sets)
     elif isinstance(point_sets, zarr.Group):
         await itk_viewer.setPointSets(point_sets)
     elif HAVE_ITK:
@@ -56,8 +54,6 @@ def _detect_render_type(data, input_type) -> RenderType:
     if isinstance(data, itkwasm.Image):
         return RenderType.IMAGE
     elif isinstance(data, itkwasm.PointSet):
-        return RenderType.POINT_SET
-    elif isinstance(data, list):
         return RenderType.POINT_SET
     elif isinstance(data, np.ndarray):
         if input_type == 'point_sets':
