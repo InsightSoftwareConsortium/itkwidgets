@@ -2,6 +2,7 @@ from imjoy import api
 from typing import List
 
 from ._type_aliases import Gaussians, Style, Image, Point_Sets
+from ._initialization_params import init_params_dict
 from .integrations import _detect_render_type, _set_viewer_image, _set_viewer_point_sets
 from .render_types import RenderType
 
@@ -52,14 +53,7 @@ class ViewerRPC:
         self.itk_viewer = itk_viewer
 
     def set_default_ui_values(self, itk_viewer):
-        settings = {
-            'annotations': itk_viewer.setAnnotationsEnabled,
-            'axes': itk_viewer.setAxesEnabled,
-            'bg_color': itk_viewer.setBackgroundColor,
-            'cmap': itk_viewer.setImageColorMap,
-            'rotate': itk_viewer.setRotateEnabled,
-            'ui_collapsed': itk_viewer.setUICollapsed,
-        }
+        settings = init_params_dict(itk_viewer)
         for key, value in self._init_viewer_kwargs.items():
             if key in settings.keys():
                 settings[key](value)
