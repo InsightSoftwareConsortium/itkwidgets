@@ -10,6 +10,8 @@ Welcome to itkwidgets's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   quick_start_guide.rst
+
 Indices and tables
 ==================
 
