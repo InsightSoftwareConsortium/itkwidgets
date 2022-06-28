@@ -11,6 +11,7 @@ Welcome to itkwidgets's documentation!
    :caption: Contents:
 
    quick_start_guide.rst
+   deployments.rst
 
 Indices and tables
 ==================
