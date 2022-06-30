@@ -30,6 +30,9 @@ class ViewerRPC:
         return data, option
 
     async def setup(self):
+        pass
+
+    async def run(self, ctx):
         """ImJoy plugin setup function."""
         global _viewer_count
         itk_viewer = await api.createWindow(
