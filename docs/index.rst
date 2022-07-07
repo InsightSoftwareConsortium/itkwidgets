@@ -12,6 +12,7 @@ Welcome to itkwidgets's documentation!
 
    quick_start_guide.rst
    deployments.rst
+   integrations.rst
    development.rst
 
 Indices and tables
