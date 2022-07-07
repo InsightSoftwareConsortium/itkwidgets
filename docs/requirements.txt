@@ -1,1 +1,2 @@
 pydata-sphinx-theme
+myst-parser
