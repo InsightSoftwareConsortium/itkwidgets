@@ -163,7 +163,116 @@ class Viewer:
         self.viewer_rpc.itk_viewer.setZSlice(position)
 
 def view(data=None, **kwargs):
-    """View the data provided and return the resulting Viewer object."""
+    """View the image and/or point sets.
+
+    Creates and returns an ImJoy plugin ipywidget to visualize an image, and/or
+    point sets.
+
+    The image can be 2D or 3D. The type of the image can be an numpy.array,
+    itk.Image, or vtk.vtkImageData.
+
+    A point set or a sequence of points sets can be visualized. The type of the
+    point set can be an numpy.array (Nx3 array of point positions).
+
+    Parameters
+    ----------
+    General Interface
+    ^^^^^^^^^^^^^^^^^
+    ui_collapsed : bool, default: True
+        Collapse the native widget user interface.
+    rotate : bool, default: False
+        Continuously rotate the camera around the scene in volume rendering
+        mode.
+    annotations: bool, default: True
+        Display annotations describing orientation and the value of a
+        mouse-position-based data probe.
+    axes: bool, default: False
+        Display axes.
+    bg_color: (red, green, blue) tuple, components from 0.0 to 1.0
+        Background color. Default is based on the current Jupyter theme.
+    container_style: dict
+        The CSS style for the rendering view `div`'s.
+
+    Images
+    ^^^^^^
+    image : array_like, itk.Image, or vtk.vtkImageData
+        The 2D or 3D image to visualize.
+    label_blend: float, default: 0.5
+        Label map blend with intensity image, from 0.0 to 1.0.
+    label_names: list of (label_value, label_name)
+        String names associated with the integer label values.
+    label_lut: string, default: 'glasbey'
+        Lookup table for the label map.
+    label_weights: float
+        The rendering weight assigned to current label. Values range from 0.0
+        to 1.0.
+    color_range: list, default: The [min, max] range of the data values
+        The [min, max] range of intensity values mapped to colors for the given
+        image component identified by name.
+    color_bounds: list, default: The [min, max] range of the data values
+        The [min, max] range of intensity values for color maps that provide a
+        bounds for user inputs.
+    cmap: string, default: 'Grayscale'
+        The color map for the current component/channel.
+    x_slice: float, default: None
+        The position in world space of the X slicing plane.
+    y_slice: float, default: None
+        The position in world space of the Y slicing plane.
+    z_slice: float, default: None
+        The position in world space of the Z slicing plane.
+    interpolation: bool, deafult: True
+        Linear as opposed to nearest neighbor interpolation for image slices.
+        Note: Interpolation is not currently supported with label maps.
+    gradient_opacity: float, default: 0.5
+        Gradient opacity for composite volume rendering, in the range
+        (0.0, 1.0].
+    gradient_opacity_scale: float, default: 0.5
+        Gradient opacity scale for composite volume rendering, in the range
+        (0.0, 1.0].
+    gaussians: dict
+        Volume rendering opacity transfer function Gaussian parameters. For
+        each image component, multiple Gaussians can be specified.
+        Default Gaussian parameters:
+          {'position': 0.5, 'height': 1, 'width': 0.5, 'xBias': 0.51, 'yBias': 0.4}
+    blend_mode: string, default: 'Composite'
+        Volume rendering blend mode. Supported modes: 'Composite', 'Maximum',
+        'Minimum', 'Average'.
+    component_visible: bool, default: True
+        The given image intensity component index's visibility.
+    shadow_enabled: bool, default: True
+        Whether to used gradient-based shadows in the volume rendering.
+    view_mode: 'x', 'y', 'z', or 'v', default: 'v'
+        Only relevant for 3D scenes.
+        Viewing mode:
+            'x': x-plane
+            'y': y-plane
+            'z': z-plane
+            'v': volume rendering
+    layer: string
+        Select the layer identified by `name` in the user interface.
+    layer_visible: bool, deafult: True
+        Whether the current layer is visible.
+
+    Point Sets
+    ^^^^^^^^^^
+    point_sets: point set
+        The point sets to visualize.
+
+    Other Parameters
+    ----------------
+    sample_distance: float, default: 0.2
+        Sampling distance for volume rendering, normalized from 0.0 to 1.0.
+        Lower values result in a higher quality rendering. High values improve
+        the framerate.
+    units: string, default: ''
+        Units to display in the scale bar.
+
+    Returns
+    -------
+    viewer : ipywidget
+        Display by placing at the end of a Jupyter or Colab cell. Query or set
+        properties on the object to change the visualization.
+    """
     viewer = Viewer(data=data, **kwargs)
 
     return viewer
