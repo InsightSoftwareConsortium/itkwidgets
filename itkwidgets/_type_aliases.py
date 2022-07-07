@@ -1,9 +1,13 @@
-from .integrations.itk import HAVE_ITK
 import itkwasm
-import numpy as np
-from typing import Dict, List, Union
 import zarr
+import numpy as np
 
+from .integrations.dask import HAVE_DASK
+from .integrations.itk import HAVE_ITK
+from .integrations.pytorch import HAVE_TORCH
+from .integrations.vtk import HAVE_VTK
+from .integrations.xarray import HAVE_XARRAY
+from typing import Dict, List, Union
 
 Gaussian_Curve = Dict[str, float]
 Gaussians = Dict[str, List[Gaussian_Curve]]
@@ -16,3 +20,19 @@ if HAVE_ITK:
     import itk
     Image = Union[Image, itk.Image]
     Point_Sets = Union[Point_Sets, itk.GroupSpatialObject]
+if HAVE_VTK:
+    import vtk
+    Image = Union[Image, vtk.vtkImageData]
+    Point_Sets = Union[Point_Sets, vtk.vtkPolyData]
+if HAVE_DASK:
+    import dask
+    Image = Union[Image, dask.array.core.Array]
+    Point_Sets = Union[Point_Sets, dask.array.core.Array]
+if HAVE_TORCH:
+    import torch
+    Image = Union[Image, torch.Tensor]
+    Point_Sets = Union[Point_Sets, torch.Tensor]
+if HAVE_XARRAY:
+    import xarray
+    Image = Union[Image, xarray.DataArray, xarray.Dataset]
+    Point_Sets = Union[Point_Sets, xarray.DataArray, xarray.Dataset]
