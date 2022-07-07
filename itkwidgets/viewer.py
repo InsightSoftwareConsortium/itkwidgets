@@ -1,3 +1,4 @@
+import asyncio
 from imjoy_rpc import api
 from typing import List
 from IPython.display import display, HTML
@@ -92,7 +93,11 @@ class ViewerRPC:
         self.set_default_ui_values(itk_viewer)
         self.itk_viewer = itk_viewer
         self.wid = self.itk_viewer.config.window_id
+
         # Create the initial screenshot
+        await self.create_screenshot()
+        # Wait and then update the screenshot in case rendered level changed
+        await asyncio.sleep(10)
         await self.create_screenshot()
 
     def set_default_ui_values(self, itk_viewer):
