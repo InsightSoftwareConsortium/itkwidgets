@@ -22,7 +22,7 @@ copyright = '2022, Matthew McCormick'
 author = 'Matthew McCormick'
 
 # The full version, including alpha/beta/rc tags
-release = '1.0a4'
+release = '1.0a5'
 
 
 # -- General configuration ---------------------------------------------------
