@@ -36,7 +36,6 @@ keywords = [
 requires-python = ">=3.7"
 dependencies = [
     "itkwasm",
-    "imjoy",
     "imjoy-rpc >= 0.5.13",
     "imjoy-utils >= 0.1.2",
     "numcodecs",

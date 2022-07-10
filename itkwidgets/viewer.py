@@ -1,4 +1,4 @@
-from imjoy import api
+from imjoy_rpc import api
 from typing import List
 
 from ._type_aliases import Gaussians, Style, Image, Point_Sets
