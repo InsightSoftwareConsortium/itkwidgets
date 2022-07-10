@@ -49,7 +49,7 @@ Documentation = "https://itkwidgets.readthedocs.io/en/latest/"
 Source = "https://github.com/InsightSoftwareConsortium/itkwidgets"
 
 [project.optional-dependencies]
-jupyterlab = [
+lab = [
     "imjoy-jupyterlab-extension >=0.1.13",
 ]
 test = [
