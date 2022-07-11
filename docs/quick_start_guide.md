@@ -2,25 +2,37 @@
 
 ## Installation
 
+### Jupyter Notebook
+
 To install the widgets for the Jupyter Notebook with pip:
 
 ```bash
-pip install itkwidgets imjoy-jupyter-extension
-```
-
-For Jupyter Lab, additionally, run:
-
-```bash
-jupyter labextension install imjoy-jupyter-extension
+pip install 'itkwidgets>=1.0a5' imjoy-jupyter-extension
 ```
 
 Then look for the ImJoy icon at the top in the Jupyter Notebook:
 
 ![ImJoy Icon in Jupyter Notebook](images/imjoy-notebook.png)
 
-Or Jupyter Lab:
+### Jupyter Lab
+
+For Jupyter Lab 3 run:
+
+```bash
+pip install 'itkwidgets>=1.0a5' imjoy-jupyterlab-extension
+```
+
+Then look for the ImJoy icon at the top in the Jupyter Notebook:
 
 ![ImJoy Icon in Jupyter Lab](images/imjoy-lab.png)
+
+### Google Colab
+
+For Google Colab run:
+
+```bash
+pip install 'itkwidgets>=1.0a5'
+```
 
 ## Example Notebooks
 
@@ -33,7 +45,7 @@ git clone -b main https://github.com/InsightSoftwareConsortium/itkwidgets.git
 Then navigate into the examples directory:
 
 ```bash
-cd <path-to-itkwidgets>/examples
+cd itkwidgets/examples
 ```
 
 ## Usage
