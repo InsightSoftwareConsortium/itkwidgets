@@ -70,6 +70,13 @@ html_static_path = ['_static',
         '_output']
 
 def jupyterlite_build(app: Sphinx, error):
+    from pprint import pprint
+    pprint('jupyterlite_build')
+    pprint(error)
+    pprint(app)
+    pprint(app.builder)
+    if app.builder:
+        pprint(app.builder.format)
     if error is not None and app.builder and app.builder.format == "html":
         subprocess.check_call(['jupyter', 'lite', 'build', '--config',
             str(jupyterlite_config)], cwd=str(here))
