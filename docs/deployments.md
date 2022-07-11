@@ -21,7 +21,7 @@ piplite.install("itkwidgets==1.0a5")
 ```
 
 Here we are installing the specific pre-release version pre-installed. See
-also [the JupyterLite configuration used for this documentation](https://github.com/InsightSoftwareConsortium/itkwidgets/blob/main/docs/jupyterlite_config.json) and the
+also [the JupyterLite configuration used for this documentation](https://github.com/InsightSoftwareConsortium/itkwidgets/blob/main/docs/jupyterlite/jupyterlite_config.json) and the
 [Sphinx / ReadTheDocs
 configuration](https://github.com/InsightSoftwareConsortium/itkwidgets/blob/main/docs/conf.py)
 used for this documentation.
