@@ -1,2 +1,3 @@
 pydata-sphinx-theme
 myst-parser
+jupyterlite[all]

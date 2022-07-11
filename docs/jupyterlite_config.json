@@ -1,0 +1,14 @@
+{
+    "LiteBuildConfig": {
+        "federated_extensions": [
+            "https://files.pythonhosted.org/packages/15/ef/d7553d9968f317d02ee3e7819be5c9fc6cfa48e9fb3cf0cf92043c6a4205/imjoy_jupyterlab_extension-0.1.13-py3-none-any.whl"
+        ],
+        "ignore_sys_prefix": true,
+        "piplite_urls": [
+            "https://files.pythonhosted.org/packages/14/f7/ea85b5e4f59db353340543d450cd3d1c5befcde8bee0cc41a9de78fed82f/itkwasm-1.0b1-py3-none-any.whl",
+            "https://files.pythonhosted.org/packages/e5/e7/3df714a23e165e1097825a6f53c18c3d1c7850de58b5c4ffe6c5a15518bf/imjoy_rpc-0.5.13-py3-none-any.whl",
+            "https://files.pythonhosted.org/packages/69/d9/5a6c8af2f4b4f49a809ae316ae4c12937d7dfda4e5b2f9e4167df5f15c0e/imjoy_utils-0.1.2-py3-none-any.whl",
+            "https://files.pythonhosted.org/packages/d1/2c/b2ac53f14e28a2c84446f84b6463561b0b66c839f2f7f2b723264a6a03ec/itkwidgets-1.0a5-py3-none-any.whl"
+        ]
+    }
+}

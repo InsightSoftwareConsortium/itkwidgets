@@ -10,6 +10,14 @@ powered by [itk-wasm](https://wasm.itk.org) and [ImJoy](https://imjoy.io/).
 *Welcome to The Future* 🔬🚀🛸!
 ```
 
+<a href="./_static/retro/notebooks/?path=Hello3DWorld.ipynb">
+Try it with JupyterLite!
+
+![Jupyterlite](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)
+
+![Hello3DWorld](./images/Hello3DWorld.gif)
+</a>
+
 ```{toctree}
 quick_start_guide.rst
 deployments.rst
