@@ -71,8 +71,8 @@ html_static_path = ['_static',
 
 def jupyterlite_build(app: Sphinx, error):
     if error is not None and app.builder and app.builder.format == "html":
-    subprocess.check_call(['jupyter', 'lite', 'build', '--config',
-        str(jupyterlite_config)], cwd=str(here))
+        subprocess.check_call(['jupyter', 'lite', 'build', '--config',
+            str(jupyterlite_config)], cwd=str(here))
 
 def setup(app):
     # For local builds, run jupyter lite build manually
