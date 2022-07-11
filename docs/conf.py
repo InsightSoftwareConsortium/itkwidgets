@@ -76,5 +76,5 @@ def jupyterlite_build(app: Sphinx, error):
 def setup(app):
     # For local builds, run jupyter lite build manually
     # $ jupyter lite serve --config ./jupyterlite_config.json
-    if RTD:
+    if RTD and app.builder.format == "html":
         app.connect("config-inited", jupyterlite_build)
