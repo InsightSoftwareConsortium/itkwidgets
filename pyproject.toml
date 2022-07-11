@@ -36,7 +36,6 @@ keywords = [
 requires-python = ">=3.7"
 dependencies = [
     "itkwasm",
-    "imjoy",
     "imjoy-rpc >= 0.5.13",
     "imjoy-utils >= 0.1.2",
     "numcodecs",
@@ -50,7 +49,7 @@ Documentation = "https://itkwidgets.readthedocs.io/en/latest/"
 Source = "https://github.com/InsightSoftwareConsortium/itkwidgets"
 
 [project.optional-dependencies]
-jupyterlab = [
+lab = [
     "imjoy-jupyterlab-extension >=0.1.13",
 ]
 test = [

@@ -4,7 +4,7 @@ from typing import Dict
 
 import itkwasm
 import numcodecs
-from imjoy import api
+from imjoy_rpc import api
 
 _numcodec_encoder = numcodecs.Blosc(cname='lz4', clevel=3)
 _numcodec_config = _numcodec_encoder.get_config()
