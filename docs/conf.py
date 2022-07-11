@@ -85,4 +85,4 @@ def setup(app):
     # For local builds, run jupyter lite build manually
     # $ jupyter lite serve --config ./jupyterlite_config.json
     if RTD:
-        app.connect("config-inited", jupyterlite_build)
+        app.connect("builder-inited", jupyterlite_build)
