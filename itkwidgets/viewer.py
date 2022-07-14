@@ -99,6 +99,11 @@ class ViewerRPC:
         # Wait and then update the screenshot in case rendered level changed
         await asyncio.sleep(10)
         await self.create_screenshot()
+        # Set up an event listener so that the embedded
+        # screenshot is updated when the user requests
+        itk_viewer.registerEventListener(
+            'screenshotTaken', self.update_screenshot
+        )
 
     def set_default_ui_values(self, itk_viewer):
         settings = init_params_dict(itk_viewer)
