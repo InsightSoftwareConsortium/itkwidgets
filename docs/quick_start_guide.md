@@ -20,6 +20,7 @@ For Jupyter Lab 3 run:
 
 ```bash
 pip install 'itkwidgets>=1.0a5' imjoy-jupyterlab-extension
+jupyter labextension install imjoy-jupyter-extension
 ```
 
 Then look for the ImJoy icon at the top in the Jupyter Notebook:
