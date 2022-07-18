@@ -157,7 +157,8 @@ const ViewerModel = widgets.DOMWidgetModel.extend(
         axes: true,
         mode: 'v',
         camera: new Float32Array(9),
-        background: null
+        background: null,
+        whichUI: 'referenceUI',
       })
     }
   },
@@ -205,6 +206,11 @@ const createRenderingPipeline = (
   domWidgetView,
   { rendered_image, rendered_label_image, point_sets, geometries }
 ) => {
+  const config= (domWidgetView.model.whichUI==='pydata-sphinx') && { uiMachineOptions: {href: new URL(
+      'https://www.jsdelivr.com/package/npm/itk-viewer-bootstrap-ui@0.3.0/dist/materialUIMachineOptions.js.es.js',
+      document.location.origin
+    ).href} }
+
   const containerStyle = {
     position: 'relative',
     width: '100%',
@@ -267,8 +273,15 @@ const createRenderingPipeline = (
     pointSets,
     geometries: vtkGeometries,
     use2D: !is3D,
-    rotate: false
-  })
+    rotate: false,
+    config: { uiMachineOptions: {href: new URL(
+      'https://www.jsdelivr.com/package/npm/itk-viewer-bootstrap-ui@0.3.0/dist/materialUIMachineOptions.js.es.js',
+      document.location.origin
+    ).href} },
+  });
+
+   console.log(domWidgetView.model.whichUI)
+
   const viewProxy = domWidgetView.model.itkVtkViewer.getViewProxy()
   const renderWindow = viewProxy.getRenderWindow()
   // Firefox requires calling .getContext on the canvas, which is
