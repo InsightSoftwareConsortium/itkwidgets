@@ -50,6 +50,9 @@ Source = "https://github.com/InsightSoftwareConsortium/itkwidgets"
 
 [project.optional-dependencies]
 lab = [
+    "imjoy-jupyter-extension >=0.3.0",
+]
+notebook = [
     "imjoy-jupyterlab-extension >=0.1.13",
 ]
 test = [
