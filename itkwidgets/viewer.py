@@ -16,9 +16,9 @@ _viewer_count = 1
 class ViewerRPC:
     """Viewer remote procedure interface."""
 
-    def __init__(self, ui_collapsed=True, rotate=False, **add_data_kwargs):
+    def __init__(self, ui_collapsed=True, rotate=False, UI='pydata-sphinx', **add_data_kwargs):
         """Create a viewer."""
-        self._init_viewer_kwargs = dict(ui_collapsed=ui_collapsed, rotate=rotate)
+        self._init_viewer_kwargs = dict(ui_collapsed=ui_collapsed, rotate=rotate, config=UI)
         self._init_viewer_kwargs.update(**add_data_kwargs)
 
     def _get_input_data(self):
@@ -35,11 +35,17 @@ class ViewerRPC:
     async def run(self, ctx):
         """ImJoy plugin setup function."""
         global _viewer_count
+        config={}
+        if self._init_viewer_kwargs.get('config', None)=='pydata-sphinx':
+            print('UI = ', self._init_viewer_kwargs.get('config', None))
+            config = { 'uiMachineOptions': { 'href': 'http://localhost:3000/src/materialUIMachineOptions.js', 'export': 'default' }}
         itk_viewer = await api.createWindow(
             name =f'itkwidgets viewer {_viewer_count}',
             type='itk-vtk-viewer',
-            src='https://kitware.github.io/itk-vtk-viewer/app',
-            fullscreen=True,
+            src= 'http://localhost:8082/', #for testing purposes
+            fullscreen=False,
+             #config should be a python data dictionary and can't be a string e.g. 'pydata-sphinx',
+            config = config,
         )
         _viewer_count += 1
 
@@ -65,9 +71,9 @@ class ViewerRPC:
 class Viewer:
     """Pythonic Viewer class."""
 
-    def __init__(self, ui_collapsed=True, rotate=False, **add_data_kwargs):
+    def __init__(self, ui_collapsed=True, rotate=False, UI='pydata-sphinx', **add_data_kwargs):
         """Create a viewer."""
-        self.viewer_rpc = ViewerRPC(ui_collapsed=ui_collapsed, rotate=rotate, **add_data_kwargs)
+        self.viewer_rpc = ViewerRPC(ui_collapsed=ui_collapsed, rotate=rotate, config=UI, **add_data_kwargs)
         api.export(self.viewer_rpc)
 
     def set_annotations_enabled(self, enabled: bool):
