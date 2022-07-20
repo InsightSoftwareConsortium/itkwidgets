@@ -82,8 +82,12 @@ class Viewer:
     def set_background_color(self, bgColor: List[float]):
         self.viewer_rpc.itk_viewer.setBackgroundColor(bgColor)
 
-    def set_image(self, image: Image):
-        self.viewer_rpc.itk_viewer.setImage(image)
+    async def set_image(self, image: Image):
+        render_type = _detect_render_type(image, 'image')
+        if render_type is RenderType.IMAGE:
+            await _set_viewer_image(self.viewer_rpc.itk_viewer, image)
+        elif render_type is RenderType.POINT_SET:
+            await _set_viewer_point_sets(self.viewer_rpc.itk_viewer, image)
 
     def set_image_blend_mode(self, mode: str):
         self.viewer_rpc.itk_viewer.setImageBlendMode(mode)
