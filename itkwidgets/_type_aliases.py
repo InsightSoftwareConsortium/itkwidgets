@@ -19,7 +19,6 @@ Point_Sets = Union[np.ndarray, itkwasm.PointSet, zarr.Group]
 if HAVE_ITK:
     import itk
     Image = Union[Image, itk.Image]
-    Point_Sets = Union[Point_Sets, itk.GroupSpatialObject]
 if HAVE_VTK:
     import vtk
     Image = Union[Image, vtk.vtkImageData]

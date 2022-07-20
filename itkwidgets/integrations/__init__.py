@@ -87,11 +87,6 @@ async def _set_viewer_point_sets(itk_viewer, point_sets):
         await itk_viewer.setPointSets(point_sets)
     elif isinstance(point_sets, zarr.Group):
         await itk_viewer.setPointSets(point_sets)
-    elif HAVE_ITK:
-        import itk
-        if isinstance(point_sets, itk.GroupSpatialObject):
-            wasm_point_sets = itk_group_spatial_object_to_wasm_point_set(point_sets)
-            await itk_viewer.setPointSets(wasm_point_sets)
     if HAVE_VTK:
         import vtk
         if isinstance(point_sets, vtk.vtkPolyData):
@@ -135,8 +130,6 @@ def _detect_render_type(data, input_type) -> RenderType:
         import itk
         if isinstance(data, itk.Image):
             return RenderType.IMAGE
-        elif isinstance(data, itk.GroupSpatialObject):
-            return RenderType.POINT_SET
     if HAVE_VTK:
         import vtk
         if isinstance(data, vtk.vtkImageData):
