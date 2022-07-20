@@ -15,8 +15,12 @@ jobs:
     - name: Build pip package
       run: |
         flit publish
+    - name: Generate release notes
+      run: |
+        python ./utilities/release-notes.py ./ReleaseNotes.txt
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@master
       with:
+        files: ./ReleaseNotes.txt
         user: __token__
         password: ${{ secrets.PYPI_API_TOKEN }}
