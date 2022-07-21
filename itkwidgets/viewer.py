@@ -16,9 +16,9 @@ _viewer_count = 1
 class ViewerRPC:
     """Viewer remote procedure interface."""
 
-    def __init__(self, ui_collapsed=True, rotate=False, UI='pydata-sphinx', **add_data_kwargs):
+    def __init__(self, ui_collapsed=True, rotate=False, ui='pydata-sphinx', **add_data_kwargs):
         """Create a viewer."""
-        self._init_viewer_kwargs = dict(ui_collapsed=ui_collapsed, rotate=rotate, config=UI)
+        self._init_viewer_kwargs = dict(ui_collapsed=ui_collapsed, rotate=rotate, config=ui)
         self._init_viewer_kwargs.update(**add_data_kwargs)
 
     def _get_input_data(self):
@@ -36,8 +36,8 @@ class ViewerRPC:
         """ImJoy plugin setup function."""
         global _viewer_count
         config={}
-        if self._init_viewer_kwargs.get('config', None)=='pydata-sphinx':
-            print('UI = ', self._init_viewer_kwargs.get('config', None))
+        ui = self._init_viewer_kwargs.get('config', None)
+        if ui=='pydata-sphinx':
             config = { 'uiMachineOptions': { 'href': 'http://localhost:3000/src/materialUIMachineOptions.js', 'export': 'default' }}
         itk_viewer = await api.createWindow(
             name =f'itkwidgets viewer {_viewer_count}',
@@ -53,9 +53,9 @@ class ViewerRPC:
         if data is not None:
             render_type = _detect_render_type(data, input_type)
             if render_type is RenderType.IMAGE:
-                await _set_viewer_image(itk_viewer, data)
+                await _set_viewer_image(itk_viewer, data, ui)
             elif render_type is RenderType.POINT_SET:
-                await _set_viewer_point_sets(itk_viewer, data)
+                await _set_viewer_point_sets(itk_viewer, data, ui)
 
             self.set_default_ui_values(itk_viewer)
 
@@ -71,9 +71,9 @@ class ViewerRPC:
 class Viewer:
     """Pythonic Viewer class."""
 
-    def __init__(self, ui_collapsed=True, rotate=False, UI='pydata-sphinx', **add_data_kwargs):
+    def __init__(self, ui_collapsed=True, rotate=False, ui='pydata-sphinx', **add_data_kwargs):
         """Create a viewer."""
-        self.viewer_rpc = ViewerRPC(ui_collapsed=ui_collapsed, rotate=rotate, config=UI, **add_data_kwargs)
+        self.viewer_rpc = ViewerRPC(ui_collapsed=ui_collapsed, rotate=rotate, config=ui, **add_data_kwargs)
         api.export(self.viewer_rpc)
 
     def set_annotations_enabled(self, enabled: bool):
