@@ -20,7 +20,6 @@ class ViewerRPC:
         """Create a viewer."""
         self._init_viewer_kwargs = dict(ui_collapsed=ui_collapsed, rotate=rotate, config=ui)
         self._init_viewer_kwargs.update(**add_data_kwargs)
-
     def _get_input_data(self):
         input_options = ['data', 'image', 'point_sets']
         for option in input_options:
@@ -37,9 +36,9 @@ class ViewerRPC:
         global _viewer_count
         ui = self._init_viewer_kwargs.get('config', None)
         if ui=='pydata-sphinx':
-            config = { 'uiMachineOptions': { 'href': 'http://localhost:3000/src/materialUIMachineOptions.js', 'export': 'default' }}
+            config = { 'uiMachineOptions': { 'href': 'https://cdn.jsdelivr.net/npm/itk-viewer-bootstrap-ui@0/dist/itk-viewer-bootstrap-ui.es.js', 'export': 'default' }}
         elif ui=='mui':
-            config = { 'uiMachineOptions': { 'href': 'https://www.jsdelivr.com/package/npm/itk-viewer-material-ui@0.2.0/dist/materialUIMachineOptions.js.es.js', 'export': 'default' }}
+            config = { 'uiMachineOptions': { 'href': 'https://www.jsdelivr.com/package/npm/itk-viewer-material-ui@0/dist/materialUIMachineOptions.js.es.js', 'export': 'default' }}
         elif ui!='reference':
             config=ui
         else:
@@ -48,7 +47,7 @@ class ViewerRPC:
         itk_viewer = await api.createWindow(
             name =f'itkwidgets viewer {_viewer_count}',
             type='itk-vtk-viewer',
-            src= 'http://localhost:8082/', #for testing purposes
+            src= 'https://kitware.github.io/itk-vtk-viewer/app', #for testing purposes
             fullscreen=False,
              #config should be a python data dictionary and can't be a string e.g. 'pydata-sphinx',
             config = config,
