@@ -47,8 +47,8 @@ class ViewerRPC:
         itk_viewer = await api.createWindow(
             name =f'itkwidgets viewer {_viewer_count}',
             type='itk-vtk-viewer',
-            src= 'https://kitware.github.io/itk-vtk-viewer/app', #for testing purposes
-            fullscreen=False,
+            src='https://kitware.github.io/itk-vtk-viewer/app',
+            fullscreen=True,
              #config should be a python data dictionary and can't be a string e.g. 'pydata-sphinx',
             config = config,
         )
