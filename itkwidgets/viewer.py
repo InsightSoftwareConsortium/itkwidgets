@@ -29,8 +29,8 @@ class ViewerRPC:
         for option in input_options:
             data = self._init_viewer_kwargs.get(option, None)
             if data is not None:
-                break
-        return data, option
+                inputs.append((option, data))
+        return inputs
 
     async def setup(self):
         pass
@@ -109,8 +109,12 @@ class Viewer:
     def set_background_color(self, bgColor: List[float]):
         self.viewer_rpc.itk_viewer.setBackgroundColor(bgColor)
 
-    def set_image(self, image: Image):
-        self.viewer_rpc.itk_viewer.setImage(image)
+    async def set_image(self, image: Image):
+        render_type = _detect_render_type(image, 'image')
+        if render_type is RenderType.IMAGE:
+            await _set_viewer_image(self.viewer_rpc.itk_viewer, image)
+        elif render_type is RenderType.POINT_SET:
+            await _set_viewer_point_sets(self.viewer_rpc.itk_viewer, image)
 
     def set_image_blend_mode(self, mode: str):
         self.viewer_rpc.itk_viewer.setImageBlendMode(mode)
@@ -144,6 +148,13 @@ class Viewer:
 
     def set_image_volume_sample_distance(self, distance: float):
         self.viewer_rpc.itk_viewer.setImageVolumeSampleDistance(distance)
+
+    async def set_label_image(self, label_image: Image):
+        render_type = _detect_render_type(label_image, 'image')
+        if render_type is RenderType.IMAGE:
+            await _set_viewer_image(self.viewer_rpc.itk_viewer, label_image, is_label=True)
+        elif render_type is RenderType.POINT_SET:
+            await _set_viewer_point_sets(self.viewer_rpc.itk_viewer, label_image)
 
     def set_label_image_blend(self, blend: float):
         self.viewer_rpc.itk_viewer.setLabelImageBlend(blend)

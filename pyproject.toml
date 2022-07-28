@@ -1,6 +1,6 @@
 [build-system]
-requires = ["flit_core >=3.2,<4"]
-build-backend = "flit_core.buildapi"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
 
 [project]
 name = "itkwidgets"
@@ -42,6 +42,8 @@ dependencies = [
     "zarr",
 ]
 
+[tool.hatch.version]
+source = "vcs"
 
 [project.urls]
 Home = "https://itkwidgets.readthedocs.io/en/latest/"
@@ -50,7 +52,12 @@ Source = "https://github.com/InsightSoftwareConsortium/itkwidgets"
 
 [project.optional-dependencies]
 lab = [
+    "imjoy-jupyter-extension >=0.3.0",
+    "imjoy-elfinder[jupyter]"
+]
+notebook = [
     "imjoy-jupyterlab-extension >=0.1.13",
+    "imjoy-elfinder[jupyter]"
 ]
 test = [
     "pytest >=2.7.3",
