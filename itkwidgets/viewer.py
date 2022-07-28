@@ -1,6 +1,5 @@
 from imjoy_rpc import api
 from typing import List
-import sys
 
 from ._type_aliases import Gaussians, Style, Image, Point_Sets
 from ._initialization_params import init_params_dict
@@ -72,7 +71,7 @@ class ViewerRPC:
         itk_viewer = await api.createWindow(
             name=f"itkwidgets viewer {_viewer_count}",
             type="itk-vtk-viewer",
-            src="http://localhost:8082/",  # 'https://kitware.github.io/itk-vtk-viewer/app',
+            src="https://kitware.github.io/itk-vtk-viewer/app",
             fullscreen=False,
             data=init_data,
             # config should be a python data dictionary and can't be a string e.g. 'pydata-sphinx',
@@ -85,7 +84,6 @@ class ViewerRPC:
     def set_default_ui_values(self, itk_viewer):
         settings = init_params_dict(itk_viewer)
         for key, value in self._init_viewer_kwargs.items():
-            sys.stdout.flush()
             if key in settings.keys():
                 settings[key](value)
 
