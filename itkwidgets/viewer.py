@@ -8,21 +8,25 @@ from .integrations import _detect_render_type, _set_viewer_image, _set_viewer_po
 from .render_types import RenderType
 
 __all__ = [
-  "Viewer",
-  "view",
+    "Viewer",
+    "view",
 ]
 
 _viewer_count = 1
 
+
 class ViewerRPC:
     """Viewer remote procedure interface."""
 
-    def __init__(self, ui_collapsed=True, rotate=False, ui='pydata-sphinx', **add_data_kwargs):
+    def __init__(
+        self, ui_collapsed=True, rotate=False, ui="pydata-sphinx", **add_data_kwargs
+    ):
         """Create a viewer."""
         self._init_viewer_kwargs = dict(ui_collapsed=ui_collapsed, rotate=rotate, ui=ui)
         self._init_viewer_kwargs.update(**add_data_kwargs)
+
     def _get_input_data(self):
-        input_options = ['data', 'image', 'point_sets']
+        input_options = ["data", "image", "point_sets"]
         for option in input_options:
             data = self._init_viewer_kwargs.get(option, None)
             if data is not None:
@@ -35,46 +39,52 @@ class ViewerRPC:
     async def run(self, ctx):
         """ImJoy plugin setup function."""
         global _viewer_count
-        ui = self._init_viewer_kwargs.get('ui', None)
-        if ui=='pydata-sphinx':
-            config = { 'uiMachineOptions': { 'href': 'https://cdn.jsdelivr.net/npm/itk-viewer-bootstrap-ui@0/dist/itk-viewer-bootstrap-ui.es.js', 'export': 'default' }}
-        elif ui=='mui':
-            config = { 'uiMachineOptions': { 'href': 'https://www.jsdelivr.com/package/npm/itk-viewer-material-ui@0/dist/materialUIMachineOptions.js.es.js', 'export': 'default' }}
-        elif ui!='reference':
-            config=ui
+        ui = self._init_viewer_kwargs.get("ui", None)
+        if ui == "pydata-sphinx":
+            config = {
+                "uiMachineOptions": {
+                    "href": "https://cdn.jsdelivr.net/npm/itk-viewer-bootstrap-ui@0/dist/itk-viewer-bootstrap-ui.es.js",
+                    "export": "default",
+                }
+            }
+        elif ui == "mui":
+            config = {
+                "uiMachineOptions": {
+                    "href": "https://www.jsdelivr.com/package/npm/itk-viewer-material-ui@0/dist/materialUIMachineOptions.js.es.js",
+                    "export": "default",
+                }
+            }
+        elif ui != "reference":
+            config = ui
         else:
-             config={}
-        
-        data, input_type = self._get_input_data()
-        
-        itk_viewer = await api.createWindow(
-            name =f'itkwidgets viewer {_viewer_count}',
-            type='itk-vtk-viewer',
-            src= 'http://localhost:8082/', #for testing purposes
-            fullscreen=False,
-            data = data,
-             #config should be a python data dictionary and can't be a string e.g. 'pydata-sphinx',
-            config = config,
-        )
-        _viewer_count += 1
+            config = {}
 
+        data, input_type = self._get_input_data()
+
+        init_data = None
         if data is not None:
-            self.set_default_ui_values(itk_viewer)
             render_type = _detect_render_type(data, input_type)
             if render_type is RenderType.IMAGE:
-                await _set_viewer_image(itk_viewer, data)
+                init_data = {"image": data}
             elif render_type is RenderType.POINT_SET:
-                await _set_viewer_point_sets(itk_viewer, data)
+                init_data = {"pointSets": data}
 
-            
+        itk_viewer = await api.createWindow(
+            name=f"itkwidgets viewer {_viewer_count}",
+            type="itk-vtk-viewer",
+            src="http://localhost:8082/",  # 'https://kitware.github.io/itk-vtk-viewer/app',
+            fullscreen=False,
+            data=init_data,
+            # config should be a python data dictionary and can't be a string e.g. 'pydata-sphinx',
+            config=config,
+        )
+        _viewer_count += 1
 
         self.itk_viewer = itk_viewer
 
     def set_default_ui_values(self, itk_viewer):
         settings = init_params_dict(itk_viewer)
         for key, value in self._init_viewer_kwargs.items():
-            print('key=', key, flush=True)
-            print('value=', value, flush=True)
             sys.stdout.flush()
             if key in settings.keys():
                 settings[key](value)
@@ -83,9 +93,13 @@ class ViewerRPC:
 class Viewer:
     """Pythonic Viewer class."""
 
-    def __init__(self, ui_collapsed=True, rotate=False, ui='pydata-sphinx', **add_data_kwargs):
+    def __init__(
+        self, ui_collapsed=True, rotate=False, ui="pydata-sphinx", **add_data_kwargs
+    ):
         """Create a viewer."""
-        self.viewer_rpc = ViewerRPC(ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, **add_data_kwargs)
+        self.viewer_rpc = ViewerRPC(
+            ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, **add_data_kwargs
+        )
         api.export(self.viewer_rpc)
 
     def set_annotations_enabled(self, enabled: bool):
@@ -105,9 +119,6 @@ class Viewer:
 
     def set_image_color_map(self, colorMap: str):
         self.viewer_rpc.itk_viewer.setImageColorMap(colorMap)
-
-    def set_ui(self, ui: str):
-        self.viewer_rpc.itk_viewer.setUI(ui)
 
     def set_image_color_range(self, range: List[float]):
         self.viewer_rpc.itk_viewer.setImageColorRange(range)
@@ -158,9 +169,7 @@ class Viewer:
         self.viewer_rpc.itk_viewer.setPointSets(pointSets)
 
     def set_rendering_view_container_style(self, containerStyle: Style):
-        self.viewer_rpc.itk_viewer.setRenderingViewContainerStyle(
-            containerStyle
-        )
+        self.viewer_rpc.itk_viewer.setRenderingViewContainerStyle(containerStyle)
 
     def set_rotate(self, enabled: bool):
         self.viewer_rpc.itk_viewer.setRotateEnabled(enabled)
@@ -182,6 +191,7 @@ class Viewer:
 
     def set_z_slice(self, position: float):
         self.viewer_rpc.itk_viewer.setZSlice(position)
+
 
 def view(data=None, **kwargs):
     """View the image and/or point sets.

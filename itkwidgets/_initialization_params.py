@@ -28,5 +28,4 @@ def init_params_dict(itk_viewer):
         'x_slice': itk_viewer.setXSlice,
         'y_slice': itk_viewer.setYSlice,
         'z_slice': itk_viewer.setZSlice,
-        'ui': itk_viewer.setUI,
     }
