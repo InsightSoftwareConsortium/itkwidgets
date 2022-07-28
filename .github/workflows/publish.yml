@@ -12,9 +12,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build pip package
-      run: |
-        flit publish
+    - name: Install build dependencies
+      run: python -m pip install --upgrade build
+    - name: Build
+      run: python -m build
     - name: Generate release notes
       run: |
         python ./utilities/release-notes.py ./ReleaseNotes.txt
