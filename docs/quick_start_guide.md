@@ -7,7 +7,7 @@
 To install the widgets for the Jupyter Notebook with pip:
 
 ```bash
-pip install 'itkwidgets[jupyter]>=1.0a6'
+pip install 'itkwidgets[notebook]>=1.0a6'
 ```
 
 Then look for the ImJoy icon at the top in the Jupyter Notebook:
