@@ -9,133 +9,51 @@ from .vtk import HAVE_VTK, vtk_image_to_ndarray, vtk_polydata_to_vtkjs
 from .xarray import HAVE_XARRAY, xarray_data_array_to_numpy, xarray_data_set_to_numpy
 from ..render_types import RenderType
 
-_image_count = 1
 
-async def _set_viewer_image(itk_viewer, image, name=None, is_label=False):
-    global _image_count
-    if isinstance(image, itkwasm.Image):
-        if not name:
-            name = image.name
-            if not name:
-                name = f"image {_image_count}"
-                _image_count += 1
-        if is_label:
-            await itk_viewer.setLabelImage(image)
-        else:
-            await itk_viewer.setImage(image, name)
-    elif isinstance(image, np.ndarray):
-        if not name:
-            name = f"image {_image_count}"
-            _image_count += 1
-        if is_label:
-            await itk_viewer.setLabelImage(image)
-        else:
-            await itk_viewer.setImage(image, name)
-    elif isinstance(image, zarr.Group):
-        if not name:
-            name = f"image {_image_count}"
-            _image_count += 1
-        if is_label:
-            await itk_viewer.setLabelImage(image)
-        else:
-            await itk_viewer.setImage(image, name)
-    elif HAVE_ITK:
+async def _get_viewer_image(image):
+    if HAVE_ITK:
         import itk
         if isinstance(image, itk.Image):
-            wasm_image = itk_image_to_wasm_image(image)
-            name = image.GetObjectName()
-            if not name:
-                name = f"image {_image_count}"
-                _image_count += 1
-            if is_label:
-                await itk_viewer.setLabelImage(wasm_image)
-            else:
-                await itk_viewer.setImage(wasm_image, name)
+            return itk_image_to_wasm_image(image)
     if HAVE_VTK:
         import vtk
         if isinstance(image, vtk.vtkImageData):
-            ndarray = vtk_image_to_ndarray(image)
-            if not name:
-                name = f"image {_image_count}"
-                _image_count += 1
-            if is_label:
-                await itk_viewer.setLabelImage(ndarray)
-            else:
-                await itk_viewer.setImage(ndarray, name)
+            return vtk_image_to_ndarray(image)
     if HAVE_DASK:
         import dask
         if isinstance(image, dask.array.core.Array):
-            ndarray = dask_array_to_ndarray(image)
-            name = image.name
-            if not name:
-                name = f"image {_image_count}"
-                _image_count += 1
-            if is_label:
-                await itk_viewer.setLabelImage(ndarray)
-            else:
-                await itk_viewer.setImage(ndarray, name)
+            return dask_array_to_ndarray(image)
     if HAVE_TORCH:
         import torch
         if isinstance(image, torch.Tensor):
-            if not name:
-                name = f"image {_image_count}"
-                _image_count += 1
-            if is_label:
-                await itk_viewer.setLabelImage(image.numpy())
-            else:
-                await itk_viewer.setImage(image.numpy(), name)
+            return image.numpy()
     if HAVE_XARRAY:
         import xarray
         if isinstance(image, xarray.DataArray):
-            ndarray = xarray_data_array_to_numpy(image)
-            name = image.name
-            if not name:
-                name = f"image {_image_count}"
-                _image_count += 1
-            if is_label:
-                await itk_viewer.setLabelImage(ndarray)
-            else:
-                await itk_viewer.setImage(ndarray, name)
+            return xarray_data_array_to_numpy(image)
         if isinstance(image, xarray.Dataset):
-            ndarray = xarray_data_set_to_numpy(image)
-            if not name:
-                name = f"image {_image_count}"
-                _image_count += 1
-            if is_label:
-                await itk_viewer.setLabelImage(ndarray)
-            else:
-                await itk_viewer.setImage(ndarray, name)
+            return xarray_data_set_to_numpy(image)
 
 
-async def _set_viewer_point_sets(itk_viewer, point_sets):
-    if isinstance(point_sets, itkwasm.PointSet):
-        await itk_viewer.setPointSets(point_sets)
-    elif isinstance(point_sets, np.ndarray):
-        await itk_viewer.setPointSets(point_sets)
-    elif isinstance(point_sets, zarr.Group):
-        await itk_viewer.setPointSets(point_sets)
+async def _get_viewer_point_sets(itk_viewer, point_sets):
     if HAVE_VTK:
         import vtk
         if isinstance(point_sets, vtk.vtkPolyData):
-            vtkjs_polydata = vtk_polydata_to_vtkjs(point_sets)
-            await itk_viewer.setPointSets(vtkjs_polydata)
+            return vtk_polydata_to_vtkjs(point_sets)
     if HAVE_DASK:
         import dask
         if isinstance(point_sets, dask.array.core.Array):
-            ndarray = dask_array_to_ndarray(point_sets)
-            await itk_viewer.setPointSets(ndarray)
+            return dask_array_to_ndarray(point_sets)
     if HAVE_TORCH:
         import torch
         if isinstance(point_sets, torch.Tensor):
-            await itk_viewer.setPointSets(point_sets.numpy())
+            return point_sets.numpy()
     if HAVE_XARRAY:
         import xarray
         if isinstance(point_sets, xarray.DataArray):
-            ndarray = xarray_data_array_to_numpy(point_sets)
-            await itk_viewer.setPointSets(ndarray)
+            return xarray_data_array_to_numpy(point_sets)
         if isinstance(point_sets, xarray.Dataset):
-            ndarray = xarray_data_set_to_numpy(point_sets)
-            await itk_viewer.setPointSets(ndarray)
+            return xarray_data_set_to_numpy(point_sets)
 
 
 def _detect_render_type(data, input_type) -> RenderType:
