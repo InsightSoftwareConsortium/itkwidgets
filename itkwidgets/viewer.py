@@ -2,8 +2,8 @@ from imjoy_rpc import api
 from typing import List
 
 from ._type_aliases import Gaussians, Style, Image, Point_Sets
-from ._initialization_params import init_params_dict
-from .integrations import _detect_render_type, _set_viewer_image, _set_viewer_point_sets
+from ._initialization_params import init_params_dict, init_key_aliases
+from .integrations import _detect_render_type, _get_viewer_image, _get_viewer_point_sets
 from .render_types import RenderType
 
 __all__ = [
@@ -23,9 +23,11 @@ class ViewerRPC:
         """Create a viewer."""
         self._init_viewer_kwargs = dict(ui_collapsed=ui_collapsed, rotate=rotate, ui=ui)
         self._init_viewer_kwargs.update(**add_data_kwargs)
+        self.init_data = {}
 
     def _get_input_data(self):
         input_options = ["data", "image", "point_sets"]
+        inputs = []
         for option in input_options:
             data = self._init_viewer_kwargs.get(option, None)
             if data is not None:
@@ -58,27 +60,32 @@ class ViewerRPC:
         else:
             config = {}
 
-        data, input_type = self._get_input_data()
+        inputs = self._get_input_data()
 
-        init_data = None
-        if data is not None:
+        self.init_data.clear()
+        for (input_type, data) in inputs:
             render_type = _detect_render_type(data, input_type)
+            key = init_key_aliases()[input_type]
             if render_type is RenderType.IMAGE:
-                init_data = {"image": data}
+                result = await _get_viewer_image(data)
             elif render_type is RenderType.POINT_SET:
-                init_data = {"pointSets": data}
+                result = await _get_viewer_point_sets(data)
+            if not result:
+                result = data
+            self.init_data[key] = result
 
         itk_viewer = await api.createWindow(
             name=f"itkwidgets viewer {_viewer_count}",
             type="itk-vtk-viewer",
             src="https://kitware.github.io/itk-vtk-viewer/app",
             fullscreen=False,
-            data=init_data,
+            data=self.init_data,
             # config should be a python data dictionary and can't be a string e.g. 'pydata-sphinx',
             config=config,
         )
         _viewer_count += 1
 
+        self.set_default_ui_values(itk_viewer)
         self.itk_viewer = itk_viewer
 
     def set_default_ui_values(self, itk_viewer):
@@ -112,9 +119,11 @@ class Viewer:
     async def set_image(self, image: Image):
         render_type = _detect_render_type(image, 'image')
         if render_type is RenderType.IMAGE:
-            await _set_viewer_image(self.viewer_rpc.itk_viewer, image)
+            image = _get_viewer_image(image)
+            await self.viewer_rpc.itk_viewer.setImage(image)
         elif render_type is RenderType.POINT_SET:
-            await _set_viewer_point_sets(self.viewer_rpc.itk_viewer, image)
+            image = _get_viewer_point_sets(image)
+            await self.viewer_rpc.itk_viewer.setPointSets(image)
 
     def set_image_blend_mode(self, mode: str):
         self.viewer_rpc.itk_viewer.setImageBlendMode(mode)
@@ -152,9 +161,11 @@ class Viewer:
     async def set_label_image(self, label_image: Image):
         render_type = _detect_render_type(label_image, 'image')
         if render_type is RenderType.IMAGE:
-            await _set_viewer_image(self.viewer_rpc.itk_viewer, label_image, is_label=True)
+            label_image = _get_viewer_image(label_image, is_label=True)
+            await self.viewer_rpc.itk_viewer.setImage(label_image)
         elif render_type is RenderType.POINT_SET:
-            await _set_viewer_point_sets(self.viewer_rpc.itk_viewer, label_image)
+            label_image = _get_viewer_point_sets(label_image, is_label=True)
+            await self.viewer_rpc.itk_viewer.setPointSets(label_image)
 
     def set_label_image_blend(self, blend: float):
         self.viewer_rpc.itk_viewer.setLabelImageBlend(blend)

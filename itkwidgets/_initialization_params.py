@@ -29,3 +29,11 @@ def init_params_dict(itk_viewer):
         'y_slice': itk_viewer.setYSlice,
         'z_slice': itk_viewer.setZSlice,
     }
+
+def init_key_aliases():
+    return {
+        'data': 'image',
+        'image': 'image',
+        'label_image': 'labelImage',
+        'point_sets': 'pointSets',
+    }
