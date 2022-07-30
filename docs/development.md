@@ -7,7 +7,16 @@ Setup your system for development:
 ```bash
 git clone https://github.com/InsightSoftwareConsortium/itkwidgets.git
 cd itkwidgets
-pip install -e .
+
+Choose your target platform.  If you are developing for jupyter notebooks:
+```bash
+pip install -e .[notebook]
+
+If you are developing for jupyter labs:
+```bash
+pip install -e .[lab]
+
+Then verify your installation:
 pytest
 pytest --nbmake examples/*.ipynb
 ```
