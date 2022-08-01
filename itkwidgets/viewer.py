@@ -248,6 +248,9 @@ def view(data=None, **kwargs):
     ^^^^^^
     image : array_like, itk.Image, or vtk.vtkImageData
         The 2D or 3D image to visualize.
+    label_image: array_like, itk.Image, or vtk.vtkImageData
+        The 2D or 3D label map to visualize. If an image is also provided, the
+        label map must have the same size.
     label_blend: float, default: 0.5
         Label map blend with intensity image, from 0.0 to 1.0.
     label_names: list of (label_value, label_name)
