@@ -70,7 +70,7 @@ class ViewerRPC:
                 result = await _get_viewer_image(data)
             elif render_type is RenderType.POINT_SET:
                 result = await _get_viewer_point_sets(data)
-            if not result:
+            if result is None:
                 result = data
             self.init_data[key] = result
 
