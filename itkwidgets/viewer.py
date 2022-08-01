@@ -26,7 +26,7 @@ class ViewerRPC:
         self.init_data = {}
 
     def _get_input_data(self):
-        input_options = ["data", "image", "point_sets"]
+        input_options = ["data", "image", "label_image", "point_sets"]
         inputs = []
         for option in input_options:
             data = self._init_viewer_kwargs.get(option, None)
