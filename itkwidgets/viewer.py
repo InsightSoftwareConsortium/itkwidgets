@@ -26,7 +26,7 @@ class ViewerRPC:
         self.init_data = {}
 
     def _get_input_data(self):
-        input_options = ["data", "image", "point_sets"]
+        input_options = ["data", "image", "label_image", "point_sets"]
         inputs = []
         for option in input_options:
             data = self._init_viewer_kwargs.get(option, None)
@@ -70,7 +70,7 @@ class ViewerRPC:
                 result = await _get_viewer_image(data)
             elif render_type is RenderType.POINT_SET:
                 result = await _get_viewer_point_sets(data)
-            if not result:
+            if result is None:
                 result = data
             self.init_data[key] = result
 
@@ -248,6 +248,9 @@ def view(data=None, **kwargs):
     ^^^^^^
     image : array_like, itk.Image, or vtk.vtkImageData
         The 2D or 3D image to visualize.
+    label_image: array_like, itk.Image, or vtk.vtkImageData
+        The 2D or 3D label map to visualize. If an image is also provided, the
+        label map must have the same size.
     label_blend: float, default: 0.5
         Label map blend with intensity image, from 0.0 to 1.0.
     label_names: list of (label_value, label_name)
