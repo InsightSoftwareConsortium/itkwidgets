@@ -35,7 +35,7 @@ async def _get_viewer_image(image):
             return xarray_data_set_to_numpy(image)
 
 
-async def _get_viewer_point_sets(itk_viewer, point_sets):
+async def _get_viewer_point_sets(point_sets):
     if HAVE_VTK:
         import vtk
         if isinstance(point_sets, vtk.vtkPolyData):
