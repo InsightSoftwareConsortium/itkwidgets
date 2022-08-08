@@ -232,7 +232,7 @@ const createRenderingPipeline = (
     backgroundColor[2] = rgb[2] / 255.0
   }
   const backgroundTrait = domWidgetView.model.get('background')
-  if (backgroundTrait.length !== 0) {
+  if (backgroundTrait && !!backgroundTrait.length) {
     backgroundColor = backgroundTrait
   }
   const viewerStyle = {
@@ -721,7 +721,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
     }
     this.model.itkVtkViewer.on('backgroundColorChanged', onBackgroundChanged)
     const background = this.model.get('background')
-    if (background.length === 0) {
+    if (background === null|| background.length === 0) {
       this.model.set('background', this.model.itkVtkViewer.getBackgroundColor())
     }
 
@@ -930,7 +930,7 @@ const ViewerView = widgets.DOMWidgetView.extend({
       onChannelsChanged
     )
     const channels = this.model.get('channels')
-    if (channels.length === 0) {
+    if (channels === null || channels.length === 0) {
       this.model.set('channels', this.model.itkVtkViewer.getComponentVisibilities())
     }
 
