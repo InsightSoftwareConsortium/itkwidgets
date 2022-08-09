@@ -10,7 +10,7 @@ from .xarray import HAVE_XARRAY, xarray_data_array_to_numpy, xarray_data_set_to_
 from ..render_types import RenderType
 
 
-async def _get_viewer_image(image):
+def _get_viewer_image(image):
     if HAVE_ITK:
         import itk
         if isinstance(image, itk.Image):
@@ -35,7 +35,7 @@ async def _get_viewer_image(image):
             return xarray_data_set_to_numpy(image)
 
 
-async def _get_viewer_point_sets(point_sets):
+def _get_viewer_point_sets(point_sets):
     if HAVE_VTK:
         import vtk
         if isinstance(point_sets, vtk.vtkPolyData):

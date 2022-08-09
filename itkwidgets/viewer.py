@@ -1,5 +1,8 @@
+import asyncio
 from imjoy_rpc import api
 from typing import List
+from IPython.display import display, HTML
+import uuid
 
 from ._type_aliases import Gaussians, Style, Image, Point_Sets
 from ._initialization_params import init_params_dict, init_key_aliases
@@ -24,6 +27,8 @@ class ViewerRPC:
         self._init_viewer_kwargs = dict(ui_collapsed=ui_collapsed, rotate=rotate, ui=ui)
         self._init_viewer_kwargs.update(**add_data_kwargs)
         self.init_data = {}
+        self.img = display(HTML(f'<div />'), display_id=str(uuid.uuid4()))
+        self.wid = None
 
     def _get_input_data(self):
         input_options = ["data", "image", "label_image", "point_sets"]
@@ -67,9 +72,9 @@ class ViewerRPC:
             render_type = _detect_render_type(data, input_type)
             key = init_key_aliases()[input_type]
             if render_type is RenderType.IMAGE:
-                result = await _get_viewer_image(data)
+                result = _get_viewer_image(data)
             elif render_type is RenderType.POINT_SET:
-                result = await _get_viewer_point_sets(data)
+                result = _get_viewer_point_sets(data)
             if result is None:
                 result = data
             self.init_data[key] = result
@@ -87,12 +92,48 @@ class ViewerRPC:
 
         self.set_default_ui_values(itk_viewer)
         self.itk_viewer = itk_viewer
+        self.wid = self.itk_viewer.config.window_id
+
+        # Create the initial screenshot
+        await self.create_screenshot()
+        # Wait and then update the screenshot in case rendered level changed
+        await asyncio.sleep(10)
+        await self.create_screenshot()
+        # Set up an event listener so that the embedded
+        # screenshot is updated when the user requests
+        itk_viewer.registerEventListener(
+            'screenshotTaken', self.update_screenshot
+        )
 
     def set_default_ui_values(self, itk_viewer):
         settings = init_params_dict(itk_viewer)
         for key, value in self._init_viewer_kwargs.items():
             if key in settings.keys():
                 settings[key](value)
+
+    async def create_screenshot(self):
+        base64_image = await self.itk_viewer.captureImage()
+        self.update_screenshot(base64_image)
+
+    def update_screenshot(self, base64_image):
+        html = HTML(
+            f'''
+                <img id=screenshot_{self.wid} src={base64_image}>
+                <script id="script_{self.wid}" type="text/javascript">
+                    var container = document.getElementById("script_{self.wid}").parentNode;
+                    var image = document.getElementById("screenshot_{self.wid}");
+                    if (!image) {{
+                        image = document.createElement("img");
+                        image.id = "screenshot_{self.wid}";
+                        container.appendChild(image);
+                    }}
+                    image.src = "{base64_image}";
+                    var viewer = document.getElementById("{self.wid}");
+                    // Hide the static image if the Viewer is visible
+                    image.style.display = viewer ? "none" : "block";
+                </script>
+            ''')
+        self.img.display(html)
 
 
 class Viewer:
@@ -161,10 +202,10 @@ class Viewer:
     async def set_label_image(self, label_image: Image):
         render_type = _detect_render_type(label_image, 'image')
         if render_type is RenderType.IMAGE:
-            label_image = _get_viewer_image(label_image, is_label=True)
+            label_image = _get_viewer_image(label_image)
             await self.viewer_rpc.itk_viewer.setImage(label_image)
         elif render_type is RenderType.POINT_SET:
-            label_image = _get_viewer_point_sets(label_image, is_label=True)
+            label_image = _get_viewer_point_sets(label_image)
             await self.viewer_rpc.itk_viewer.setPointSets(label_image)
 
     def set_label_image_blend(self, blend: float):
