@@ -72,9 +72,9 @@ class ViewerRPC:
             render_type = _detect_render_type(data, input_type)
             key = init_key_aliases()[input_type]
             if render_type is RenderType.IMAGE:
-                result = await _get_viewer_image(data)
+                result = _get_viewer_image(data)
             elif render_type is RenderType.POINT_SET:
-                result = await _get_viewer_point_sets(data)
+                result = _get_viewer_point_sets(data)
             if result is None:
                 result = data
             self.init_data[key] = result
