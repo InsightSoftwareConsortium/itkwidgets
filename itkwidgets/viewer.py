@@ -202,10 +202,10 @@ class Viewer:
     async def set_label_image(self, label_image: Image):
         render_type = _detect_render_type(label_image, 'image')
         if render_type is RenderType.IMAGE:
-            label_image = _get_viewer_image(label_image, is_label=True)
+            label_image = _get_viewer_image(label_image)
             await self.viewer_rpc.itk_viewer.setImage(label_image)
         elif render_type is RenderType.POINT_SET:
-            label_image = _get_viewer_point_sets(label_image, is_label=True)
+            label_image = _get_viewer_point_sets(label_image)
             await self.viewer_rpc.itk_viewer.setPointSets(label_image)
 
     def set_label_image_blend(self, blend: float):
