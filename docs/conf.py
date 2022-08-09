@@ -17,7 +17,7 @@ from pathlib import Path
 from sphinx.application import Sphinx
 import subprocess
 import os
-import json
+import re
 
 # -- Project information -----------------------------------------------------
 
@@ -25,8 +25,10 @@ project = 'itkwidgets'
 copyright = '2022, Matthew McCormick'
 author = 'Matthew McCormick'
 
-# The full version, including alpha/beta/rc tags
-release = '1.0a7'
+# The full version, including alpha/beta/rc tags.
+release = re.sub('^v', '', os.popen('git describe').read().strip())
+# The short X.Y version.
+version = release
 
 
 # -- General configuration ---------------------------------------------------
