@@ -45,6 +45,12 @@ dependencies = [
 [tool.hatch.version]
 source = "vcs"
 
+[tool.hatch.build]
+exclude = [
+  "/js/node_modules",
+  "/examples",
+]
+
 [project.urls]
 Home = "https://itkwidgets.readthedocs.io/en/latest/"
 Documentation = "https://itkwidgets.readthedocs.io/en/latest/"
