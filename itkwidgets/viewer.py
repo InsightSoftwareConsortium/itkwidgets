@@ -56,7 +56,7 @@ class ViewerRPC:
         elif ui == "mui":
             config = {
                 "uiMachineOptions": {
-                    "href": "https://www.jsdelivr.com/package/npm/itk-viewer-material-ui@0/dist/materialUIMachineOptions.js.es.js",
+                    "href": "https://cdn.jsdelivr.net/npm/itk-viewer-material-ui@0/dist/materialUIMachineOptions.js.es.js",
                     "export": "default",
                 }
             }
