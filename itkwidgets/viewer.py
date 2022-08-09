@@ -68,6 +68,7 @@ class ViewerRPC:
         inputs = self._get_input_data()
 
         self.init_data.clear()
+        result= None
         for (input_type, data) in inputs:
             render_type = _detect_render_type(data, input_type)
             key = init_key_aliases()[input_type]
