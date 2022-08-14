@@ -7,7 +7,7 @@
 To install the widgets for the Jupyter Notebook with pip:
 
 ```bash
-pip install 'itkwidgets[notebook]>=1.0a6'
+pip install 'itkwidgets[notebook]>=1.0a8'
 ```
 
 Then look for the ImJoy icon at the top in the Jupyter Notebook:
@@ -19,7 +19,7 @@ Then look for the ImJoy icon at the top in the Jupyter Notebook:
 For Jupyter Lab 3 run:
 
 ```bash
-pip install 'itkwidgets[lab]>=1.0a6'
+pip install 'itkwidgets[lab]>=1.0a8'
 ```
 
 Then look for the ImJoy icon at the top in the Jupyter Notebook:
@@ -31,7 +31,7 @@ Then look for the ImJoy icon at the top in the Jupyter Notebook:
 For Google Colab run:
 
 ```bash
-pip install 'itkwidgets>=1.0a6'
+pip install 'itkwidgets>=1.0a8'
 ```
 
 ## Example Notebooks
