@@ -84,7 +84,7 @@ class ViewerRPC:
             name=f"itkwidgets viewer {_viewer_count}",
             type="itk-vtk-viewer",
             src="https://kitware.github.io/itk-vtk-viewer/app",
-            fullscreen=False,
+            fullscreen=True,
             data=self.init_data,
             # config should be a python data dictionary and can't be a string e.g. 'pydata-sphinx',
             config=config,
