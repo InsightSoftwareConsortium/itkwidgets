@@ -1,6 +1,6 @@
 import os
 import six
-import collections
+from collections.abc import Sequence
 from datetime import datetime
 
 import traitlets
@@ -350,7 +350,7 @@ class PolyDataList(traitlets.TraitType):
         # list
         geometries = value
         if not isinstance(geometries, dict) and not isinstance(
-                geometries, collections.Sequence) and geometries is not None:
+                geometries, Sequence) and geometries is not None:
             geometries = [geometries]
 
         try:
@@ -578,7 +578,7 @@ class PointSetList(PolyDataList):
         # list
         point_sets = value
         if not isinstance(point_sets, dict) and not isinstance(
-                point_sets, collections.Sequence) and point_sets is not None:
+                point_sets, Sequence) and point_sets is not None:
             point_sets = [point_sets]
 
         try:
