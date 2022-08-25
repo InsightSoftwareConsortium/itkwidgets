@@ -84,7 +84,7 @@ class ViewerRPC:
             name=f"itkwidgets viewer {_viewer_count}",
             type="itk-vtk-viewer",
             src="https://kitware.github.io/itk-vtk-viewer/app",
-            fullscreen=False,
+            fullscreen=True,
             data=self.init_data,
             # config should be a python data dictionary and can't be a string e.g. 'pydata-sphinx',
             config=config,
@@ -119,15 +119,9 @@ class ViewerRPC:
     def update_screenshot(self, base64_image):
         html = HTML(
             f'''
-                <img id=screenshot_{self.wid} src={base64_image}>
-                <script id="script_{self.wid}" type="text/javascript">
-                    var container = document.getElementById("script_{self.wid}").parentNode;
+                <img id="screenshot_{self.wid}" src={base64_image}>
+                <script type="text/javascript">
                     var image = document.getElementById("screenshot_{self.wid}");
-                    if (!image) {{
-                        image = document.createElement("img");
-                        image.id = "screenshot_{self.wid}";
-                        container.appendChild(image);
-                    }}
                     image.src = "{base64_image}";
                     var viewer = document.getElementById("{self.wid}");
                     // Hide the static image if the Viewer is visible
