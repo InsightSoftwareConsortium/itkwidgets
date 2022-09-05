@@ -181,7 +181,11 @@ class Viewer:
         loop.run_until_complete(task)
 
     def queue_request(self, method, *args):
-        self.queue.put({'method': method, 'arg': args})
+        if hasattr(self.viewer_rpc, 'itk_viewer'):
+            fn = getattr(self.viewer_rpc.itk_viewer, method)
+            fn(*args)
+        else:
+            self.queue.put({'method': method, 'arg': args})
 
     def set_annotations_enabled(self, enabled: bool):
         self.queue_request('setAnnotationsEnabled', enabled)
