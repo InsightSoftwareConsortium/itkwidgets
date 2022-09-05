@@ -1,5 +1,6 @@
 import asyncio
 import queue
+import threading
 from imjoy_rpc import api
 from typing import List
 from IPython.display import display, HTML
@@ -31,6 +32,7 @@ class ViewerRPC:
         self.init_data = {}
         self.img = display(HTML(f'<div />'), display_id=str(uuid.uuid4()))
         self.wid = None
+        self.event = threading.Event()
 
     def _get_input_data(self):
         input_options = ["data", "image", "label_image", "point_sets"]
@@ -92,6 +94,7 @@ class ViewerRPC:
             config=config,
         )
         _viewer_count += 1
+        asyncio.get_running_loop().call_soon_threadsafe(self.event.set)
 
         self.set_default_ui_values(itk_viewer)
         self.itk_viewer = itk_viewer
@@ -155,12 +158,15 @@ class Viewer:
         api.export(self.viewer_rpc)
 
     async def run_queued_requests(self):
-        while not hasattr(self.viewer_rpc, 'itk_viewer'):
+        self.viewer_rpc.event.wait()
+        while self.queue.qsize():
             await asyncio.sleep(1)
-        while hasattr(self.viewer_rpc, 'itk_viewer'):
             method_name, args = self.queue.get().values()
             fn = getattr(self.viewer_rpc.itk_viewer, method_name)
             self.bg_jobs.new(self.requests_worker, fn, *args)
+        # Clean up any old threads
+        await asyncio.sleep(3)
+        self.bg_jobs.flush()
 
     def requests_worker(self, fn, *args):
         loop = asyncio.new_event_loop()
