@@ -157,22 +157,17 @@ class Viewer:
         self.bg_thread = self.bg_jobs.new(self.queue_worker)
         api.export(self.viewer_rpc)
 
+    @property
+    def loop(self):
+        return asyncio.get_running_loop()
+
     async def run_queued_requests(self):
         self.viewer_rpc.event.wait()
         while self.queue.qsize():
             await asyncio.sleep(1)
             method_name, args = self.queue.get().values()
             fn = getattr(self.viewer_rpc.itk_viewer, method_name)
-            self.bg_jobs.new(self.requests_worker, fn, *args)
-        # Clean up any old threads
-        await asyncio.sleep(3)
-        self.bg_jobs.flush()
-
-    def requests_worker(self, fn, *args):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        task = loop.create_task(fn(*args))
-        loop.run_until_complete(task)
+            self.loop.call_soon_threadsafe(asyncio.ensure_future, fn(*args))
 
     def queue_worker(self):
         loop = asyncio.new_event_loop()
