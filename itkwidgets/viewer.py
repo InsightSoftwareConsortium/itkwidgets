@@ -331,13 +331,13 @@ def view(data=None, **kwargs):
         The given image intensity component index's visibility.
     shadow_enabled: bool, default: True
         Whether to used gradient-based shadows in the volume rendering.
-    view_mode: 'x', 'y', 'z', or 'v', default: 'v'
+    view_mode: 'XPlane', 'YPlane', 'ZPlane', or 'Volume', default: 'Volume'
         Only relevant for 3D scenes.
         Viewing mode:
-            'x': x-plane
-            'y': y-plane
-            'z': z-plane
-            'v': volume rendering
+            'XPlane': x-plane
+            'YPlane': y-plane
+            'ZPlane': z-plane
+            'Volume': volume rendering
     layer: string
         Select the layer identified by `name` in the user interface.
     layer_visible: bool, deafult: True
