@@ -9,6 +9,7 @@ import uuid
 
 from ._type_aliases import Gaussians, Style, Image, Point_Sets
 from ._initialization_params import init_params_dict, init_key_aliases
+from ._method_types import deferred_methods
 from .integrations import _detect_render_type, _get_viewer_image, _get_viewer_point_sets
 from .render_types import RenderType
 
@@ -32,7 +33,8 @@ class ViewerRPC:
         self.init_data = {}
         self.img = display(HTML(f'<div />'), display_id=str(uuid.uuid4()))
         self.wid = None
-        self.event = threading.Event()
+        self.viewer_event = threading.Event()
+        self.data_event = threading.Event()
 
     def _get_input_data(self):
         input_options = ["data", "image", "label_image", "point_sets"]
@@ -94,7 +96,11 @@ class ViewerRPC:
             config=config,
         )
         _viewer_count += 1
-        asyncio.get_running_loop().call_soon_threadsafe(self.event.set)
+        itk_viewer.registerEventListener(
+            'renderedImageAssigned', self.set_event
+        )
+        # Once the viewer has been created any queued requests can be run
+        asyncio.get_running_loop().call_soon_threadsafe(self.viewer_event.set)
 
         self.set_default_ui_values(itk_viewer)
         self.itk_viewer = itk_viewer
@@ -141,6 +147,10 @@ class ViewerRPC:
             ''')
         self.img.display(html)
 
+    def set_event(self, event_data):
+        # Once the data has been set the deferred queue requests can be run
+        asyncio.get_running_loop().call_soon_threadsafe(self.data_event.set)
+
 
 class Viewer:
     """Pythonic Viewer class."""
@@ -154,6 +164,7 @@ class Viewer:
             ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, **add_data_kwargs
         )
         self.queue = queue.Queue()
+        self.deferred_queue = queue.Queue()
         self.bg_thread = self.bg_jobs.new(self.queue_worker)
         api.export(self.viewer_rpc)
 
@@ -162,12 +173,19 @@ class Viewer:
         return asyncio.get_running_loop()
 
     async def run_queued_requests(self):
-        self.viewer_rpc.event.wait()
-        while self.queue.qsize():
-            await asyncio.sleep(1)
-            method_name, args = self.queue.get().values()
+        def _run_queued_requests(queue):
+            method_name, args = queue.get().values()
             fn = getattr(self.viewer_rpc.itk_viewer, method_name)
             self.loop.call_soon_threadsafe(asyncio.ensure_future, fn(*args))
+
+        # Wait for the viewer to be created
+        self.viewer_rpc.viewer_event.wait()
+        while self.queue.qsize():
+            _run_queued_requests(self.queue)
+        # Wait for the data to be set
+        self.viewer_rpc.data_event.wait()
+        while self.deferred_queue.qsize():
+            _run_queued_requests(self.deferred_queue)
 
     def queue_worker(self):
         loop = asyncio.new_event_loop()
