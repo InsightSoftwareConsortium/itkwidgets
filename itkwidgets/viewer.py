@@ -1,11 +1,15 @@
 import asyncio
+import queue
+import threading
 from imjoy_rpc import api
 from typing import List
 from IPython.display import display, HTML
+from IPython.lib import backgroundjobs as bg
 import uuid
 
 from ._type_aliases import Gaussians, Style, Image, Point_Sets
 from ._initialization_params import init_params_dict, init_key_aliases
+from ._method_types import deferred_methods
 from .integrations import _detect_render_type, _get_viewer_image, _get_viewer_point_sets
 from .render_types import RenderType
 
@@ -29,6 +33,8 @@ class ViewerRPC:
         self.init_data = {}
         self.img = display(HTML(f'<div />'), display_id=str(uuid.uuid4()))
         self.wid = None
+        self.viewer_event = threading.Event()
+        self.data_event = threading.Event()
 
     def _get_input_data(self):
         input_options = ["data", "image", "label_image", "point_sets"]
@@ -90,6 +96,11 @@ class ViewerRPC:
             config=config,
         )
         _viewer_count += 1
+        itk_viewer.registerEventListener(
+            'renderedImageAssigned', self.set_event
+        )
+        # Once the viewer has been created any queued requests can be run
+        asyncio.get_running_loop().call_soon_threadsafe(self.viewer_event.set)
 
         self.set_default_ui_values(itk_viewer)
         self.itk_viewer = itk_viewer
@@ -130,6 +141,10 @@ class ViewerRPC:
             ''')
         self.img.display(html)
 
+    def set_event(self, event_data):
+        # Once the data has been set the deferred queue requests can be run
+        asyncio.get_running_loop().call_soon_threadsafe(self.data_event.set)
+
 
 class Viewer:
     """Pythonic Viewer class."""
@@ -138,115 +153,151 @@ class Viewer:
         self, ui_collapsed=True, rotate=False, ui="pydata-sphinx", **add_data_kwargs
     ):
         """Create a viewer."""
+        self.bg_jobs = bg.BackgroundJobManager()
         self.viewer_rpc = ViewerRPC(
             ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, **add_data_kwargs
         )
+        self.queue = queue.Queue()
+        self.deferred_queue = queue.Queue()
+        self.bg_thread = self.bg_jobs.new(self.queue_worker)
         api.export(self.viewer_rpc)
 
+    @property
+    def loop(self):
+        return asyncio.get_running_loop()
+
+    async def run_queued_requests(self):
+        def _run_queued_requests(queue):
+            method_name, args = queue.get().values()
+            fn = getattr(self.viewer_rpc.itk_viewer, method_name)
+            self.loop.call_soon_threadsafe(asyncio.ensure_future, fn(*args))
+
+        # Wait for the viewer to be created
+        self.viewer_rpc.viewer_event.wait()
+        while self.queue.qsize():
+            _run_queued_requests(self.queue)
+        # Wait for the data to be set
+        self.viewer_rpc.data_event.wait()
+        while self.deferred_queue.qsize():
+            _run_queued_requests(self.deferred_queue)
+
+    def queue_worker(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        task = loop.create_task(self.run_queued_requests())
+        loop.run_until_complete(task)
+
+    def queue_request(self, method, *args):
+        if hasattr(self.viewer_rpc, 'itk_viewer'):
+            fn = getattr(self.viewer_rpc.itk_viewer, method)
+            fn(*args)
+        else:
+            self.queue.put({'method': method, 'arg': args})
+
     def set_annotations_enabled(self, enabled: bool):
-        self.viewer_rpc.itk_viewer.setAnnotationsEnabled(enabled)
+        self.queue_request('setAnnotationsEnabled', enabled)
 
     def set_axes_enabled(self, enabled: bool):
-        self.viewer_rpc.itk_viewer.setAxesEnabled(enabled)
+        self.queue_request('setAxesEnabled', enabled)
 
     def set_background_color(self, bgColor: List[float]):
-        self.viewer_rpc.itk_viewer.setBackgroundColor(bgColor)
+        self.queue_request('setBackgroundColor', bgColor)
 
-    async def set_image(self, image: Image):
+    def set_image(self, image: Image):
         render_type = _detect_render_type(image, 'image')
         if render_type is RenderType.IMAGE:
             image = _get_viewer_image(image)
-            await self.viewer_rpc.itk_viewer.setImage(image)
+            self.queue_request('setImage', image)
         elif render_type is RenderType.POINT_SET:
             image = _get_viewer_point_sets(image)
-            await self.viewer_rpc.itk_viewer.setPointSets(image)
+            self.queue_request('setPointSets', image)
 
     def set_image_blend_mode(self, mode: str):
-        self.viewer_rpc.itk_viewer.setImageBlendMode(mode)
+        self.queue_request('setImageBlendMode', mode)
 
     def set_image_color_map(self, colorMap: str):
-        self.viewer_rpc.itk_viewer.setImageColorMap(colorMap)
+        self.queue_request('setImageColorMap', colorMap)
 
     def set_image_color_range(self, range: List[float]):
-        self.viewer_rpc.itk_viewer.setImageColorRange(range)
+        self.queue_request('setImageColorRange', range)
 
     def set_image_color_range_bounds(self, range: List[float]):
-        self.viewer_rpc.itk_viewer.setImageColorRangeBounds(range)
+        self.queue_request('setImageColorRangeBounds', range)
 
     def set_image_component_visibility(self, visibility: bool):
-        self.viewer_rpc.itk_viewer.setImageComponentVisibility(visibility)
+        self.queue_request('setImageComponentVisibility', visibility)
 
     def set_image_gradient_opacity(self, opacity: float):
-        self.viewer_rpc.itk_viewer.setImageGradientOpacity(opacity)
+        self.queue_request('setImageGradientOpacity', opacity)
 
     def set_image_gradient_opacity_scale(self, min: float):
-        self.viewer_rpc.itk_viewer.setImageGradientOpacityScale(min)
+        self.queue_request('setImageGradientOpacityScale', min)
 
     def set_image_interpolation_enabled(self, enabled: bool):
-        self.viewer_rpc.itk_viewer.setImageInterpolationEnabled(enabled)
+        self.queue_request('setImageInterpolationEnabled', enabled)
 
     def set_image_piecewise_function_gaussians(self, gaussians: Gaussians):
-        self.viewer_rpc.itk_viewer.setImagePiecewiseFunctionGaussians(gaussians)
+        self.queue_request('setImagePiecewiseFunctionGaussians', gaussians)
 
     def set_image_shadow_enabled(self, enabled: bool):
-        self.viewer_rpc.itk_viewer.setImageShadowEnabled(enabled)
+        self.queue_request('setImageShadowEnabled', enabled)
 
     def set_image_volume_sample_distance(self, distance: float):
-        self.viewer_rpc.itk_viewer.setImageVolumeSampleDistance(distance)
+        self.queue_request('setImageVolumeSampleDistance', distance)
 
-    async def set_label_image(self, label_image: Image):
+    def set_label_image(self, label_image: Image):
         render_type = _detect_render_type(label_image, 'image')
         if render_type is RenderType.IMAGE:
             label_image = _get_viewer_image(label_image)
-            await self.viewer_rpc.itk_viewer.setImage(label_image)
+            self.queue_request('setImage', label_image)
         elif render_type is RenderType.POINT_SET:
             label_image = _get_viewer_point_sets(label_image)
-            await self.viewer_rpc.itk_viewer.setPointSets(label_image)
+            self.queue_request('setPointSets', label_image)
 
     def set_label_image_blend(self, blend: float):
-        self.viewer_rpc.itk_viewer.setLabelImageBlend(blend)
+        self.queue_request('setLabelImageBlend', blend)
 
     def set_label_image_label_names(self, names: List[str]):
-        self.viewer_rpc.itk_viewer.setLabelImageLabelNames(names)
+        self.queue_request('setLabelImageLabelNames', names)
 
     def set_label_image_lookup_table(self, lookupTable: str):
-        self.viewer_rpc.itk_viewer.setLabelImageLookupTable(lookupTable)
+        self.queue_request('setLabelImageLookupTable', lookupTable)
 
     def set_label_image_weights(self, weights: float):
-        self.viewer_rpc.itk_viewer.setLabelImageWeights(weights)
+        self.queue_request('setLabelImageWeights', weights)
 
     def select_layer(self, name: str):
-        self.viewer_rpc.itk_viewer.selectLayer(name)
+        self.queue_request('selectLayer', name)
 
     def set_layer_visibility(self, visible: bool):
-        self.viewer_rpc.itk_viewer.setLayerVisibility(visible)
+        self.queue_request('setLayerVisibility', visible)
 
     def set_point_sets(self, pointSets: Point_Sets):
-        self.viewer_rpc.itk_viewer.setPointSets(pointSets)
+        self.queue_request('setPointSets', pointSets)
 
     def set_rendering_view_container_style(self, containerStyle: Style):
-        self.viewer_rpc.itk_viewer.setRenderingViewContainerStyle(containerStyle)
+        self.queue_request('setRenderingViewContainerStyle', containerStyle)
 
     def set_rotate(self, enabled: bool):
-        self.viewer_rpc.itk_viewer.setRotateEnabled(enabled)
+        self.queue_request('setRotateEnabled', enabled)
 
     def set_ui_collapsed(self, collapsed: bool):
-        self.viewer_rpc.itk_viewer.setUICollapsed(collapsed)
+        self.queue_request('setUICollapsed', collapsed)
 
     def set_units(self, units: str):
-        self.viewer_rpc.itk_viewer.setUnits(units)
+        self.queue_request('setUnits', units)
 
     def set_view_mode(self, mode: str):
-        self.viewer_rpc.itk_viewer.setViewMode(mode)
+        self.queue_request('setViewMode', mode)
 
     def set_x_slice(self, position: float):
-        self.viewer_rpc.itk_viewer.setXSlice(position)
+        self.queue_request('setXSlice', position)
 
     def set_y_slice(self, position: float):
-        self.viewer_rpc.itk_viewer.setYSlice(position)
+        self.queue_request('setYSlice', position)
 
     def set_z_slice(self, position: float):
-        self.viewer_rpc.itk_viewer.setZSlice(position)
+        self.queue_request('setZSlice', position)
 
 
 def view(data=None, **kwargs):

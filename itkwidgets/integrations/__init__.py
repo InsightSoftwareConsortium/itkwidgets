@@ -33,6 +33,7 @@ def _get_viewer_image(image):
             return xarray_data_array_to_numpy(image)
         if isinstance(image, xarray.Dataset):
             return xarray_data_set_to_numpy(image)
+    return image
 
 
 def _get_viewer_point_sets(point_sets):
@@ -54,6 +55,7 @@ def _get_viewer_point_sets(point_sets):
             return xarray_data_array_to_numpy(point_sets)
         if isinstance(point_sets, xarray.Dataset):
             return xarray_data_set_to_numpy(point_sets)
+    return point_sets
 
 
 def _detect_render_type(data, input_type) -> RenderType:
