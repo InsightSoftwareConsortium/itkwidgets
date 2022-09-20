@@ -5,3 +5,17 @@ examples/integrations/itk/005_32months_T2_RegT1_Reg2Atlas_ManualBrainMask_Stripp
 docs/_*
 docs/.jupyterlite.doit.db
 docs/.cache
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
