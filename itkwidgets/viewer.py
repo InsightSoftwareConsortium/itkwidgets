@@ -191,6 +191,8 @@ class Viewer:
         if hasattr(self.viewer_rpc, 'itk_viewer'):
             fn = getattr(self.viewer_rpc.itk_viewer, method)
             fn(*args)
+        elif method in deferred_methods():
+            self.deferred_queue.put({'method': method, 'arg': args})
         else:
             self.queue.put({'method': method, 'arg': args})
 
