@@ -55,7 +55,7 @@ class ViewerRPC:
         if ui == "pydata-sphinx":
             config = {
                 "uiMachineOptions": {
-                    "href": "https://cdn.jsdelivr.net/npm/itk-viewer-bootstrap-ui@0.10.3/dist/bootstrapUIMachineOptions.js.es.js",
+                    "href": "https://cdn.jsdelivr.net/npm/itk-viewer-bootstrap-ui@0.11.0/dist/bootstrapUIMachineOptions.js.es.js",
                     "export": "default",
                 }
             }
