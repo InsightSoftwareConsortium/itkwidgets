@@ -55,14 +55,14 @@ class ViewerRPC:
         if ui == "pydata-sphinx":
             config = {
                 "uiMachineOptions": {
-                    "href": "https://cdn.jsdelivr.net/npm/itk-viewer-bootstrap-ui@0/dist/bootstrapUIMachineOptions.js.es.js",
+                    "href": "https://cdn.jsdelivr.net/npm/itk-viewer-bootstrap-ui@0.10.3/dist/bootstrapUIMachineOptions.js.es.js",
                     "export": "default",
                 }
             }
         elif ui == "mui":
             config = {
                 "uiMachineOptions": {
-                    "href": "https://cdn.jsdelivr.net/npm/itk-viewer-material-ui@0/dist/materialUIMachineOptions.js.es.js",
+                    "href": "https://cdn.jsdelivr.net/npm/itk-viewer-material-ui@0.3.0/dist/materialUIMachineOptions.js.es.js",
                     "export": "default",
                 }
             }
@@ -89,7 +89,7 @@ class ViewerRPC:
         itk_viewer = await api.createWindow(
             name=f"itkwidgets viewer {_viewer_count}",
             type="itk-vtk-viewer",
-            src="https://kitware.github.io/itk-vtk-viewer/app",
+            src="https://bafybeihh34vpeoczdl3bu5wff3cvx35g2u3h3cbs6cmc3werg7drobr3ty.on.fleek.co/",
             fullscreen=True,
             data=self.init_data,
             # config should be a python data dictionary and can't be a string e.g. 'pydata-sphinx',
