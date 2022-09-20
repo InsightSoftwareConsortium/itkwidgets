@@ -1,8 +1,8 @@
 import itkwasm
 import zarr
 import numpy as np
+import dask
 
-from .integrations.dask import HAVE_DASK
 from .integrations.itk import HAVE_ITK
 from .integrations.pytorch import HAVE_TORCH
 from .integrations.vtk import HAVE_VTK
@@ -23,10 +23,8 @@ if HAVE_VTK:
     import vtk
     Image = Union[Image, vtk.vtkImageData]
     Point_Sets = Union[Point_Sets, vtk.vtkPolyData]
-if HAVE_DASK:
-    import dask
-    Image = Union[Image, dask.array.core.Array]
-    Point_Sets = Union[Point_Sets, dask.array.core.Array]
+Image = Union[Image, dask.array.core.Array]
+Point_Sets = Union[Point_Sets, dask.array.core.Array]
 if HAVE_TORCH:
     import torch
     Image = Union[Image, torch.Tensor]
