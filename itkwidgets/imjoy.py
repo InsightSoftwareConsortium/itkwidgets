@@ -1,10 +1,11 @@
-from dataclasses import dataclass, asdict
+from dataclasses import asdict
 
-from typing import Dict
+from typing import Dict 
 
 import itkwasm
 import numcodecs
 from imjoy_rpc import api
+import zarr
 
 _numcodec_encoder = numcodecs.Blosc(cname='lz4', clevel=3)
 _numcodec_config = _numcodec_encoder.get_config()
@@ -24,6 +25,26 @@ def encode_itkwasm_image(image):
 
     return image_dict
 
+def encode_zarr_store(store):
+    def getItem(key):
+        return store[key]
+
+    def setItem(key, value):
+        store[key] = value
+
+    def containsItem(key):
+        return key in store
+
+    return {
+        "_rintf": True,
+        "_rtype": 'zarr-store',
+        "getItem": getItem,
+        "setItem": setItem,
+        "containsItem": containsItem,
+    }
+
 def register_itkwasm_imjoy_codecs():
 
     api.registerCodec({'name': 'itkwasm-image', 'type': itkwasm.Image, 'encoder': encode_itkwasm_image})
+    api.registerCodec({'name': 'zarr-store', 'type': zarr.storage.BaseStore, 'encoder': encode_zarr_store})
+ 

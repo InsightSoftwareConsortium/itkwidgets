@@ -39,6 +39,7 @@ dependencies = [
     "imjoy-rpc >= 0.5.13",
     "imjoy-utils >= 0.1.2",
     "numcodecs",
+    "multiscale_spatial_image >= 0.10.1",
     "zarr",
 ]
 
