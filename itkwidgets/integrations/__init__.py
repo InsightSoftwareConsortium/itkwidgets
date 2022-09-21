@@ -5,7 +5,7 @@ import itkwasm
 import numpy as np
 import zarr
 from multiscale_spatial_image import MultiscaleSpatialImage, to_multiscale, itk_image_to_multiscale
-from spatial_image import to_spatial_image
+from spatial_image import to_spatial_image, is_spatial_image
 
 import dask
 import xarray as xr
@@ -106,8 +106,18 @@ def _get_viewer_image(image):
     # Todo: preserve dask Array, if present, check if dims are NGFF -> use dims, coords
     # Check if coords are uniform, if not, resample
     if isinstance(image, xr.DataArray):
+        if is_spatial_image(image):
+            scale_factors = _spatial_image_scale_factors(image, min_length)
+            multiscale = to_multiscale(image, scale_factors)
+            return _make_multiscale_store(multiscale)
+
         return xarray_data_array_to_numpy(image)
     if isinstance(image, xr.Dataset):
+        da = image[next(iter(image.variables.keys()))]
+        if is_spatial_image(da):
+            scale_factors = _spatial_image_scale_factors(da, min_length)
+            multiscale = to_multiscale(da, scale_factors)
+            return _make_multiscale_store(multiscale)
         return xarray_data_set_to_numpy(image)
 
     if isinstance(image, np.ndarray):
