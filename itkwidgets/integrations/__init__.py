@@ -93,7 +93,7 @@ def _get_viewer_image(image):
 
     # NGFF Zarr
     if isinstance(image, zarr.Group) and 'multiscales' in image.attrs:
-        return _make_multiscale_store(image.store)
+        return image.store
 
     if HAVE_TORCH:
         import torch
