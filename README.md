@@ -1,6 +1,7 @@
 # itkwidgets
 
 [![Documentation Status](https://readthedocs.org/projects/itkwidgets/badge/?version=latest)](https://itkwidgets.readthedocs.io/en/latest/?badge=latest)
+[![Notebook tests](https://github.com/InsightSoftwareConsortium/itkwidgets/actions/workflows/notebook-test.yml/badge.svg)](https://github.com/InsightSoftwareConsortium/itkwidgets/actions/workflows/notebook-test.yml)
 
 Interactive widgets to visualize images, point sets, and 3D geometry on the web.
 
