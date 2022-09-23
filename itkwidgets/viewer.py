@@ -12,6 +12,7 @@ from ._initialization_params import init_params_dict, init_key_aliases
 from ._method_types import deferred_methods
 from .integrations import _detect_render_type, _get_viewer_image, _get_viewer_point_sets
 from .render_types import RenderType
+from .viewer_config import ITK_VIEWER_SRC, PYDATA_SPHINX_HREF, MUI_HREF
 
 __all__ = [
     "Viewer",
@@ -56,14 +57,14 @@ class ViewerRPC:
         if ui == "pydata-sphinx":
             config = {
                 "uiMachineOptions": {
-                    "href": "https://cdn.jsdelivr.net/npm/itk-viewer-bootstrap-ui@0.11.0/dist/bootstrapUIMachineOptions.js.es.js",
+                    "href": PYDATA_SPHINX_HREF,
                     "export": "default",
                 }
             }
         elif ui == "mui":
             config = {
                 "uiMachineOptions": {
-                    "href": "https://cdn.jsdelivr.net/npm/itk-viewer-material-ui@0.3.0/dist/materialUIMachineOptions.js.es.js",
+                    "href": MUI_HREF,
                     "export": "default",
                 }
             }
@@ -93,7 +94,7 @@ class ViewerRPC:
         itk_viewer = await api.createWindow(
             name=f"itkwidgets viewer {_viewer_count}",
             type="itk-vtk-viewer",
-            src="https://bafybeicvblbtdzu7u6fdawt3muzd5t436xtbpu7cwdas3p3rcsjktxousq.on.fleek.co/",
+            src=ITK_VIEWER_SRC,
             fullscreen=True,
             data=self.init_data,
             # config should be a python data dictionary and can't be a string e.g. 'pydata-sphinx',
