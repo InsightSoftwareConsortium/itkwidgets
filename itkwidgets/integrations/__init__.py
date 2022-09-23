@@ -4,7 +4,7 @@ from re import S
 import itkwasm
 import numpy as np
 import zarr
-from multiscale_spatial_image import MultiscaleSpatialImage, to_multiscale, itk_image_to_multiscale
+from multiscale_spatial_image import MultiscaleSpatialImage, to_multiscale, itk_image_to_multiscale, Methods
 from spatial_image import to_spatial_image, is_spatial_image
 
 import dask
@@ -42,8 +42,12 @@ def _make_multiscale_store(multiscale):
     multiscale.to_zarr(store, compute=True)
     return store
 
-def _get_viewer_image(image):
+def _get_viewer_image(image, label=False):
     min_length = 64
+    if label:
+        method = Methods.DASK_IMAGE_NEAREST
+    else:
+        method = Methods.DASK_IMAGE_GAUSSIAN
     if isinstance(image, MultiscaleSpatialImage):
         return _make_multiscale_store(image)
 
@@ -68,7 +72,7 @@ def _get_viewer_image(image):
                 previous = scale_factor
                 scale_factors.append(scale_factor)
 
-            multiscale = itk_image_to_multiscale(image, scale_factors=scale_factors)
+            multiscale = itk_image_to_multiscale(image, scale_factors=scale_factors, method=method)
             return _make_multiscale_store(multiscale)
 
     if HAVE_VTK:
@@ -76,19 +80,19 @@ def _get_viewer_image(image):
         if isinstance(image, vtk.vtkImageData):
             spatial_image = vtk_image_to_spatial_image(image)
             scale_factors = _spatial_image_scale_factors(spatial_image, min_length)
-            multiscale = to_multiscale(spatial_image, scale_factors)
+            multiscale = to_multiscale(spatial_image, scale_factors, method=method)
             return _make_multiscale_store(multiscale)
 
     if isinstance(image, dask.array.core.Array):
         spatial_image = to_spatial_image(image)
         scale_factors = _spatial_image_scale_factors(spatial_image, min_length)
-        multiscale = to_multiscale(spatial_image, scale_factors)
+        multiscale = to_multiscale(spatial_image, scale_factors, method=method)
         return _make_multiscale_store(multiscale)
 
     if isinstance(image, zarr.Array):
         spatial_image = to_spatial_image(image)
         scale_factors = _spatial_image_scale_factors(spatial_image, min_length)
-        multiscale = to_multiscale(spatial_image, scale_factors)
+        multiscale = to_multiscale(spatial_image, scale_factors, method=method)
         return _make_multiscale_store(multiscale)
 
     # NGFF Zarr
@@ -100,7 +104,7 @@ def _get_viewer_image(image):
         if isinstance(image, torch.Tensor):
             spatial_image = to_spatial_image(image.numpy())
             scale_factors = _spatial_image_scale_factors(spatial_image, min_length)
-            multiscale = to_multiscale(spatial_image, scale_factors)
+            multiscale = to_multiscale(spatial_image, scale_factors, method=method)
             return _make_multiscale_store(multiscale)
 
     # Todo: preserve dask Array, if present, check if dims are NGFF -> use dims, coords
@@ -108,7 +112,7 @@ def _get_viewer_image(image):
     if isinstance(image, xr.DataArray):
         if is_spatial_image(image):
             scale_factors = _spatial_image_scale_factors(image, min_length)
-            multiscale = to_multiscale(image, scale_factors)
+            multiscale = to_multiscale(image, scale_factors, method=method)
             return _make_multiscale_store(multiscale)
 
         return xarray_data_array_to_numpy(image)
@@ -116,14 +120,14 @@ def _get_viewer_image(image):
         da = image[next(iter(image.variables.keys()))]
         if is_spatial_image(da):
             scale_factors = _spatial_image_scale_factors(da, min_length)
-            multiscale = to_multiscale(da, scale_factors)
+            multiscale = to_multiscale(da, scale_factors, method=method)
             return _make_multiscale_store(multiscale)
         return xarray_data_set_to_numpy(image)
 
     if isinstance(image, np.ndarray):
         spatial_image = to_spatial_image(image)
         scale_factors = _spatial_image_scale_factors(spatial_image, min_length)
-        multiscale = to_multiscale(spatial_image, scale_factors)
+        multiscale = to_multiscale(spatial_image, scale_factors, method=method)
         return _make_multiscale_store(multiscale)
     raise RuntimeError("Could not process the viewer image")
 

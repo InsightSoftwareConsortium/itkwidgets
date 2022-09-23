@@ -19,6 +19,7 @@ __all__ = [
 ]
 
 _viewer_count = 1
+_codecs_registered = False
 
 
 class ViewerRPC:
@@ -79,7 +80,10 @@ class ViewerRPC:
             render_type = _detect_render_type(data, input_type)
             key = init_key_aliases()[input_type]
             if render_type is RenderType.IMAGE:
-                result = _get_viewer_image(data)
+                if input_type == 'label_image':
+                    result = _get_viewer_image(data, label=True)
+                else:
+                    result = _get_viewer_image(data, label=False)
             elif render_type is RenderType.POINT_SET:
                 result = _get_viewer_point_sets(data)
             if result is None:
@@ -208,7 +212,7 @@ class Viewer:
     def set_image(self, image: Image):
         render_type = _detect_render_type(image, 'image')
         if render_type is RenderType.IMAGE:
-            image = _get_viewer_image(image)
+            image = _get_viewer_image(image, label=False)
             self.queue_request('setImage', image)
         elif render_type is RenderType.POINT_SET:
             image = _get_viewer_point_sets(image)
@@ -250,7 +254,7 @@ class Viewer:
     def set_label_image(self, label_image: Image):
         render_type = _detect_render_type(label_image, 'image')
         if render_type is RenderType.IMAGE:
-            label_image = _get_viewer_image(label_image)
+            label_image = _get_viewer_image(label_image, label=True)
             self.queue_request('setImage', label_image)
         elif render_type is RenderType.POINT_SET:
             label_image = _get_viewer_point_sets(label_image)
