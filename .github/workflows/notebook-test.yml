@@ -24,4 +24,4 @@ jobs:
           python3 -c "import imagej; ij = imagej.init('2.5.0'); print(ij.getVersion())"
       - name: Test notebooks
         run: |
-          pytest --nbmake --nbmake-timeout=3000  examples/*ipynb
+          pytest --nbmake --nbmake-timeout=3000  examples/*.ipynb examples/integrations/dask/*.ipynb
