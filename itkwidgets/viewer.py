@@ -26,7 +26,6 @@ __all__ = [
 _viewer_count = 1
 _codecs_registered = False
 
-
 class ViewerRPC:
     """Viewer remote procedure interface."""
 

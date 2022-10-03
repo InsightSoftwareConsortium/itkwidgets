@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+
+    <link rel="manifest" href="static/manifest.json">
+
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="image-viewer">
+    <meta name="apple-mobile-web-app-title" content="image-viewer">
+    <meta name="theme-color" content="#8B8B8B">
+    <meta name="msapplication-navbutton-color" content="#8B8B8B">
+    <meta name="apple-mobile-web-app-status-bar-style"
+    content="black-translucent">
+    <meta name="msapplication-starturl" content="/itk-vtk-viewer/app/">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- <link rel="icon" type="image/png" sizes="50x50" href="/itk-vtk-viewer/logo.png"> -->
+    <!-- <link rel="apple-touch-icon" type="image/png" sizes="50x50" href="/itk-vtk-viewer/logo.png"> -->
+
+    <script type="text/javascript" src="https://lib.imjoy.io/imjoy-loader.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/socket.io-client@4.0.1/dist/socket.io.min.js"></script> 
+    <link rel="icon" type="image/png" href="static/favicon-32x32.png">
+  </head>
+
+  <body>
+    <div class="content" style="position: absolute; width: 100vw; height: 100vh; top: 0; left: 0; overflow: hidden; background: black; margin: 0; padding: 0;"></div>
+    <script type="text/javascript" src="static/itkVtkViewer.js">
+    </script>
+    <script>
+        async function setupJSSocketIo(config, resolve, reject) {
+          try{
+            const toObject = (x) => {
+                if(x===undefined || x===null) return x;
+                return x.toJs({dict_converter : Object.fromEntries})
+            }
+            config = toObject(config)
+            config.server_token = config.token
+            globalThis.config = config
+            const url = config.server_url;
+            const extraHeaders = {};
+            if (config.token) {
+                extraHeaders.Authorization = "Bearer " + config.token;
+            }
+            // const basePath = new URL(url).pathname;
+            // Note: extraHeaders only works for polling transport (the default)
+            // If we switch to websocket only, the headers won't be respected
+            if(globalThis.socket){
+                globalThis.socket.disconnect();
+            }
+            const socket = io(url, {
+                withCredentials: true,
+                extraHeaders,
+            });
+            let connected = false;
+            socket.on("connect", () => {
+                if(connected) {
+                    console.warn("Skipping reconnect to the server");
+                    return
+                }
+
+                globalThis.sendMessage = function(data){
+
+                    return new Promise((resolve, reject)=>{
+                        try{
+                            data = toObject(data)
+                            socket.emit("plugin_message", data, result => {
+                                if (!result.success) reject(result.detail)
+                                else resolve(result)
+                            })
+                        }
+                        catch(e){
+                            reject(e)
+                        }
+
+                    })
+                }
+
+                socket.emit("register_plugin", config, async (result) => {
+                    if (!result.success) {
+                        console.error(result.detail);
+                        reject(result.detail);
+                        return;
+                    }
+                    connected = true;
+                    globalThis.setMessageCallback = (cb)=>{
+                        socket.on("plugin_message", cb);
+                    }
+                    console.log("Plugin registered: " + config.name)
+                    resolve();
+                })
+
+                socket.on("connect_error", (error) => {
+                    console.error("connection error", error);
+                    reject(`${error}`);
+                });
+                socket.on("disconnect", () => {
+                    console.error("disconnected");
+                    reject("disconnected");
+                });
+            })
+            globalThis.socket = socket;
+        }
+        catch(e){
+            reject(`${error}`);
+        }
+     }
+     async function setupViewerForImJoy(container) {
+      const imjoyRPC = await imjoyLoader.loadImJoyRPC({
+        api_version: '0.2.3'
+      })
+      const version = itkVtkViewer.version
+      const api = await imjoyRPC.setupRPC({
+        name: 'itk-vtk-viewer',
+        version,
+        description: '2D / 3D web image, mesh, and point set viewer using itk-wasm and vtk.js ',
+        type: 'rpc-window',
+        docs: 'https://kitware.github.io/itk-vtk-viewer/docs/imjoy.html',
+        authors: ['Matt McCormick', 'Wei Ouyang'],
+        license: '3-Clause BSD License',
+        labels: ['visualization', 'itk', 'vtk', 'image', 'mesh', 'geometry', 'point set', '2D', '3D'],
+        icon: 'https://kitware.github.io/itk-vtk-viewer/app/favicon-32x32.png',
+        cover: ['https://kitware.github.io/itk-vtk-viewer/docs/howToUse.jpg', 'https://kitware.github.io/itk-vtk-viewer/docs/imjoy.png'],
+      })
+      itkVtkViewer.imJoyCodecs.forEach((codec) => {
+        api.registerCodec(codec)
+      })
+      api.export(itkVtkViewer.imJoyPluginAPI)
+      api.log('itk-vtk-viewer loaded successfully.')
+    }
+
+    const container = document.querySelector('.content');
+    // inside an iframe
+    // if (window.self !== window.top) {
+      setupViewerForImJoy(container)
+    // } else {
+    //   const viewer = itkVtkViewer.processURLParameters(container, {
+    //     fullscreen: true
+    //   });
+    //   if (!viewer) {
+    //     itkVtkViewer.createViewerFromLocalFiles(container)
+    //   }
+    // }
+  </script>
+  </body>
+</html>
