@@ -33,13 +33,13 @@ keywords = [
     "webgpu",
 ]
 
-requires-python = ">=3.8"
+requires-python = ">=3.7"
 dependencies = [
     "itkwasm >= 1.0b1",
     "imjoy-rpc >= 0.5.16",
     "imjoy-utils >= 0.1.2",
+    "ngff-zarr >= 0.1.0",
     "numcodecs",
-    "multiscale_spatial_image[dask-image] >= 0.11.1",
     "zarr",
 ]
 

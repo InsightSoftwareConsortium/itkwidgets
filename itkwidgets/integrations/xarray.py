@@ -5,6 +5,13 @@ try:
 except ImportError:
     pass
 
+HAVE_MULTISCALE_SPATIAL_IMAGE = False
+try:
+    import multiscale_spatial_image
+    HAVE_MULTISCALE_SPATIAL_IMAGE = True
+except ImportError:
+    pass
+
 def xarray_data_array_to_numpy(data_array):
     return data_array.to_numpy()
 
