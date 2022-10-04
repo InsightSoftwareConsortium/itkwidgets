@@ -47,10 +47,11 @@ def _get_viewer_image(image, label=False):
         method = Methods.DASK_IMAGE_NEAREST
     else:
         method = Methods.DASK_IMAGE_GAUSSIAN
-    
+
     store, chunk_store = _make_multiscale_store()
 
     if HAVE_MULTISCALE_SPATIAL_IMAGE:
+        from multiscale_spatial_image import MultiscaleSpatialImage
         if isinstance(image, MultiscaleSpatialImage):
             image.to_zarr(store, compute=True)
             return store
@@ -59,6 +60,7 @@ def _get_viewer_image(image, label=False):
         ngff_image = itk_image_to_ngff_image(image)
         multiscales = to_multiscales(ngff_image, method=method)
         to_ngff_zarr(store, multiscales, chunk_store=chunk_store)
+        return store
 
     if HAVE_ITK:
         import itk
@@ -152,10 +154,6 @@ def _detect_render_type(data, input_type) -> RenderType:
         return RenderType.IMAGE
     elif isinstance(data, itkwasm.PointSet):
         return RenderType.POINT_SET
-    elif HAVE_MULTISCALE_SPATIAL_IMAGE:
-        from multiscale_spatial_image import MultiscaleSpatialImage
-        if isinstance(data, MultiscaleSpatialImage):
-            return RenderType.IMAGE
     elif isinstance(data, (zarr.Array, zarr.Group)):
         # For now assume zarr.Group is an image
         # In the future, once NGFF supports point sets fully
@@ -174,6 +172,10 @@ def _detect_render_type(data, input_type) -> RenderType:
     elif HAVE_ITK:
         import itk
         if isinstance(data, itk.Image):
+            return RenderType.IMAGE
+    if HAVE_MULTISCALE_SPATIAL_IMAGE:
+        from multiscale_spatial_image import MultiscaleSpatialImage
+        if isinstance(data, MultiscaleSpatialImage):
             return RenderType.IMAGE
     if HAVE_VTK:
         import vtk
@@ -200,8 +202,8 @@ def _detect_render_type(data, input_type) -> RenderType:
                 return RenderType.POINT_SET
             else:
                 return RenderType.IMAGE
-    if isinstance(data, xr.Dataset):
-        if input_type == 'point_sets':
-            return RenderType.POINT_SET
-        else:
-            return RenderType.IMAGE
+        if isinstance(data, xr.Dataset):
+            if input_type == 'point_sets':
+                return RenderType.POINT_SET
+            else:
+                return RenderType.IMAGE
