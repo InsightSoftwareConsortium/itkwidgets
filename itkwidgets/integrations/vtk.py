@@ -6,10 +6,10 @@ try:
 except ImportError:
     pass
 
-from spatial_image import to_spatial_image
+from ngff_zarr import ngff_image, to_ngff_image
 
 
-def vtk_image_to_spatial_image(image):
+def vtk_image_to_ngff_image(image):
     array = vtk_to_numpy(image.GetPointData().GetScalars())
     dimensions = list(image.GetDimensions())
     array.shape = dimensions[::-1]
@@ -20,9 +20,9 @@ def vtk_image_to_spatial_image(image):
     spacing = image.GetSpacing()
     scale = { 'x': spacing[0], 'y': spacing[1], 'z': spacing[2] }
 
-    spatial_image = to_spatial_image(array, scale=scale, translation=translation)
+    ngff_image = to_ngff_image(array, scale=scale, translation=translation)
 
-    return spatial_image
+    return ngff_image
 
 def vtk_polydata_to_vtkjs(point_set):
     array = vtk_to_numpy(point_set.GetPoints().GetData())
