@@ -6,22 +6,29 @@ jobs:
   run:
     runs-on: ubuntu-latest
     name: Test notebooks with nbmake
+    strategy:
+      matrix:
+        python-version: ['3.7', '3.8', '3.9', '3.10']
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions/setup-python@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
         with:
-          python-version: '3.7'
+          python-version: ${{ matrix.python-version }}
+
       - uses: actions/setup-java@v3
         with:
           java-version: '8'
           distribution: 'zulu'
+
       - name: Install test dependencies
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install -e ".[test]"
           python3 -m pip install pyimagej
           python3 -c "import imagej; ij = imagej.init('2.5.0'); print(ij.getVersion())"
+
       - name: Test notebooks
         run: |
           pytest --nbmake --nbmake-timeout=3000  examples/*.ipynb examples/integrations/dask/*.ipynb
