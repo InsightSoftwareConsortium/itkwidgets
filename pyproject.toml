@@ -38,7 +38,7 @@ dependencies = [
     "itkwasm >= 1.0b1",
     "imjoy-rpc >= 0.5.16",
     "imjoy-utils >= 0.1.2",
-    "ngff-zarr[dask-image] >= 0.1.0",
+    "ngff-zarr[dask-image] >= 0.1.2",
     "numcodecs",
     "zarr",
 ]
