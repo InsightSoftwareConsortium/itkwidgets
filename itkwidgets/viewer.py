@@ -256,7 +256,7 @@ class Viewer:
         render_type = _detect_render_type(label_image, 'image')
         if render_type is RenderType.IMAGE:
             label_image = _get_viewer_image(label_image, label=True)
-            self.queue_request('setImage', label_image)
+            self.queue_request('setLabelImage', label_image)
         elif render_type is RenderType.POINT_SET:
             label_image = _get_viewer_point_sets(label_image)
             self.queue_request('setPointSets', label_image)
