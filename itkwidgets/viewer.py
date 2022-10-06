@@ -252,6 +252,9 @@ class Viewer:
     def set_image_volume_sample_distance(self, distance: float):
         self.queue_request('setImageVolumeSampleDistance', distance)
 
+    def set_image_volume_scattering_blend(self, scattering_blend: float):
+        self.queue_request('setImageVolumeScatteringBlend', scattering_blend)
+
     def set_label_image(self, label_image: Image):
         render_type = _detect_render_type(label_image, 'image')
         if render_type is RenderType.IMAGE:
