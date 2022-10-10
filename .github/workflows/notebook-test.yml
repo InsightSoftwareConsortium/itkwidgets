@@ -32,4 +32,4 @@ jobs:
 
       - name: Test notebooks
         run: |
-          pytest --nbmake --nbmake-timeout=3000  examples/*.ipynb examples/integrations/dask/*.ipynb examples/integrations/itk/*.ipynb
+          pytest --nbmake --nbmake-timeout=3000  examples/*.ipynb examples/integrations/dask/*.ipynb examples/integrations/itk/*.ipynb examples/integrations/zarr/*.ipynb
