@@ -11,6 +11,7 @@ from ._type_aliases import Gaussians, Style, Image, Point_Sets
 from ._initialization_params import init_params_dict, init_key_aliases
 from ._method_types import deferred_methods
 from .integrations import _detect_render_type, _get_viewer_image, _get_viewer_point_sets
+from .integrations.environment import IN_JUPYTERLITE
 from .render_types import RenderType
 from .viewer_config import ITK_VIEWER_SRC, PYDATA_SPHINX_HREF, MUI_HREF
 
@@ -35,8 +36,9 @@ class ViewerRPC:
         self.init_data = {}
         self.img = display(HTML(f'<div />'), display_id=str(uuid.uuid4()))
         self.wid = None
-        self.viewer_event = threading.Event()
-        self.data_event = threading.Event()
+        if not IN_JUPYTERLITE:
+            self.viewer_event = threading.Event()
+            self.data_event = threading.Event()
 
     def _get_input_data(self):
         input_options = ["data", "image", "label_image", "point_sets"]
@@ -98,11 +100,13 @@ class ViewerRPC:
             config=config,
         )
         _viewer_count += 1
-        itk_viewer.registerEventListener(
-            'renderedImageAssigned', self.set_event
-        )
-        # Once the viewer has been created any queued requests can be run
-        asyncio.get_running_loop().call_soon_threadsafe(self.viewer_event.set)
+        if not IN_JUPYTERLITE:
+            itk_viewer.registerEventListener(
+                'renderedImageAssigned', self.set_event
+            )
+        if not IN_JUPYTERLITE:
+            # Once the viewer has been created any queued requests can be run
+            asyncio.get_running_loop().call_soon_threadsafe(self.viewer_event.set)
 
         self.set_default_ui_values(itk_viewer)
         self.itk_viewer = itk_viewer
@@ -155,13 +159,14 @@ class Viewer:
         self, ui_collapsed=True, rotate=False, ui="pydata-sphinx", **add_data_kwargs
     ):
         """Create a viewer."""
-        self.bg_jobs = bg.BackgroundJobManager()
         self.viewer_rpc = ViewerRPC(
             ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, **add_data_kwargs
         )
-        self.queue = queue.Queue()
-        self.deferred_queue = queue.Queue()
-        self.bg_thread = self.bg_jobs.new(self.queue_worker)
+        if not IN_JUPYTERLITE:
+            self.bg_jobs = bg.BackgroundJobManager()
+            self.queue = queue.Queue()
+            self.deferred_queue = queue.Queue()
+            self.bg_thread = self.bg_jobs.new(self.queue_worker)
         api.export(self.viewer_rpc)
 
     @property
@@ -190,7 +195,7 @@ class Viewer:
         loop.run_until_complete(task)
 
     def queue_request(self, method, *args, **kwargs):
-        if hasattr(self.viewer_rpc, 'itk_viewer'):
+        if IN_JUPYTERLITE or hasattr(self.viewer_rpc, 'itk_viewer'):
             fn = getattr(self.viewer_rpc.itk_viewer, method)
             fn(*args, **kwargs)
         elif method in deferred_methods():
