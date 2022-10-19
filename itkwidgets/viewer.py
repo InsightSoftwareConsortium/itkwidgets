@@ -173,9 +173,9 @@ class Viewer:
 
     async def run_queued_requests(self):
         def _run_queued_requests(queue):
-            method_name, args = queue.get().values()
+            method_name, args, kwargs = queue.get()
             fn = getattr(self.viewer_rpc.itk_viewer, method_name)
-            self.loop.call_soon_threadsafe(asyncio.ensure_future, fn(*args))
+            self.loop.call_soon_threadsafe(asyncio.ensure_future, fn(*args, **kwargs))
 
         # Wait for the viewer to be created
         self.viewer_rpc.viewer_event.wait()
@@ -192,14 +192,14 @@ class Viewer:
         task = loop.create_task(self.run_queued_requests())
         loop.run_until_complete(task)
 
-    def queue_request(self, method, *args):
+    def queue_request(self, method, *args, **kwargs):
         if hasattr(self.viewer_rpc, 'itk_viewer'):
             fn = getattr(self.viewer_rpc.itk_viewer, method)
-            fn(*args)
+            fn(*args, **kwargs)
         elif method in deferred_methods():
-            self.deferred_queue.put({'method': method, 'arg': args})
+            self.deferred_queue.put((method, args, kwargs))
         else:
-            self.queue.put({'method': method, 'arg': args})
+            self.queue.put((method, args, kwargs))
 
     def set_annotations_enabled(self, enabled: bool):
         self.queue_request('setAnnotationsEnabled', enabled)
