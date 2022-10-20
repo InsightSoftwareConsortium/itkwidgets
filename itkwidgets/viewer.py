@@ -47,8 +47,23 @@ class ViewerRPC:
                 inputs.append((option, data))
         return inputs
 
-    async def setup(self):
-        pass
+    def setup(self):
+        self.init_data.clear()
+        input_data = self._get_input_data()
+        result= None
+        for (input_type, data) in input_data:
+            render_type = _detect_render_type(data, input_type)
+            key = init_key_aliases()[input_type]
+            if render_type is RenderType.IMAGE:
+                if input_type == 'label_image':
+                    result = _get_viewer_image(data, label=True)
+                else:
+                    result = _get_viewer_image(data, label=False)
+            elif render_type is RenderType.POINT_SET:
+                result = _get_viewer_point_sets(data)
+            if result is None:
+                result = data
+            self.init_data[key] = result
 
     async def run(self, ctx):
         """ImJoy plugin setup function."""
@@ -72,24 +87,6 @@ class ViewerRPC:
             config = ui
         else:
             config = {}
-
-        inputs = self._get_input_data()
-
-        self.init_data.clear()
-        result= None
-        for (input_type, data) in inputs:
-            render_type = _detect_render_type(data, input_type)
-            key = init_key_aliases()[input_type]
-            if render_type is RenderType.IMAGE:
-                if input_type == 'label_image':
-                    result = _get_viewer_image(data, label=True)
-                else:
-                    result = _get_viewer_image(data, label=False)
-            elif render_type is RenderType.POINT_SET:
-                result = _get_viewer_point_sets(data)
-            if result is None:
-                result = data
-            self.init_data[key] = result
 
         itk_viewer = await api.createWindow(
             name=f"itkwidgets viewer {_viewer_count}",
@@ -173,9 +170,9 @@ class Viewer:
 
     async def run_queued_requests(self):
         def _run_queued_requests(queue):
-            method_name, args = queue.get().values()
+            method_name, args, kwargs = queue.get()
             fn = getattr(self.viewer_rpc.itk_viewer, method_name)
-            self.loop.call_soon_threadsafe(asyncio.ensure_future, fn(*args))
+            self.loop.call_soon_threadsafe(asyncio.ensure_future, fn(*args, **kwargs))
 
         # Wait for the viewer to be created
         self.viewer_rpc.viewer_event.wait()
@@ -192,14 +189,14 @@ class Viewer:
         task = loop.create_task(self.run_queued_requests())
         loop.run_until_complete(task)
 
-    def queue_request(self, method, *args):
+    def queue_request(self, method, *args, **kwargs):
         if hasattr(self.viewer_rpc, 'itk_viewer'):
             fn = getattr(self.viewer_rpc.itk_viewer, method)
-            fn(*args)
+            fn(*args, **kwargs)
         elif method in deferred_methods():
-            self.deferred_queue.put({'method': method, 'arg': args})
+            self.deferred_queue.put((method, args, kwargs))
         else:
-            self.queue.put({'method': method, 'arg': args})
+            self.queue.put((method, args, kwargs))
 
     def set_annotations_enabled(self, enabled: bool):
         self.queue_request('setAnnotationsEnabled', enabled)
