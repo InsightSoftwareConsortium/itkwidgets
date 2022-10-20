@@ -58,6 +58,11 @@ Documentation = "https://itkwidgets.readthedocs.io/en/latest/"
 Source = "https://github.com/InsightSoftwareConsortium/itkwidgets"
 
 [project.optional-dependencies]
+all = [
+    "imjoy-jupyterlab-extension >=0.1.13",
+    "imjoy-elfinder[jupyter]",
+    "imjoy-jupyter-extension >=0.3.0"
+]
 lab = [
     "imjoy-jupyterlab-extension >=0.1.13",
     "imjoy-elfinder[jupyter]"
