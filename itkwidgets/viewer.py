@@ -11,7 +11,7 @@ from ._type_aliases import Gaussians, Style, Image, Point_Sets
 from ._initialization_params import init_params_dict, init_key_aliases
 from ._method_types import deferred_methods
 from .integrations import _detect_render_type, _get_viewer_image, _get_viewer_point_sets
-from .integrations.environment import IN_JUPYTERLITE
+from .integrations.environment import ENVIRONMENT, Env
 from .render_types import RenderType
 from .viewer_config import ITK_VIEWER_SRC, PYDATA_SPHINX_HREF, MUI_HREF
 
@@ -36,7 +36,7 @@ class ViewerRPC:
         self.init_data = {}
         self.img = display(HTML(f'<div />'), display_id=str(uuid.uuid4()))
         self.wid = None
-        if not IN_JUPYTERLITE:
+        if ENVIRONMENT is not Env.JUPYTERLITE:
             self.viewer_event = threading.Event()
             self.data_event = threading.Event()
 
@@ -100,11 +100,10 @@ class ViewerRPC:
             config=config,
         )
         _viewer_count += 1
-        if not IN_JUPYTERLITE:
+        if ENVIRONMENT is not Env.JUPYTERLITE:
             itk_viewer.registerEventListener(
                 'renderedImageAssigned', self.set_event
             )
-        if not IN_JUPYTERLITE:
             # Once the viewer has been created any queued requests can be run
             asyncio.get_running_loop().call_soon_threadsafe(self.viewer_event.set)
 
@@ -162,7 +161,7 @@ class Viewer:
         self.viewer_rpc = ViewerRPC(
             ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, **add_data_kwargs
         )
-        if not IN_JUPYTERLITE:
+        if ENVIRONMENT is not Env.JUPYTERLITE:
             self.bg_jobs = bg.BackgroundJobManager()
             self.queue = queue.Queue()
             self.deferred_queue = queue.Queue()
@@ -172,6 +171,10 @@ class Viewer:
     @property
     def loop(self):
         return asyncio.get_running_loop()
+
+    @property
+    def has_viewer(self):
+        return hasattr(self.viewer_rpc, 'itk_viewer')
 
     async def run_queued_requests(self):
         def _run_queued_requests(queue):
@@ -195,7 +198,7 @@ class Viewer:
         loop.run_until_complete(task)
 
     def queue_request(self, method, *args, **kwargs):
-        if IN_JUPYTERLITE or hasattr(self.viewer_rpc, 'itk_viewer'):
+        if ENVIRONMENT is Env.JUPYTERLITE or self.has_viewer:
             fn = getattr(self.viewer_rpc.itk_viewer, method)
             fn(*args, **kwargs)
         elif method in deferred_methods():
