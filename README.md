@@ -5,6 +5,8 @@
 
 Interactive widgets to visualize images, point sets, and 3D geometry on the web.
 
+![Hello 3D World](./docs/images/Hello3DWorld.gif)
+
 # Getting Started
 
 ## Installation
