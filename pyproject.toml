@@ -59,9 +59,9 @@ Source = "https://github.com/InsightSoftwareConsortium/itkwidgets"
 
 [project.optional-dependencies]
 all = [
-    "imjoy-jupyterlab-extension >=0.1.13",
-    "imjoy-elfinder[jupyter]",
-    "imjoy-jupyter-extension >=0.3.0"
+    "imjoy-jupyterlab-extension >=0.1.13 ; python_version > '3.7'",
+    "imjoy-elfinder[jupyter] ; python_version > '3.7'",
+    "imjoy-jupyter-extension >=0.3.0 ; python_version > '3.7'"
 ]
 lab = [
     "imjoy-jupyterlab-extension >=0.1.13",
