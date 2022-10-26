@@ -1,5 +1,5 @@
 ITK_VIEWER_SRC = (
-    "https://bafybeicuvbx4cfp3zgo25j376bmmysh73a2ui5dbapuwqtmjcvcaipmpbi.on.fleek.co/"
+    "https://bafybeignwipulr56pvj37nnfkkqneh6faj2pejdrpygnqwxme3q3pl2kbe.on.fleek.co/"
 )
-PYDATA_SPHINX_HREF = "https://cdn.jsdelivr.net/npm/itk-viewer-bootstrap-ui@0.14.1/dist/bootstrapUIMachineOptions.js.es.js"
+PYDATA_SPHINX_HREF = "https://cdn.jsdelivr.net/npm/itk-viewer-bootstrap-ui@0.15.0/dist/bootstrapUIMachineOptions.js.es.js"
 MUI_HREF = "https://cdn.jsdelivr.net/npm/itk-viewer-material-ui@0.3.0/dist/materialUIMachineOptions.js.es.js"
