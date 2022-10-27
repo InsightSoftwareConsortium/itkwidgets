@@ -47,9 +47,16 @@ if ENVIRONMENT is not Env.COLAB:
         try:
             import_module("imjoy-jupyterlab-extension")
         except:
-            raise RuntimeError('imjoy-jupyterlab-extension is required. `pip install itkwidgets[lab]` and refresh page.')
+            if ENVIRONMENT is Env.JUPYTERLITE:
+                print('imjoy-jupyterlab-extension is required')
+                raise RuntimeError('imjoy-jupyterlab-extension is required. Install the package and refresh page.')
+            else:
+                raise RuntimeError('imjoy-jupyterlab-extension is required. `pip install itkwidgets[lab]` and refresh page.')
 
 try:
     import imjoy_elfinder
 except:
-    raise RuntimeError('imjoy-elfinder is required. `pip install imjoy-elfinder` and refresh page.')
+    if ENVIRONMENT is Env.JUPYTERLITE:
+        raise RuntimeError('imjoy-elfinder is required. Install the package and refresh page.')
+    else:
+        raise RuntimeError('imjoy-elfinder is required. `pip install imjoy-elfinder` and refresh page.')
