@@ -28,44 +28,19 @@ class ViewerRPC:
     """Viewer remote procedure interface."""
 
     def __init__(
-        self, ui_collapsed=True, rotate=False, ui="pydata-sphinx", **add_data_kwargs
+        self, ui_collapsed=True, rotate=False, ui="pydata-sphinx", data=None
     ):
         """Create a viewer."""
         self._init_viewer_kwargs = dict(ui_collapsed=ui_collapsed, rotate=rotate, ui=ui)
-        self._init_viewer_kwargs.update(**add_data_kwargs)
-        self.init_data = {}
+        self.init_data = data
         self.img = display(HTML(f'<div />'), display_id=str(uuid.uuid4()))
         self.wid = None
         if ENVIRONMENT is not Env.JUPYTERLITE:
             self.viewer_event = threading.Event()
             self.data_event = threading.Event()
 
-    def _get_input_data(self):
-        input_options = ["data", "image", "label_image", "point_sets"]
-        inputs = []
-        for option in input_options:
-            data = self._init_viewer_kwargs.get(option, None)
-            if data is not None:
-                inputs.append((option, data))
-        return inputs
-
-    def setup(self):
-        self.init_data.clear()
-        input_data = self._get_input_data()
-        result= None
-        for (input_type, data) in input_data:
-            render_type = _detect_render_type(data, input_type)
-            key = init_key_aliases()[input_type]
-            if render_type is RenderType.IMAGE:
-                if input_type == 'label_image':
-                    result = _get_viewer_image(data, label=True)
-                else:
-                    result = _get_viewer_image(data, label=False)
-            elif render_type is RenderType.POINT_SET:
-                result = _get_viewer_point_sets(data)
-            if result is None:
-                result = data
-            self.init_data[key] = result
+    async def setup(self):
+        pass
 
     async def run(self, ctx):
         """ImJoy plugin setup function."""
@@ -157,9 +132,11 @@ class Viewer:
     def __init__(
         self, ui_collapsed=True, rotate=False, ui="pydata-sphinx", **add_data_kwargs
     ):
+        input_data = self.input_data(add_data_kwargs)
+        data = self.init_data(input_data)
         """Create a viewer."""
         self.viewer_rpc = ViewerRPC(
-            ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, **add_data_kwargs
+            ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, data=data
         )
         if ENVIRONMENT is not Env.JUPYTERLITE:
             self.bg_jobs = bg.BackgroundJobManager()
@@ -175,6 +152,33 @@ class Viewer:
     @property
     def has_viewer(self):
         return hasattr(self.viewer_rpc, 'itk_viewer')
+
+    def input_data(self, init_data_kwargs):
+        input_options = ["data", "image", "label_image", "point_sets"]
+        inputs = []
+        for option in input_options:
+            data = init_data_kwargs.get(option, None)
+            if data is not None:
+                inputs.append((option, data))
+        return inputs
+
+    def init_data(self, input_data):
+        _init_data = {}
+        result= None
+        for (input_type, data) in input_data:
+            render_type = _detect_render_type(data, input_type)
+            key = init_key_aliases()[input_type]
+            if render_type is RenderType.IMAGE:
+                if input_type == 'label_image':
+                    result = _get_viewer_image(data, label=True)
+                else:
+                    result = _get_viewer_image(data, label=False)
+            elif render_type is RenderType.POINT_SET:
+                result = _get_viewer_point_sets(data)
+            if result is None:
+                raise RuntimeError(f"Could not process the viewer {input_type}")
+            _init_data[key] = result
+        return _init_data
 
     async def run_queued_requests(self):
         def _run_queued_requests(queue):
