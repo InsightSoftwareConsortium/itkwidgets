@@ -38,4 +38,5 @@ jobs:
           examples/integrations/itk/*.ipynb
           examples/integrations/MONAI/*.ipynb
           examples/integrations/vtk/*.ipynb
+          examples/integrations/xarray/*.ipynb
           examples/integrations/zarr/*.ipynb
