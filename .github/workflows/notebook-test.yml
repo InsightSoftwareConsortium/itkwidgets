@@ -37,6 +37,7 @@ jobs:
           examples/integrations/dask/*.ipynb
           examples/integrations/itk/*.ipynb
           examples/integrations/MONAI/*.ipynb
+          examples/integrations/PyImageJ/*.ipynb
           examples/integrations/PyVista/*.ipynb
           examples/integrations/vtk/*.ipynb
           examples/integrations/xarray/*.ipynb
