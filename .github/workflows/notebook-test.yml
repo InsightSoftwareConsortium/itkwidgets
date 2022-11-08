@@ -31,5 +31,11 @@ jobs:
           python3 -m pip install --upgrade --pre itk
 
       - name: Test notebooks
-        run: |
-          pytest --nbmake --nbmake-timeout=3000  examples/*.ipynb examples/integrations/dask/*.ipynb examples/integrations/itk/*.ipynb examples/integrations/zarr/*.ipynb examples/integrations/MONAI/*.ipynb
+        run: >
+          pytest --nbmake --nbmake-timeout=3000
+          examples/*.ipynb
+          examples/integrations/dask/*.ipynb
+          examples/integrations/itk/*.ipynb
+          examples/integrations/MONAI/*.ipynb
+          examples/integrations/vtk/*.ipynb
+          examples/integrations/zarr/*.ipynb
