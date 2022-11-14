@@ -35,7 +35,6 @@ def find_env():
 
 
 ENVIRONMENT = find_env()
-print(f'ENVIRONMENT: {ENVIRONMENT}')
 
 if ENVIRONMENT is not Env.COLAB:
     if ENVIRONMENT is Env.JUPYTER_NOTEBOOK:
