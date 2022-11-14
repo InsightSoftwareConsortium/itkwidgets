@@ -18,14 +18,14 @@ def find_env():
     except:
         try:
             from IPython import get_ipython
+            if 'studio-lab' in get_ipython().starting_dir:
+                return  Env.SAGEMAKER
             parent_header = get_ipython().parent_header
             username = parent_header['header']['username']
             if username == '':
                 return Env.JUPYTERLAB
             elif username == 'username':
                 return Env.JUPYTER_NOTEBOOK
-            else:
-                return Env.SAGEMAKER
         except AttributeError:
             try:
                 import js
