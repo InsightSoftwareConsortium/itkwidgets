@@ -1,5 +1,6 @@
 from enum import Enum
 from importlib import import_module
+import sys
 
 
 class Env(Enum):
@@ -37,7 +38,7 @@ def find_env():
 ENVIRONMENT = find_env()
 
 if ENVIRONMENT is not Env.COLAB:
-    if ENVIRONMENT is Env.JUPYTER_NOTEBOOK:
+    if ENVIRONMENT is Env.JUPYTER_NOTEBOOK and sys.version_info.minor > 7:
         try:
             import imjoy_jupyter_extension
         except:
@@ -47,9 +48,8 @@ if ENVIRONMENT is not Env.COLAB:
             import_module("imjoy-jupyterlab-extension")
         except:
             if ENVIRONMENT is Env.JUPYTERLITE:
-                print('imjoy-jupyterlab-extension is required')
                 raise RuntimeError('imjoy-jupyterlab-extension is required. Install the package and refresh page.')
-            else:
+            elif sys.version_info.minor > 7:
                 raise RuntimeError('imjoy-jupyterlab-extension is required. `pip install itkwidgets[lab]` and refresh page.')
 
 try:
@@ -57,5 +57,5 @@ try:
 except:
     if ENVIRONMENT is Env.JUPYTERLITE:
         raise RuntimeError('imjoy-elfinder is required. Install the package and refresh page.')
-    else:
+    elif sys.version_info.minor > 7:
         raise RuntimeError('imjoy-elfinder is required. `pip install imjoy-elfinder` and refresh page.')
