@@ -19,3 +19,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# JupyterLite build
+docs/jupyterlite/.cache/
+docs/jupyterlite/.jupyterlite.doit.db
+docs/jupyterlite/_output/
