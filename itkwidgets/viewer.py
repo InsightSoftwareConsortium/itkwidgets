@@ -1,4 +1,5 @@
 import asyncio
+import functools
 import queue
 import threading
 from imjoy_rpc import api
@@ -139,15 +140,19 @@ class Viewer:
                 ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, init_data=data, **add_data_kwargs
             )
             if ENVIRONMENT is not Env.JUPYTERLITE:
-                self.bg_jobs = bg.BackgroundJobManager()
-                self.queue = queue.Queue()
-                self.deferred_queue = queue.Queue()
-                self.bg_thread = self.bg_jobs.new(self.queue_worker)
+                self._setup_queueing()
             api.export(self.viewer_rpc)
         else:
             self._itk_viewer = add_data_kwargs.get('itk_viewer', None)
             self.server = add_data_kwargs.get('server', None)
             self.workspace = self.server.config.workspace
+
+    def _setup_queueing(self):
+        self.bg_jobs = bg.BackgroundJobManager()
+        self.queue = queue.Queue()
+        self.deferred_queue = queue.Queue()
+        self.bg_thread = self.bg_jobs.new(self.queue_worker)
+        self.results = {}
 
     @property
     def loop(self):
@@ -186,6 +191,12 @@ class Viewer:
         task = loop.create_task(self.run_queued_requests())
         loop.run_until_complete(task)
 
+    def call_getter(self, method, *args, **kwargs):
+        self.results[method] = self.loop.create_future()
+        fn = getattr(self.viewer_rpc.itk_viewer, method)
+        future = asyncio.ensure_future(fn(*args, **kwargs))
+        future.add_done_callback(functools.partial(self._callback, method))
+
     def queue_request(self, method, *args, **kwargs):
         if (
             ENVIRONMENT is Env.JUPYTERLITE or ENVIRONMENT is Env.HYPHA
@@ -199,12 +210,27 @@ class Viewer:
 
     def set_annotations_enabled(self, enabled: bool):
         self.queue_request('setAnnotationsEnabled', enabled)
+    def get_annotations_enabled(self):
+        if 'getAnnotationsEnabled' not in self.results:
+            self.call_getter('getAnnotationsEnabled')
+        elif self.results['getAnnotationsEnabled'].done():
+            return self.results.pop('getAnnotationsEnabled').result()
 
     def set_axes_enabled(self, enabled: bool):
         self.queue_request('setAxesEnabled', enabled)
+    def get_axes_enabled(self):
+        if 'getAxesEnabled' not in self.results:
+            self.call_getter('getAxesEnabled')
+        elif self.results['getAxesEnabled'].done():
+            return self.results.pop('getAxesEnabled').result()
 
     def set_background_color(self, bgColor: List[float]):
         self.queue_request('setBackgroundColor', bgColor)
+    def get_background_color(self):
+        if 'getBackgroundColor' not in self.results:
+            self.call_getter('getBackgroundColor')
+        elif self.results['getBackgroundColor'].done():
+            return self.results.pop('getBackgroundColor').result()
 
     def set_image(self, image: Image, name: str = 'Image'):
         render_type = _detect_render_type(image, 'image')
@@ -220,42 +246,107 @@ class Viewer:
         elif render_type is RenderType.POINT_SET:
             image = _get_viewer_point_set(image)
             self.queue_request('setPointSets', image)
+    def get_image(self):
+        if 'getImage' not in self.results:
+            self.call_getter('getImage')
+        elif self.results['getImage'].done():
+            return self.results.pop('getImage').result()
 
     def set_image_blend_mode(self, mode: str):
         self.queue_request('setImageBlendMode', mode)
+    def get_image_blend_mode(self):
+        if 'getImageBlendMode' not in self.results:
+            self.call_getter('getImageBlendMode')
+        elif self.results['getImageBlendMode'].done():
+            return self.results.pop('getImageBlendMode').result()
 
     def set_image_color_map(self, colorMap: str):
         self.queue_request('setImageColorMap', colorMap)
+    def get_image_color_map(self):
+        if 'getImageColorMap' not in self.results:
+            self.call_getter('getImageColorMap')
+        elif self.results['getImageColorMap'].done():
+            return self.results.pop('getImageColorMap').result()
 
     def set_image_color_range(self, range: List[float]):
         self.queue_request('setImageColorRange', range)
+    def get_image_color_range(self):
+        if 'getImageColorRange' not in self.results:
+            self.call_getter('getImageColorRange')
+        elif self.results['getImageColorRange'].done():
+            return self.results.pop('getImageColorRange').result()
 
     def set_image_color_range_bounds(self, range: List[float]):
         self.queue_request('setImageColorRangeBounds', range)
+    def get_image_color_range_bounds(self):
+        if 'getImageColorRangeBounds' not in self.results:
+            self.call_getter('getImageColorRangeBounds')
+        elif self.results['getImageColorRangeBounds'].done():
+            return self.results.pop('getImageColorRangeBounds').result()
 
     def set_image_component_visibility(self, visibility: bool):
         self.queue_request('setImageComponentVisibility', visibility)
+    def get_image_component_visibility(self, component: int):
+        if 'getImageComponentVisibility' not in self.results:
+            self.call_getter('getImageComponentVisibility', component)
+        elif self.results['getImageComponentVisibility'].done():
+            return self.results.pop('getImageComponentVisibility').result()
 
     def set_image_gradient_opacity(self, opacity: float):
         self.queue_request('setImageGradientOpacity', opacity)
+    def get_image_gradient_opacity(self):
+        if 'getImageGradientOpacity' not in self.results:
+            self.call_getter('getImageGradientOpacity')
+        elif self.results['getImageGradientOpacity'].done():
+            return self.results.pop('getImageGradientOpacity').result()
 
     def set_image_gradient_opacity_scale(self, min: float):
         self.queue_request('setImageGradientOpacityScale', min)
+    def get_image_gradient_opacity_scale(self):
+        if 'getImageGradientOpacityScale' not in self.results:
+            self.call_getter('getImageGradientOpacityScale')
+        elif self.results['getImageGradientOpacityScale'].done():
+            return self.results.pop('getImageGradientOpacityScale').result()
 
     def set_image_interpolation_enabled(self, enabled: bool):
         self.queue_request('setImageInterpolationEnabled', enabled)
+    def get_image_interpolation_enabled(self):
+        if 'getImageInterpolationEnabled' not in self.results:
+            self.call_getter('getImageInterpolationEnabled')
+        elif self.results['getImageInterpolationEnabled'].done():
+            return self.results.pop('getImageInterpolationEnabled').result()
 
     def set_image_piecewise_function_gaussians(self, gaussians: Gaussians):
         self.queue_request('setImagePiecewiseFunctionGaussians', gaussians)
+    def get_image_piecewise_function_gaussians(self):
+        if 'getImagePiecewiseFunctionGaussians' not in self.results:
+            self.call_getter('getImagePiecewiseFunctionGaussians')
+        elif self.results['getImagePiecewiseFunctionGaussians'].done():
+            return self.results.pop('getImagePiecewiseFunctionGaussians').result()
 
     def set_image_shadow_enabled(self, enabled: bool):
         self.queue_request('setImageShadowEnabled', enabled)
+    def get_image_shadow_enabled(self):
+        if 'getImageShadowEnabled' not in self.results:
+            self.call_getter('getImageShadowEnabled')
+        elif self.results['getImageShadowEnabled'].done():
+            return self.results.pop('getImageShadowEnabled').result()
 
     def set_image_volume_sample_distance(self, distance: float):
         self.queue_request('setImageVolumeSampleDistance', distance)
+    def get_image_volume_sample_distance(self):
+        if 'getImageVolumeSampleDistance' not in self.results:
+            self.call_getter('getImageVolumeSampleDistance')
+        elif self.results['getImageVolumeSampleDistance'].done():
+            return self.results.pop('getImageVolumeSampleDistance').result()
 
     def set_image_volume_scattering_blend(self, scattering_blend: float):
         self.queue_request('setImageVolumeScatteringBlend', scattering_blend)
+    def get_image_volume_scattering_blend(self):
+        if 'getImageVolumeScatteringBlend' not in self.results:
+            self.call_getter('getImageVolumeScatteringBlend')
+        elif self.results['getImageVolumeScatteringBlend'].done():
+            return self.results.pop('getImageVolumeScatteringBlend').result()
 
     def compare_images(self, fixed_image: Union[str, Image], moving_image: Union[str, Image], method: str = None, image_mix: float = None, checkerboard: bool = None, pattern: Union[Tuple[int, int], Tuple[int, int, int]] = None, swap_image_order: bool = None):
         # image args may be image name or image object
@@ -297,24 +388,54 @@ class Viewer:
         elif render_type is RenderType.POINT_SET:
             label_image = _get_viewer_point_set(label_image)
             self.queue_request('setPointSets', label_image)
+    def get_label_image(self):
+        if 'getLabelImage' not in self.results:
+            self.call_getter('getLabelImage')
+        elif self.results['getLabelImage'].done():
+            return self.results.pop('getLabelImage').result()
 
     def set_label_image_blend(self, blend: float):
         self.queue_request('setLabelImageBlend', blend)
+    def get_label_image_blend(self):
+        if 'getLabelImageBlend' not in self.results:
+            self.call_getter('getLabelImageBlend')
+        elif self.results['getLabelImageBlend'].done():
+            return self.results.pop('getLabelImageBlend').result()
 
     def set_label_image_label_names(self, names: List[str]):
         self.queue_request('setLabelImageLabelNames', names)
+    def get_label_image_label_names(self):
+        if 'getLabelImageLabelNames' not in self.results:
+            self.call_getter('getLabelImageLabelNames')
+        elif self.results['getLabelImageLabelNames'].done():
+            return self.results.pop('getLabelImageLabelNames').result()
 
     def set_label_image_lookup_table(self, lookupTable: str):
         self.queue_request('setLabelImageLookupTable', lookupTable)
+    def get_label_image_lookup_table(self):
+        if 'getLabelImageLookupTable' not in self.results:
+            self.call_getter('getLabelImageLookupTable')
+        elif self.results['getLabelImageLookupTable'].done():
+            return self.results.pop('getLabelImageLookupTable').result()
 
     def set_label_image_weights(self, weights: float):
         self.queue_request('setLabelImageWeights', weights)
+    def get_label_image_weights(self):
+        if 'getLabelImageWeights' not in self.results:
+            self.call_getter('getLabelImageWeights')
+        elif self.results['getLabelImageWeights'].done():
+            return self.results.pop('getLabelImageWeights').result()
 
     def select_layer(self, name: str):
         self.queue_request('selectLayer', name)
 
     def set_layer_visibility(self, visible: bool):
         self.queue_request('setLayerVisibility', visible)
+    def get_layer_visibility(self, name: str):
+        if 'getLayerVisibility' not in self.results:
+            self.call_getter('getLayerVisibility', name)
+        elif self.results['getLayerVisibility'].done():
+            return self.results.pop('getLayerVisibility').result()
 
     def add_point_set(self, pointSet: PointSet):
         pointSet = _get_viewer_point_set(pointSet)
@@ -322,30 +443,75 @@ class Viewer:
     def set_point_set(self, pointSet: PointSet):
         pointSet = _get_viewer_point_set(pointSet)
         self.queue_request('setPointSets', pointSet)
+    def get_point_sets(self):
+        if 'getPointSets' not in self.results:
+            self.call_getter('getPointSets')
+        elif self.results['getPointSets'].done():
+            return self.results.pop('getPointSets').result()
 
     def set_rendering_view_container_style(self, containerStyle: Style):
         self.queue_request('setRenderingViewContainerStyle', containerStyle)
+    def get_rendering_view_container_style(self):
+        if 'getRenderingViewContainerStyle' not in self.results:
+            self.call_getter('getRenderingViewContainerStyle')
+        elif self.results['getRenderingViewContainerStyle'].done():
+            return self.results.pop('getRenderingViewContainerStyle').result()
 
     def set_rotate(self, enabled: bool):
         self.queue_request('setRotateEnabled', enabled)
+    def get_rotate(self):
+        if 'getRotateEnabled' not in self.results:
+            self.call_getter('getRotateEnabled')
+        elif self.results['getRotateEnabled'].done():
+            return self.results.pop('getRotateEnabled').result()
 
     def set_ui_collapsed(self, collapsed: bool):
         self.queue_request('setUICollapsed', collapsed)
+    def get_ui_collapsed(self):
+        if 'getUICollapsed' not in self.results:
+            self.call_getter('getUICollapsed')
+        elif self.results['getUICollapsed'].done():
+            return self.results.pop('getUICollapsed').result()
 
     def set_units(self, units: str):
         self.queue_request('setUnits', units)
+    def get_units(self):
+        if 'getUnits' not in self.results:
+            self.call_getter('getUnits')
+        elif self.results['getUnits'].done():
+            return self.results.pop('getUnits').result()
 
     def set_view_mode(self, mode: str):
         self.queue_request('setViewMode', mode)
+    def get_view_mode(self):
+        if 'getViewMode' not in self.results:
+            self.call_getter('getViewMode')
+        elif self.results['getViewMode'].done():
+            return self.results.pop('getViewMode').result()
 
     def set_x_slice(self, position: float):
         self.queue_request('setXSlice', position)
+    def get_x_slice(self):
+        if 'getXSlice' not in self.results:
+            self.call_getter('getXSlice')
+        elif self.results['getXSlice'].done():
+            return self.results.pop('getXSlice').result()
 
     def set_y_slice(self, position: float):
         self.queue_request('setYSlice', position)
+    def get_y_slice(self):
+        if 'getYSlice' not in self.results:
+            self.call_getter('getYSlice')
+        elif self.results['getYSlice'].done():
+            return self.results.pop('getYSlice').result()
 
     def set_z_slice(self, position: float):
         self.queue_request('setZSlice', position)
+    def get_z_slice(self):
+        if 'getZSlice' not in self.results:
+            self.call_getter('getZSlice')
+        elif self.results['getZSlice'].done():
+            return self.results.pop('getZSlice').result()
 
 
 def view(data=None, **kwargs):
