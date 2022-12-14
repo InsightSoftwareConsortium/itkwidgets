@@ -16,6 +16,7 @@ from ._initialization_params import (
     build_init_data,
 )
 from ._method_types import deferred_methods
+from .cell_watcher import CellWatcher
 from .imjoy import register_itkwasm_imjoy_codecs
 from .integrations import _detect_render_type, _get_viewer_image, _get_viewer_point_set
 from .integrations.environment import ENVIRONMENT, Env
@@ -139,6 +140,7 @@ class Viewer:
             self.viewer_rpc = ViewerRPC(
                 ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, init_data=data, **add_data_kwargs
             )
+            self.cw = CellWatcher()
             if ENVIRONMENT is not Env.JUPYTERLITE:
                 self._setup_queueing()
             api.export(self.viewer_rpc)
@@ -195,7 +197,7 @@ class Viewer:
         self.results[method] = self.loop.create_future()
         fn = getattr(self.viewer_rpc.itk_viewer, method)
         future = asyncio.ensure_future(fn(*args, **kwargs))
-        future.add_done_callback(functools.partial(self._callback, method))
+        future.add_done_callback(functools.partial(self.cw._callback, method))
 
     def queue_request(self, method, *args, **kwargs):
         if (
