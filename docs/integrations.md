@@ -36,7 +36,7 @@ ITK
 Install ITK:
 
 ```bash
-pip install --pre itk-io
+pip install itk-io
 ```
 
 You can use ITK to read in and filter your data before displaying and interacting with it with the Viewer.
