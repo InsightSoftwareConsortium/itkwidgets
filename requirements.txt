@@ -10,3 +10,6 @@ matplotlib
 numpy
 six
 zstandard
+traitlets<5.7.0
+notebook<6.5.0
+ipywidgets<8.0.0
