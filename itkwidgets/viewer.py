@@ -213,13 +213,17 @@ class Viewer:
     def fetch_value(func):
         @functools.wraps(func)
         def _fetch_value(self, *args, **kwargs):
-            fn_name = func(self, *args, **kwargs)
-            if fn_name not in self.results:
-                api.log('call_getter')
-                self.call_getter(fn_name, *args, **kwargs)
-            elif self.results[fn_name].done():
-                api.log(f'resolved: {self.results[fn_name]}')
-                return self.results.pop(fn_name).result()
+            try:
+                fn_name = func(self, *args, **kwargs)
+                if fn_name not in self.results:
+                    self.call_getter(fn_name, *args, **kwargs)
+                elif self.results[fn_name].done():
+                    return self.results.pop(fn_name).result()
+            except Exception as e:
+                # Don't wait for getters to resolve, force cell to execute so
+                # exception is raised
+                self.cw._callback()
+                raise RuntimeError(e)
         return _fetch_value
 
     def set_annotations_enabled(self, enabled: bool):

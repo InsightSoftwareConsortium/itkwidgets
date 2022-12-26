@@ -29,13 +29,23 @@ class CellWatcher(object):
         self.shell.events.register('post_run_cell', self.post_run_cell)
         self.shell.events.register('pre_execute', self.pre_execute)
 
+    def _task_cleanup(self, task):
+        global background_tasks
+        try:
+            # "Handle" exceptions here to prevent further errors. Exceptions
+            # thrown will be actually be raised in the Viewer._fetch_value
+            # decorator.
+            _ = task.exception()
+        except:
+            background_tasks.discard(task)
+
     def create_task(self, fn):
         global background_tasks
         # The event loop only keeps weak references to tasks.
         # Gather them in a collection to avoid garbage collection mid-task.
         task = asyncio.create_task(fn())
         background_tasks.add(task)
-        task.add_done_callback(background_tasks.discard)
+        task.add_done_callback(self._task_cleanup)
 
     def capture_event(self, stream, ident, parent):
         self._events.put((stream, ident, parent))
@@ -102,9 +112,12 @@ class CellWatcher(object):
         # Continue processing the remaining queued tasks
         self.create_task(self.execute_next_request)
 
-    def _callback(self, name, future):
-        self.viewer.results[name].set_result(future.result())
-        getters_resolved = [f.done() for f in self.viewer.results.values()]
+    def _callback(self, name=None, future=None):
+        if name is not None and future is not None:
+            self.viewer.results[name].set_result(future.result())
+            getters_resolved = [f.done() for f in self.viewer.results.values()]
+        else:
+            getters_resolved = [True]
         # if all getters have resolved then ready to re-run
         if all(getters_resolved):
             self.create_task(self._execute_next_request)
