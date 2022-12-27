@@ -154,7 +154,6 @@ class Viewer:
         self.queue = queue.Queue()
         self.deferred_queue = queue.Queue()
         self.bg_thread = self.bg_jobs.new(self.queue_worker)
-        self.results = {}
 
     @property
     def loop(self):
@@ -194,10 +193,12 @@ class Viewer:
         loop.run_until_complete(task)
 
     def call_getter(self, method, *args, **kwargs):
-        self.results[method] = self.loop.create_future()
+        name = uuid.uuid4()
+        self.cw.results[name] = self.loop.create_future()
         fn = getattr(self.viewer_rpc.itk_viewer, method)
         future = asyncio.ensure_future(fn(*args, **kwargs))
-        future.add_done_callback(functools.partial(self.cw._callback, method))
+        future.add_done_callback(functools.partial(self.cw._callback, name))
+        return name
 
     def queue_request(self, method, *args, **kwargs):
         if (
@@ -215,10 +216,7 @@ class Viewer:
         def _fetch_value(self, *args, **kwargs):
             try:
                 fn_name = func(self, *args, **kwargs)
-                if fn_name not in self.results:
-                    self.call_getter(fn_name, *args, **kwargs)
-                elif self.results[fn_name].done():
-                    return self.results.pop(fn_name).result()
+                return self.call_getter(fn_name, *args, **kwargs)
             except Exception as e:
                 # Don't wait for getters to resolve, force cell to execute so
                 # exception is raised

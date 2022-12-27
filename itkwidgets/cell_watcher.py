@@ -1,7 +1,7 @@
 import asyncio
-import re
 import sys
 from inspect import isawaitable, iscoroutinefunction
+import uuid
 from IPython import get_ipython
 from queue import Queue
 
@@ -17,6 +17,7 @@ class CellWatcher(object):
         self.execute_request_handler = self.kernel.shell_handlers["execute_request"]
         self.current_request = None
         self.itk_viewer_created = False
+        self.results = {}
 
         self._events = Queue()
 
@@ -58,35 +59,19 @@ class CellWatcher(object):
         # ipykernel 6+
         self.capture_event(stream, ident, parent)
 
-    def preprocess_getters(self, raw):
-        regex = f"{self.view_object}.get_(.*)\([^()]*\)"
-        lines = raw.split('\n')
-        # Find and evaluate any getters in the cell before the cell
-        # is actually run
-        count = 0
-        for line in lines:
-            if not line.startswith('#'):
-                res = [self.shell.ev(m.group()) for m in re.finditer(regex, line)]
-                count += len(res)
-        return count
+    @property
+    def all_getters_resolved(self):
+        getters_resolved = [f.done() for f in self.results.values()]
+        return all(getters_resolved)
 
     async def execute_next_request(self):
+        # Modeled after the approach used in jupyter-ui-poll
+        # https://github.com/Kirill888/jupyter-ui-poll/blob/f65b81f95623c699ed7fd66a92be6d40feb73cde/jupyter_ui_poll/_poll.py#L75-L101
         if self._events.empty():
             return
 
-        self.current_request = self._events.get()
-        raw = self.current_request[2]["content"].get("code", "")
-        getters = self.preprocess_getters(raw)
-        if getters == 0:
-            # If there are no getters, process the cell as usual
-            await self._execute_next_request()
-
-    async def _execute_next_request(self):
-        # Modeled after the approach used in jupyter-ui-poll
-        # https://github.com/Kirill888/jupyter-ui-poll/blob/f65b81f95623c699ed7fd66a92be6d40feb73cde/jupyter_ui_poll/_poll.py#L75-L101
-
         # Fetch the next request
-        stream, ident, parent = self.current_request
+        stream, ident, parent = self._events.get()
 
         # Set I/O to the correct cell
         self.kernel.set_parent(ident, parent)
@@ -109,18 +94,28 @@ class CellWatcher(object):
                 self.kernel._publish_status("idle")
 
         self.current_request = None
-        # Continue processing the remaining queued tasks
-        self.create_task(self.execute_next_request)
+        if self.all_getters_resolved:
+            # Continue processing the remaining queued tasks
+            self.create_task(self.execute_next_request)
+
+    def update_namespace(self):
+        # Update the namespace variables with the results from the getters
+        keys = [k for k in self.shell.user_ns.keys()]
+        for key in keys:
+            value = self.shell.user_ns[key]
+            if isinstance(value, uuid.UUID) and value in self.results:
+                self.shell.user_ns[key] = self.results[value].result()
+        self.results.clear()
 
     def _callback(self, name=None, future=None):
         if name is not None and future is not None:
-            self.viewer.results[name].set_result(future.result())
-            getters_resolved = [f.done() for f in self.viewer.results.values()]
+            self.results[name].set_result(future.result())
         else:
-            getters_resolved = [True]
+            self.results.clear()
         # if all getters have resolved then ready to re-run
-        if all(getters_resolved):
-            self.create_task(self._execute_next_request)
+        if self.all_getters_resolved:
+            self.update_namespace()
+            self.create_task(self.execute_next_request)
 
     def pre_execute(self):
         if not self.itk_viewer_created and self.viewer.has_viewer:
