@@ -32,6 +32,7 @@ class Viewers(object):
 
     @property
     def viewer_objects(self):
+        # Return a list of created viewers
         return list(self.data.keys())
 
     def add_viewer(self, view):
@@ -61,21 +62,27 @@ class CellWatcher(object):
         self.kernel = self.shell.kernel
         self.shell_stream = getattr(self.kernel, "shell_stream", None)
         self.execute_request_handler = self.kernel.shell_handlers["execute_request"]
+        # Keep a reference to the ipykernel execute_request function
         self.current_request = None
         self.waiting_on_viewer = False
         self.results = {}
 
         self._events = Queue()
 
+        # Replace the ipykernel shell_handler for execute_request with our own
+        # function, which we can use to capture, queue and process future cells
         if iscoroutinefunction(self.execute_request_handler):  # ipykernel 6+
             self.kernel.shell_handlers["execute_request"] = self.capture_event_async
         else:
             # ipykernel < 6
             self.kernel.shell_handlers["execute_request"] = self.capture_event
 
+        # Call self.post_run_cell every time the post_run_cell signal is emitted
+        # post_run_cell runs after interactive execution (e.g. a cell in a notebook)
         self.shell.events.register('post_run_cell', self.post_run_cell)
 
     def add_viewer(self, view):
+        # Track all Viewer instances
         self.viewers.add_viewer(view)
 
     def update_viewer_status(self, view):
@@ -97,7 +104,7 @@ class CellWatcher(object):
     def create_task(self, fn):
         global background_tasks
         # The event loop only keeps weak references to tasks.
-        # Gather them in a collection to avoid garbage collection mid-task.
+        # Gather them into a set to avoid garbage collection mid-task.
         task = asyncio.create_task(fn())
         background_tasks.add(task)
         task.add_done_callback(self._task_cleanup)
@@ -115,12 +122,13 @@ class CellWatcher(object):
 
     @property
     def all_getters_resolved(self):
+        # Check if all of the getter/setter futures have resolved
         getters_resolved = [f.done() for f in self.results.values()]
         return all(getters_resolved)
 
     def ready_to_run_next_cell(self, parent):
-        # All getters need to be resolved and any
-        # references to Viewer objects are ready
+        # Any itk_viewer objects need to be available and all getters/setters
+        # need to be resolved
         raw = parent.get("content", {}).get("code", "")
         viewers_not_ready = [n for n in self.viewers.not_created if n in raw]
         self.waiting_on_viewer = any(viewers_not_ready)
@@ -131,14 +139,16 @@ class CellWatcher(object):
         # https://github.com/Kirill888/jupyter-ui-poll/blob/f65b81f95623c699ed7fd66a92be6d40feb73cde/jupyter_ui_poll/_poll.py#L75-L101
         if self._events.empty():
             return
-        # Fetch the next request if we haven't already
+
         if self.current_request is None:
+            # Fetch the next request if we haven't already
             self.current_request = self._events.get()
         if self.ready_to_run_next_cell(self.current_request[2]):
             # Continue processing the remaining queued tasks
             await self._execute_next_request()
 
     async def _execute_next_request(self):
+        # Here we actually run the queued cell as it would have been run
         stream, ident, parent = self.current_request
 
         # Set I/O to the correct cell
@@ -168,14 +178,18 @@ class CellWatcher(object):
 
     def update_namespace(self):
         # Update the namespace variables with the results from the getters
+        # FIXME: This is a temporary "fix" and does not handle updating output
         keys = [k for k in self.shell.user_ns.keys()]
         for key in keys:
             value = self.shell.user_ns[key]
             if asyncio.isfuture(value) and isinstance(value, FuturePromise):
+                # Getters/setters return futures
+                # They should all be resolved now, so use the result
                 self.shell.user_ns[key] = value.result()
         self.results.clear()
 
     def _callback(self, *args, **kwargs):
+        # After each getter/setter resolves check if they've all resolved
         if self.all_getters_resolved:
             self.update_namespace()
             self.create_task(self.execute_next_request)
@@ -193,5 +207,8 @@ class CellWatcher(object):
                 self.viewers.set_name(objs[idx], var)
 
     def post_run_cell(self):
+        # If a cell has been run and there are viewers with no variable
+        # associated with them check the user namespace to see if they have
+        # been added
         if self.viewers.not_named:
             self.find_view_object_names()

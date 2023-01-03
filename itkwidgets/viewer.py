@@ -30,7 +30,7 @@ __all__ = [
 ]
 
 _viewer_count = 1
-CellWatcher()
+CellWatcher() # Instantiate the singleton class right away
 
 
 class ViewerRPC:
