@@ -7,6 +7,47 @@ from imjoy_rpc.utils import FuturePromise
 
 background_tasks = set()
 
+
+class Viewers(object):
+    def __init__(self):
+        self._data = {}
+
+    @property
+    def data(self):
+        return self._data
+
+    @property
+    def not_created(self):
+        # Return a list of names of viewers that have not been created yet
+        names = []
+        for vals in self.data.values():
+            if vals['name'] is not None and not vals['status']:
+                names.append(vals['name'])
+        return names
+
+    @property
+    def not_named(self):
+        # Return a list of names of viewers that have not been named yet
+        return any([k for k, v in self.data.items() if v['name'] is None])
+
+    @property
+    def viewer_objects(self):
+        return list(self.data.keys())
+
+    def add_viewer(self, view):
+        self._data[view] = {'name': None, 'status': False}
+
+    def set_name(self, view, name):
+        if view not in self.data.keys():
+            self.add_viewer(view)
+        self._data[view]['name'] = name
+
+    def update_viewer_status(self, view):
+        if view not in self.data.keys():
+            self.add_viewer(view)
+        self._data[view]['status'] = True
+
+
 class CellWatcher(object):
     def __new__(cls):
         if not hasattr(cls, '_instance'):
@@ -15,13 +56,13 @@ class CellWatcher(object):
         return cls._instance
 
     def setup(self):
-        self.viewer = None
+        self.viewers = Viewers()
         self.shell = get_ipython()
         self.kernel = self.shell.kernel
         self.shell_stream = getattr(self.kernel, "shell_stream", None)
         self.execute_request_handler = self.kernel.shell_handlers["execute_request"]
         self.current_request = None
-        self.itk_viewer_created = False
+        self.waiting_on_viewer = False
         self.results = {}
 
         self._events = Queue()
@@ -33,7 +74,15 @@ class CellWatcher(object):
             self.kernel.shell_handlers["execute_request"] = self.capture_event
 
         self.shell.events.register('post_run_cell', self.post_run_cell)
-        self.shell.events.register('pre_execute', self.pre_execute)
+
+    def add_viewer(self, view):
+        self.viewers.add_viewer(view)
+
+    def update_viewer_status(self, view):
+        self.viewers.update_viewer_status(view)
+        if self.waiting_on_viewer:
+            # Might be ready now, try again
+            self.create_task(self.execute_next_request)
 
     def _task_cleanup(self, task):
         global background_tasks
@@ -55,7 +104,7 @@ class CellWatcher(object):
 
     def capture_event(self, stream, ident, parent):
         self._events.put((stream, ident, parent))
-        if self.itk_viewer_created and self._events.qsize() == 1:
+        if self._events.qsize() == 1 and self.ready_to_run_next_cell(parent):
             # We've added a new task to an empty queue.
             # Begin executing tasks again.
             self.create_task(self.execute_next_request)
@@ -69,14 +118,28 @@ class CellWatcher(object):
         getters_resolved = [f.done() for f in self.results.values()]
         return all(getters_resolved)
 
+    def ready_to_run_next_cell(self, parent):
+        # All getters need to be resolved and any
+        # references to Viewer objects are ready
+        raw = parent.get("content", {}).get("code", "")
+        viewers_not_ready = [n for n in self.viewers.not_created if n in raw]
+        self.waiting_on_viewer = any(viewers_not_ready)
+        return self.all_getters_resolved and not self.waiting_on_viewer
+
     async def execute_next_request(self):
         # Modeled after the approach used in jupyter-ui-poll
         # https://github.com/Kirill888/jupyter-ui-poll/blob/f65b81f95623c699ed7fd66a92be6d40feb73cde/jupyter_ui_poll/_poll.py#L75-L101
         if self._events.empty():
             return
+        # Fetch the next request if we haven't already
+        if self.current_request is None:
+            self.current_request = self._events.get()
+        if self.ready_to_run_next_cell(self.current_request[2]):
+            # Continue processing the remaining queued tasks
+            await self._execute_next_request()
 
-        # Fetch the next request
-        stream, ident, parent = self._events.get()
+    async def _execute_next_request(self):
+        stream, ident, parent = self.current_request
 
         # Set I/O to the correct cell
         self.kernel.set_parent(ident, parent)
@@ -117,22 +180,18 @@ class CellWatcher(object):
             self.update_namespace()
             self.create_task(self.execute_next_request)
 
-    def pre_execute(self):
-        if not self.itk_viewer_created and self.viewer.has_viewer:
-            # The viewer exists, we can begin processing cells
-            self.itk_viewer_created = self.viewer.has_viewer
-            self.create_task(self.execute_next_request)
-
-    def find_view_object(self):
-        # Used to identify getter functions and associate them
-        # with the appropriate view instance
+    def find_view_object_names(self):
+        # Used to determine that all references to Viewer
+        # objects are ready before a cell is run
+        objs = self.viewers.viewer_objects
         user_vars = [k for k in self.shell.user_ns.keys() if not k.startswith('_')]
         for var in user_vars:
             # Identify which variable the view object has been assigned to
             value = self.shell.user_ns[var]
-            if type(value) == type(self.viewer) and value == self.viewer:
-                self.view_object = var
+            if value.__str__() in objs:
+                idx = objs.index(value.__str__())
+                self.viewers.set_name(objs[idx], var)
 
     def post_run_cell(self):
-        if self.view_object is None:
-            self.find_view_object()
+        if self.viewers.not_named:
+            self.find_view_object_names()
