@@ -1,9 +1,9 @@
 import asyncio
 import sys
 from inspect import isawaitable, iscoroutinefunction
-import uuid
 from IPython import get_ipython
 from queue import Queue
+from imjoy_rpc.utils import FuturePromise
 
 background_tasks = set()
 
@@ -103,16 +103,11 @@ class CellWatcher(object):
         keys = [k for k in self.shell.user_ns.keys()]
         for key in keys:
             value = self.shell.user_ns[key]
-            if isinstance(value, uuid.UUID) and value in self.results:
-                self.shell.user_ns[key] = self.results[value].result()
+            if asyncio.isfuture(value) and isinstance(value, FuturePromise):
+                self.shell.user_ns[key] = value.result()
         self.results.clear()
 
-    def _callback(self, name=None, future=None):
-        if name is not None and future is not None:
-            self.results[name].set_result(future.result())
-        else:
-            self.results.clear()
-        # if all getters have resolved then ready to re-run
+    def _callback(self, *args, **kwargs):
         if self.all_getters_resolved:
             self.update_namespace()
             self.create_task(self.execute_next_request)
