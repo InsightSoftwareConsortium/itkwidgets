@@ -30,14 +30,14 @@ __all__ = [
 ]
 
 _viewer_count = 1
-_codecs_registered = False
+CellWatcher()
 
 
 class ViewerRPC:
     """Viewer remote procedure interface."""
 
     def __init__(
-        self, ui_collapsed=True, rotate=False, ui="pydata-sphinx", init_data=None, **add_data_kwargs
+        self, ui_collapsed=True, rotate=False, ui="pydata-sphinx", init_data=None, parent=None, **add_data_kwargs
     ):
         global _codecs_registered
         """Create a viewer."""
@@ -52,6 +52,7 @@ class ViewerRPC:
         self.init_data = init_data
         self.img = display(HTML(f'<div />'), display_id=str(uuid.uuid4()))
         self.wid = None
+        self.parent = parent
         if ENVIRONMENT is not Env.JUPYTERLITE and ENVIRONMENT is not Env.HYPHA:
             self.viewer_event = threading.Event()
             self.data_event = threading.Event()
@@ -78,10 +79,12 @@ class ViewerRPC:
             _viewer_count += 1
             if ENVIRONMENT is not Env.JUPYTERLITE:
                 itk_viewer.registerEventListener(
-                    'renderedImageAssigned', self.set_event
+                    'screenshotTaken', self.update_screenshot
                 )
                 # Once the viewer has been created any queued requests can be run
                 asyncio.get_running_loop().call_soon_threadsafe(self.viewer_event.set)
+            else:
+                CellWatcher().update_viewer_status(self.parent)
 
             self.set_default_ui_values(itk_viewer)
             self.itk_viewer = itk_viewer
@@ -134,6 +137,7 @@ class Viewer:
         self, ui_collapsed=True, rotate=False, ui="pydata-sphinx", **add_data_kwargs
     ):
         """Create a viewer."""
+        self.name = self.__str__()
         input_data = parse_input_data(add_data_kwargs)
         data = build_init_data(input_data)
         if ENVIRONMENT is not Env.HYPHA:

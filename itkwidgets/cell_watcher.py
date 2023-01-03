@@ -8,9 +8,14 @@ from imjoy_rpc.utils import FuturePromise
 background_tasks = set()
 
 class CellWatcher(object):
-    def __init__(self, viewer):
-        self.viewer = viewer
-        self.view_object = None
+    def __new__(cls):
+        if not hasattr(cls, '_instance'):
+            cls._instance = super(CellWatcher, cls).__new__(cls)
+            cls._instance.setup()
+        return cls._instance
+
+    def setup(self):
+        self.viewer = None
         self.shell = get_ipython()
         self.kernel = self.shell.kernel
         self.shell_stream = getattr(self.kernel, "shell_stream", None)
