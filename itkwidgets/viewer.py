@@ -216,24 +216,28 @@ class Viewer:
             return future
         return _fetch_value
 
+    @fetch_value
     def set_annotations_enabled(self, enabled: bool):
-        self.queue_request('setAnnotationsEnabled', enabled)
+        return self.viewer_rpc.itk_viewer.setAnnotationsEnabled(enabled)
     @fetch_value
     def get_annotations_enabled(self):
         return self.viewer_rpc.itk_viewer.getAnnotationsEnabled()
 
+    @fetch_value
     def set_axes_enabled(self, enabled: bool):
-        self.queue_request('setAxesEnabled', enabled)
+        return self.viewer_rpc.itk_viewer.setAxesEnabled(enabled)
     @fetch_value
     def get_axes_enabled(self):
         return self.viewer_rpc.itk_viewer.getAxesEnabled()
 
+    @fetch_value
     def set_background_color(self, bgColor: List[float]):
-        self.queue_request('setBackgroundColor', bgColor)
+        return self.viewer_rpc.itk_viewer.setBackgroundColor(bgColor)
     @fetch_value
     def get_background_color(self):
         return self.viewer_rpc.itk_viewer.getBackgroundColor()
 
+    @fetch_value
     def set_image(self, image: Image, name: str = 'Image'):
         render_type = _detect_render_type(image, 'image')
         if render_type is RenderType.IMAGE:
@@ -244,82 +248,94 @@ class Viewer:
                 svc = self.server.get_service(svc_name)
                 svc.set_label_or_image('image')
             else:
-                self.queue_request('setImage', image, name)
+                return self.viewer_rpc.itk_viewer.setImage(image, name)
         elif render_type is RenderType.POINT_SET:
             image = _get_viewer_point_set(image)
-            self.queue_request('setPointSets', image)
+            return self.viewer_rpc.itk_viewer.setPointSets(image)
     @fetch_value
     def get_image(self):
         return self.viewer_rpc.itk_viewer.getImage()
 
+    @fetch_value
     def set_image_blend_mode(self, mode: str):
-        self.queue_request('setImageBlendMode', mode)
+        return self.viewer_rpc.itk_viewer.setImageBlendMode(mode)
     @fetch_value
     def get_image_blend_mode(self):
         return self.viewer_rpc.itk_viewer.getImageBlendMode()
 
+    @fetch_value
     def set_image_color_map(self, colorMap: str):
-        self.queue_request('setImageColorMap', colorMap)
+        return self.viewer_rpc.itk_viewer.setImageColorMap(colorMap)
     @fetch_value
     def get_image_color_map(self):
         return self.viewer_rpc.itk_viewer.getImageColorMap()
 
+    @fetch_value
     def set_image_color_range(self, range: List[float]):
-        self.queue_request('setImageColorRange', range)
+        return self.viewer_rpc.itk_viewer.setImageColorRange(range)
     @fetch_value
     def get_image_color_range(self):
         return self.viewer_rpc.itk_viewer.getImageColorRange()
 
+    @fetch_value
     def set_image_color_range_bounds(self, range: List[float]):
-        self.queue_request('setImageColorRangeBounds', range)
+        return self.viewer_rpc.itk_viewer.setImageColorRangeBounds(range)
     @fetch_value
     def get_image_color_range_bounds(self):
         return self.viewer_rpc.itk_viewer.getImageColorRangeBounds()
 
+    @fetch_value
     def set_image_component_visibility(self, visibility: bool):
-        self.queue_request('setImageComponentVisibility', visibility)
+        return self.viewer_rpc.itk_viewer.setImageComponentVisibility(visibility)
     @fetch_value
     def get_image_component_visibility(self, component: int):
         return self.viewer_rpc.itk_viewer.getImageComponentVisibility(component)
 
+    @fetch_value
     def set_image_gradient_opacity(self, opacity: float):
-        self.queue_request('setImageGradientOpacity', opacity)
+        return self.viewer_rpc.itk_viewer.setImageGradientOpacity(opacity)
     @fetch_value
     def get_image_gradient_opacity(self):
         return self.viewer_rpc.itk_viewer.getImageGradientOpacity()
 
+    @fetch_value
     def set_image_gradient_opacity_scale(self, min: float):
-        self.queue_request('setImageGradientOpacityScale', min)
+        return self.viewer_rpc.itk_viewer.setImageGradientOpacityScale(min)
     @fetch_value
     def get_image_gradient_opacity_scale(self):
         return self.viewer_rpc.itk_viewer.getImageGradientOpacityScale()
 
+    @fetch_value
     def set_image_interpolation_enabled(self, enabled: bool):
-        self.queue_request('setImageInterpolationEnabled', enabled)
+        return self.viewer_rpc.itk_viewer.setImageInterpolationEnabled(enabled)
     @fetch_value
     def get_image_interpolation_enabled(self):
         return self.viewer_rpc.itk_viewer.getImageInterpolationEnabled()
 
+    @fetch_value
     def set_image_piecewise_function_gaussians(self, gaussians: Gaussians):
-        self.queue_request('setImagePiecewiseFunctionGaussians', gaussians)
+        return self.viewer_rpc.itk_viewer.setImagePiecewiseFunctionGaussians(gaussians)
     @fetch_value
     def get_image_piecewise_function_gaussians(self):
         return self.viewer_rpc.itk_viewer.getImagePiecewiseFunctionGaussians()
 
+    @fetch_value
     def set_image_shadow_enabled(self, enabled: bool):
-        self.queue_request('setImageShadowEnabled', enabled)
+        return self.viewer_rpc.itk_viewer.setImageShadowEnabled(enabled)
     @fetch_value
     def get_image_shadow_enabled(self):
         return self.viewer_rpc.itk_viewer.getImageShadowEnabled()
 
+    @fetch_value
     def set_image_volume_sample_distance(self, distance: float):
-        self.queue_request('setImageVolumeSampleDistance', distance)
+        return self.viewer_rpc.itk_viewer.setImageVolumeSampleDistance(distance)
     @fetch_value
     def get_image_volume_sample_distance(self):
         return self.viewer_rpc.itk_viewer.getImageVolumeSampleDistance()
 
+    @fetch_value
     def set_image_volume_scattering_blend(self, scattering_blend: float):
-        self.queue_request('setImageVolumeScatteringBlend', scattering_blend)
+        return self.viewer_rpc.itk_viewer.setImageVolumeScatteringBlend(scattering_blend)
     @fetch_value
     def get_image_volume_scattering_blend(self):
         return self.viewer_rpc.itk_viewer.getImageVolumeScatteringBlend()
@@ -348,8 +364,9 @@ class Viewer:
             options['pattern'] = pattern
         if swap_image_order is not None:
             options['swapImageOrder'] = swap_image_order
-        self.queue_request('compareImages', fixed_name, moving_name, options)
+        return self.viewer_rpc.itk_viewer.compareImages(fixed_name, moving_name, options)
 
+    @fetch_value
     def set_label_image(self, label_image: Image):
         render_type = _detect_render_type(label_image, 'image')
         if render_type is RenderType.IMAGE:
@@ -360,103 +377,114 @@ class Viewer:
                 svc = self.server.get_service(svc_name)
                 svc.set_label_or_image('label_image')
             else:
-                self.queue_request('setLabelImage', label_image)
+                return self.viewer_rpc.itk_viewer.setLabelImage(label_image)
         elif render_type is RenderType.POINT_SET:
             label_image = _get_viewer_point_set(label_image)
-            self.queue_request('setPointSets', label_image)
+            return self.viewer_rpc.itk_viewer.setPointSets(label_image)
     @fetch_value
     def get_label_image(self):
         return self.viewer_rpc.itk_viewer.getLabelImage()
 
+    @fetch_value
     def set_label_image_blend(self, blend: float):
-        self.queue_request('setLabelImageBlend', blend)
+        return self.viewer_rpc.itk_viewer.setLabelImageBlend(blend)
     @fetch_value
     def get_label_image_blend(self):
         return self.viewer_rpc.itk_viewer.getLabelImageBlend()
 
+    @fetch_value
     def set_label_image_label_names(self, names: List[str]):
-        self.queue_request('setLabelImageLabelNames', names)
+        return self.viewer_rpc.itk_viewer.setLabelImageLabelNames(names)
     @fetch_value
     def get_label_image_label_names(self):
         return self.viewer_rpc.itk_viewer.getLabelImageLabelNames()
 
+    @fetch_value
     def set_label_image_lookup_table(self, lookupTable: str):
-        self.queue_request('setLabelImageLookupTable', lookupTable)
+        return self.viewer_rpc.itk_viewer.setLabelImageLookupTable(lookupTable)
     @fetch_value
     def get_label_image_lookup_table(self):
         return self.viewer_rpc.itk_viewer.getLabelImageLookupTable()
 
+    @fetch_value
     def set_label_image_weights(self, weights: float):
-        self.queue_request('setLabelImageWeights', weights)
+        return self.viewer_rpc.itk_viewer.setLabelImageWeights(weights)
     @fetch_value
     def get_label_image_weights(self):
         return self.viewer_rpc.itk_viewer.getLabelImageWeights()
 
+    @fetch_value
     def select_layer(self, name: str):
-        self.queue_request('selectLayer', name)
+        return self.viewer_rpc.itk_viewer.selectLayer(name)
 
+    @fetch_value
     def set_layer_visibility(self, visible: bool):
-        self.queue_request('setLayerVisibility', visible)
+        return self.viewer_rpc.itk_viewer.setLayerVisibility(visible)
     @fetch_value
     def get_layer_visibility(self, name: str):
         return self.viewer_rpc.itk_viewer.getLayerVisibility(name)
 
+    @fetch_value
     def add_point_set(self, pointSet: PointSet):
         pointSet = _get_viewer_point_set(pointSet)
-        self.queue_request('addPointSet', pointSet)
+        return self.viewer_rpc.itk_viewer.addPointSet(pointSet)
+    @fetch_value
     def set_point_set(self, pointSet: PointSet):
         pointSet = _get_viewer_point_set(pointSet)
-        self.queue_request('setPointSets', pointSet)
-    def get_point_sets(self):
-        if 'getPointSets' not in self.results:
-            self.call_getter('getPointSets')
-        elif self.results['getPointSets'].done():
-            return self.results.pop('getPointSets').result()
+        return self.viewer_rpc.itk_viewer.setPointSets(pointSet)
 
+    @fetch_value
     def set_rendering_view_container_style(self, containerStyle: Style):
-        self.queue_request('setRenderingViewContainerStyle', containerStyle)
+        return self.viewer_rpc.itk_viewer.setRenderingViewContainerStyle(containerStyle)
     @fetch_value
     def get_rendering_view_container_style(self):
         return self.viewer_rpc.itk_viewer.getRenderingViewStyle()
 
+    @fetch_value
     def set_rotate(self, enabled: bool):
-        self.queue_request('setRotateEnabled', enabled)
+        return self.viewer_rpc.itk_viewer.setRotateEnabled(enabled)
     @fetch_value
     def get_rotate(self):
         return self.viewer_rpc.itk_viewer.getRotateEnabled()
 
+    @fetch_value
     def set_ui_collapsed(self, collapsed: bool):
-        self.queue_request('setUICollapsed', collapsed)
+        return self.viewer_rpc.itk_viewer.setUICollapsed(collapsed)
     @fetch_value
     def get_ui_collapsed(self):
         return self.viewer_rpc.itk_viewer.getUICollapsed()
 
+    @fetch_value
     def set_units(self, units: str):
-        self.queue_request('setUnits', units)
+        return self.viewer_rpc.itk_viewer.setUnits(units)
     @fetch_value
     def get_units(self):
         return self.viewer_rpc.itk_viewer.getUnits()
 
+    @fetch_value
     def set_view_mode(self, mode: str):
-        self.queue_request('setViewMode', mode)
+        return self.viewer_rpc.itk_viewer.setViewMode(mode)
     @fetch_value
     def get_view_mode(self):
         return self.viewer_rpc.itk_viewer.getViewMode()
 
+    @fetch_value
     def set_x_slice(self, position: float):
-        self.queue_request('setXSlice', position)
+        return self.viewer_rpc.itk_viewer.setXSlice(position)
     @fetch_value
     def get_x_slice(self):
         return self.viewer_rpc.itk_viewer.getXSlice()
 
+    @fetch_value
     def set_y_slice(self, position: float):
-        self.queue_request('setYSlice', position)
+        return self.viewer_rpc.itk_viewer.setYSlice(position)
     @fetch_value
     def get_y_slice(self):
         return self.viewer_rpc.itk_viewer.getYSlice()
 
+    @fetch_value
     def set_z_slice(self, position: float):
-        self.queue_request('setZSlice', position)
+        return self.viewer_rpc.itk_viewer.setZSlice(position)
     @fetch_value
     def get_z_slice(self):
         return self.viewer_rpc.itk_viewer.getZSlice()
