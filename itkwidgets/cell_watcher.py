@@ -66,6 +66,7 @@ class CellWatcher(object):
         self.current_request = None
         self.waiting_on_viewer = False
         self.results = {}
+        self.abort_all = False
 
         self._events = Queue()
 
@@ -138,11 +139,13 @@ class CellWatcher(object):
         # Modeled after the approach used in jupyter-ui-poll
         # https://github.com/Kirill888/jupyter-ui-poll/blob/f65b81f95623c699ed7fd66a92be6d40feb73cde/jupyter_ui_poll/_poll.py#L75-L101
         if self._events.empty():
+            self.abort_all = False
             return
 
         if self.current_request is None:
             # Fetch the next request if we haven't already
             self.current_request = self._events.get()
+
         if self.ready_to_run_next_cell(self.current_request[2]):
             # Continue processing the remaining queued tasks
             await self._execute_next_request()
@@ -153,7 +156,7 @@ class CellWatcher(object):
 
         # Set I/O to the correct cell
         self.kernel.set_parent(ident, parent)
-        if self.kernel._aborting:
+        if self.abort_all or self.kernel._aborting:
             self.kernel._send_abort_reply(stream, parent, ident)
         else:
             # Use the original kernel execute_request method to run the cell
@@ -206,9 +209,11 @@ class CellWatcher(object):
                 idx = objs.index(value.__str__())
                 self.viewers.set_name(objs[idx], var)
 
-    def post_run_cell(self):
+    def post_run_cell(self, response):
         # If a cell has been run and there are viewers with no variable
         # associated with them check the user namespace to see if they have
         # been added
+        if response.error_in_exec is not None:
+            self.abort_all = True
         if self.viewers.not_named:
             self.find_view_object_names()
