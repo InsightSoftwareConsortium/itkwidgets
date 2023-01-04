@@ -420,6 +420,9 @@ class Viewer:
     @fetch_value
     def select_layer(self, name: str):
         return self.viewer_rpc.itk_viewer.selectLayer(name)
+    @fetch_value
+    def get_layer_names(self):
+        return self.viewer_rpc.itk_viewer.getLayerNames()
 
     @fetch_value
     def set_layer_visibility(self, visible: bool):
