@@ -83,7 +83,7 @@ For information on additional options, see the view function docstring:
 view?
 ```
 
-See the [deployments](deployments.md) section for a more detailed overview of additional notebook
+See the [deployments](docs/deployments.md) section for a more detailed overview of additional notebook
 options as well as other ways to run and interact with your notebooks.
 
 # Learn more
