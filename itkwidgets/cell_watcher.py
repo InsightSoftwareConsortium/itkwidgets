@@ -140,9 +140,8 @@ class CellWatcher(object):
         # https://github.com/Kirill888/jupyter-ui-poll/blob/f65b81f95623c699ed7fd66a92be6d40feb73cde/jupyter_ui_poll/_poll.py#L75-L101
         if self._events.empty():
             self.abort_all = False
-            return
 
-        if self.current_request is None:
+        if self.current_request is None and not self._events.empty():
             # Fetch the next request if we haven't already
             self.current_request = self._events.get()
 
