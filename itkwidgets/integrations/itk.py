@@ -5,7 +5,7 @@ HAVE_ITK = False
 try:
     import itk
     if not hasattr(itk, '__version__') or version.parse(itk.__version__) < version.parse('5.3.0'):
-      raise RuntimeError('itk 5.3rc4 or newer is required. `pip install --upgrade --pre itk`')
+      raise RuntimeError('itk 5.3 or newer is required. `pip install itk>=5.3.0`')
     HAVE_ITK = True
 except ImportError:
     pass
@@ -19,4 +19,4 @@ if HAVE_ITK:
 
 else:
     def itk_group_spatial_object_to_wasm_point_set(point_set):
-        raise RuntimeError('itk 5.3rc4 or newer is required. `pip install --upgrade --pre itk`')
+        raise RuntimeError('itk 5.3 or newer is required. `pip install itk>=5.3.0`')
