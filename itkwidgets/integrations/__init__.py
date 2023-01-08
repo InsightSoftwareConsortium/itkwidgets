@@ -146,6 +146,10 @@ def _get_viewer_point_sets(point_sets):
             return xarray_data_array_to_numpy(point_sets)
         if isinstance(point_sets, xr.Dataset):
             return xarray_data_set_to_numpy(point_sets)
+    if HAVE_ITK:
+        import itk
+        if isinstance(point_sets, itk.PointSet):
+            return itk.array_from_vector_container(point_sets.GetPoints())
     return point_sets
 
 
@@ -173,6 +177,9 @@ def _detect_render_type(data, input_type) -> RenderType:
         import itk
         if isinstance(data, itk.Image):
             return RenderType.IMAGE
+        elif isinstance(data, itk.PointSet):
+            print(f'isinstance(data, itk.PointSet)', flush=True)
+            return RenderType.POINT_SET
     if HAVE_MULTISCALE_SPATIAL_IMAGE:
         from multiscale_spatial_image import MultiscaleSpatialImage
         if isinstance(data, MultiscaleSpatialImage):
