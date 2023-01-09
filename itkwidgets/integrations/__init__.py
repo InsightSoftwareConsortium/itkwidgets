@@ -178,7 +178,6 @@ def _detect_render_type(data, input_type) -> RenderType:
         if isinstance(data, itk.Image):
             return RenderType.IMAGE
         elif isinstance(data, itk.PointSet):
-            print(f'isinstance(data, itk.PointSet)', flush=True)
             return RenderType.POINT_SET
     if HAVE_MULTISCALE_SPATIAL_IMAGE:
         from multiscale_spatial_image import MultiscaleSpatialImage
