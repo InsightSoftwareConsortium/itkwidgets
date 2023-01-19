@@ -1,4 +1,5 @@
 import asyncio
+import os
 import queue
 import threading
 from imjoy_rpc import api
@@ -64,6 +65,7 @@ class ViewerRPC:
             config = ui
         else:
             config = {}
+        config['maxConcurrency'] = os.cpu_count() * 2
 
         itk_viewer = await api.createWindow(
             name=f"itkwidgets viewer {_viewer_count}",
