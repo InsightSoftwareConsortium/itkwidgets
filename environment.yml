@@ -1,8 +1,10 @@
-name: python 3.8
+name: itkwidgets
 channels:
   - conda-forge
 dependencies:
-  - python=3.8
+  - python=3.10
   - pip
+  - nodejs
   - pip:
-    - imjoy-jupyterlab-extension
+    - itk>=5.3.0
+    - itkwidgets[all]>=1.0a21
