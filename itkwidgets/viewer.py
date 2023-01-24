@@ -8,10 +8,10 @@ from IPython.display import display, HTML
 from IPython.lib import backgroundjobs as bg
 import uuid
 
-from ._type_aliases import Gaussians, Style, Image, Point_Sets
+from ._type_aliases import Gaussians, Style, Image, Point_Set
 from ._initialization_params import init_params_dict, init_key_aliases
 from ._method_types import deferred_methods
-from .integrations import _detect_render_type, _get_viewer_image, _get_viewer_point_sets
+from .integrations import _detect_render_type, _get_viewer_image, _get_viewer_point_set
 from .integrations.environment import ENVIRONMENT, Env
 from .render_types import RenderType
 from .viewer_config import ITK_VIEWER_SRC, PYDATA_SPHINX_HREF, MUI_HREF
@@ -156,7 +156,7 @@ class Viewer:
         return hasattr(self.viewer_rpc, 'itk_viewer')
 
     def input_data(self, init_data_kwargs):
-        input_options = ["data", "image", "label_image", "point_sets"]
+        input_options = ["data", "image", "label_image", "point_set"]
         inputs = []
         for option in input_options:
             data = init_data_kwargs.get(option, None)
@@ -176,7 +176,7 @@ class Viewer:
                 else:
                     result = _get_viewer_image(data, label=False)
             elif render_type is RenderType.POINT_SET:
-                result = _get_viewer_point_sets(data)
+                result = _get_viewer_point_set(data)
             if result is None:
                 raise RuntimeError(f"Could not process the viewer {input_type}")
             _init_data[key] = result
@@ -227,7 +227,7 @@ class Viewer:
             image = _get_viewer_image(image, label=False)
             self.queue_request('setImage', image)
         elif render_type is RenderType.POINT_SET:
-            image = _get_viewer_point_sets(image)
+            image = _get_viewer_point_set(image)
             self.queue_request('setPointSets', image)
 
     def set_image_blend_mode(self, mode: str):
@@ -272,7 +272,7 @@ class Viewer:
             label_image = _get_viewer_image(label_image, label=True)
             self.queue_request('setLabelImage', label_image)
         elif render_type is RenderType.POINT_SET:
-            label_image = _get_viewer_point_sets(label_image)
+            label_image = _get_viewer_point_set(label_image)
             self.queue_request('setPointSets', label_image)
 
     def set_label_image_blend(self, blend: float):
@@ -293,8 +293,8 @@ class Viewer:
     def set_layer_visibility(self, visible: bool):
         self.queue_request('setLayerVisibility', visible)
 
-    def set_point_sets(self, pointSets: Point_Sets):
-        self.queue_request('setPointSets', pointSets)
+    def set_point_set(self, pointSet: Point_Set):
+        self.queue_request('setPointSets', pointSet)
 
     def set_rendering_view_container_style(self, containerStyle: Style):
         self.queue_request('setRenderingViewContainerStyle', containerStyle)
@@ -322,16 +322,16 @@ class Viewer:
 
 
 def view(data=None, **kwargs):
-    """View the image and/or point sets.
+    """View the image and/or point set.
 
     Creates and returns an ImJoy plugin ipywidget to visualize an image, and/or
-    point sets.
+    point set.
 
     The image can be 2D or 3D. The type of the image can be an numpy.array,
     itk.Image, or vtk.vtkImageData.
 
-    A point set or a sequence of points sets can be visualized. The type of the
-    point set can be an numpy.array (Nx3 array of point positions).
+    A point set can be visualized. The type of the point set can be an
+    numpy.array (Nx3 array of point positions).
 
     Parameters
     ----------
@@ -415,10 +415,10 @@ def view(data=None, **kwargs):
     layer_visible: bool, deafult: True
         Whether the current layer is visible.
 
-    Point Sets
+    Point Set
     ^^^^^^^^^^
-    point_sets: point set
-        The point sets to visualize.
+    point_set: point set
+        The point set to visualize.
 
     Other Parameters
     ----------------

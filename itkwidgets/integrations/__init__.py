@@ -129,28 +129,28 @@ def _get_viewer_image(image, label=False):
     raise RuntimeError("Could not process the viewer image")
 
 
-def _get_viewer_point_sets(point_sets):
+def _get_viewer_point_set(point_set):
     if HAVE_VTK:
         import vtk
-        if isinstance(point_sets, vtk.vtkPolyData):
-            return vtk_polydata_to_vtkjs(point_sets)
-    if isinstance(point_sets, dask.array.core.Array):
-        return np.asarray(point_sets)
+        if isinstance(point_set, vtk.vtkPolyData):
+            return vtk_polydata_to_vtkjs(point_set)
+    if isinstance(point_set, dask.array.core.Array):
+        return np.asarray(point_set)
     if HAVE_TORCH:
         import torch
-        if isinstance(point_sets, torch.Tensor):
-            return point_sets.numpy()
+        if isinstance(point_set, torch.Tensor):
+            return point_set.numpy()
     if HAVE_XARRAY:
         import xarray as xr
-        if isinstance(point_sets, xr.DataArray):
-            return xarray_data_array_to_numpy(point_sets)
-        if isinstance(point_sets, xr.Dataset):
-            return xarray_data_set_to_numpy(point_sets)
+        if isinstance(point_set, xr.DataArray):
+            return xarray_data_array_to_numpy(point_set)
+        if isinstance(point_set, xr.Dataset):
+            return xarray_data_set_to_numpy(point_set)
     if HAVE_ITK:
         import itk
-        if isinstance(point_sets, itk.PointSet):
-            return itk.array_from_vector_container(point_sets.GetPoints())
-    return point_sets
+        if isinstance(point_set, itk.PointSet):
+            return itk.array_from_vector_container(point_set.GetPoints())
+    return point_set
 
 
 def _detect_render_type(data, input_type) -> RenderType:
@@ -164,12 +164,12 @@ def _detect_render_type(data, input_type) -> RenderType:
         # We may need to do more introspection
         return RenderType.IMAGE
     elif isinstance(data, np.ndarray):
-        if input_type == 'point_sets':
+        if input_type == 'point_set':
             return RenderType.POINT_SET
         else:
             return RenderType.IMAGE
     elif isinstance(data, zarr.Group):
-        if input_type == 'point_sets':
+        if input_type == 'point_set':
             return RenderType.POINT_SET
         else:
             return RenderType.IMAGE
@@ -190,26 +190,26 @@ def _detect_render_type(data, input_type) -> RenderType:
         elif isinstance(data, vtk.vtkPolyData):
             return RenderType.POINT_SET
     if isinstance(data, dask.array.core.Array):
-        if input_type == 'point_sets':
+        if input_type == 'point_set':
             return RenderType.POINT_SET
         else:
             return RenderType.IMAGE
     if HAVE_TORCH:
         import torch
         if isinstance(data, torch.Tensor):
-            if input_type == 'point_sets':
+            if input_type == 'point_set':
                 return RenderType.POINT_SET
             else:
                 return RenderType.IMAGE
     if HAVE_XARRAY:
         import xarray as xr
         if isinstance(data, xr.DataArray):
-            if input_type == 'point_sets':
+            if input_type == 'point_set':
                 return RenderType.POINT_SET
             else:
                 return RenderType.IMAGE
         if isinstance(data, xr.Dataset):
-            if input_type == 'point_sets':
+            if input_type == 'point_set':
                 return RenderType.POINT_SET
             else:
                 return RenderType.IMAGE

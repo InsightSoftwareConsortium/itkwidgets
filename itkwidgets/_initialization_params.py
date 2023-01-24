@@ -35,5 +35,5 @@ def init_key_aliases():
         'data': 'image',
         'image': 'image',
         'label_image': 'labelImage',
-        'point_sets': 'pointSets',
+        'point_set': 'pointSets',
     }
