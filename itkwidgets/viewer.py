@@ -9,7 +9,7 @@ from IPython.lib import backgroundjobs as bg
 import uuid
 
 from ._type_aliases import Gaussians, Style, Image, Point_Set
-from ._initialization_params import init_params_dict, init_key_aliases
+from ._initialization_params import init_params_dict
 from ._method_types import deferred_methods
 from .integrations import _detect_render_type, _get_viewer_image, _get_viewer_point_set
 from .integrations.environment import ENVIRONMENT, Env
@@ -169,17 +169,17 @@ class Viewer:
         result= None
         for (input_type, data) in input_data:
             render_type = _detect_render_type(data, input_type)
-            key = init_key_aliases()[input_type]
             if render_type is RenderType.IMAGE:
                 if input_type == 'label_image':
                     result = _get_viewer_image(data, label=True)
+                    render_type = RenderType.LABELIMAGE
                 else:
                     result = _get_viewer_image(data, label=False)
             elif render_type is RenderType.POINT_SET:
                 result = _get_viewer_point_set(data)
             if result is None:
                 raise RuntimeError(f"Could not process the viewer {input_type}")
-            _init_data[key] = result
+            _init_data[render_type.value] = result
         return _init_data
 
     async def run_queued_requests(self):

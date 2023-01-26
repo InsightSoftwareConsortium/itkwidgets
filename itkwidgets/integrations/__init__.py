@@ -154,6 +154,10 @@ def _get_viewer_point_set(point_set):
 
 
 def _detect_render_type(data, input_type) -> RenderType:
+    if input_type == 'image' or input_type == 'label_image':
+        return RenderType.IMAGE
+    elif input_type == 'point_set':
+        return RenderType.POINT_SET
     if isinstance(data, itkwasm.Image):
         return RenderType.IMAGE
     elif isinstance(data, itkwasm.PointSet):
@@ -164,12 +168,7 @@ def _detect_render_type(data, input_type) -> RenderType:
         # We may need to do more introspection
         return RenderType.IMAGE
     elif isinstance(data, np.ndarray):
-        if input_type == 'point_set':
-            return RenderType.POINT_SET
-        else:
-            return RenderType.IMAGE
-    elif isinstance(data, zarr.Group):
-        if input_type == 'point_set':
+        if data.ndim == 2 and data.shape[1] < 4:
             return RenderType.POINT_SET
         else:
             return RenderType.IMAGE
@@ -190,26 +189,26 @@ def _detect_render_type(data, input_type) -> RenderType:
         elif isinstance(data, vtk.vtkPolyData):
             return RenderType.POINT_SET
     if isinstance(data, dask.array.core.Array):
-        if input_type == 'point_set':
+        if data.ndim ==2 and data.shape[1] < 4:
             return RenderType.POINT_SET
         else:
             return RenderType.IMAGE
     if HAVE_TORCH:
         import torch
         if isinstance(data, torch.Tensor):
-            if input_type == 'point_set':
+            if data.dim == 2 and data.shape[1] < 4:
                 return RenderType.POINT_SET
             else:
                 return RenderType.IMAGE
     if HAVE_XARRAY:
         import xarray as xr
         if isinstance(data, xr.DataArray):
-            if input_type == 'point_set':
+            if data.dims == 2 and data.shape[1] < 4:
                 return RenderType.POINT_SET
             else:
                 return RenderType.IMAGE
         if isinstance(data, xr.Dataset):
-            if input_type == 'point_set':
+            if data.dims == 2 and data.shape[1] < 4:
                 return RenderType.POINT_SET
             else:
                 return RenderType.IMAGE
