@@ -15,21 +15,21 @@ Gaussians = Dict[str, List[Gaussian_Curve]]
 Style = Dict[str, str]
 
 Image = Union[np.ndarray, itkwasm.Image, zarr.Group]
-Point_Set = Union[np.ndarray, itkwasm.PointSet, zarr.Group]
+PointSet = Union[np.ndarray, itkwasm.PointSet, zarr.Group]
 if HAVE_ITK:
     import itk
     Image = Union[Image, itk.Image]
 if HAVE_VTK:
     import vtk
     Image = Union[Image, vtk.vtkImageData]
-    Point_Set = Union[Point_Set, vtk.vtkPolyData]
+    PointSet = Union[PointSet, vtk.vtkPolyData]
 Image = Union[Image, dask.array.core.Array]
-Point_Set = Union[Point_Set, dask.array.core.Array]
+PointSet = Union[PointSet, dask.array.core.Array]
 if HAVE_TORCH:
     import torch
     Image = Union[Image, torch.Tensor]
-    Point_Set = Union[Point_Set, torch.Tensor]
+    PointSet = Union[PointSet, torch.Tensor]
 if HAVE_XARRAY:
     import xarray
     Image = Union[Image, xarray.DataArray, xarray.Dataset]
-    Point_Set = Union[Point_Set, xarray.DataArray, xarray.Dataset]
+    PointSet = Union[PointSet, xarray.DataArray, xarray.Dataset]

@@ -8,7 +8,7 @@ from IPython.display import display, HTML
 from IPython.lib import backgroundjobs as bg
 import uuid
 
-from ._type_aliases import Gaussians, Style, Image, Point_Set
+from ._type_aliases import Gaussians, Style, Image, PointSet
 from ._initialization_params import init_params_dict
 from ._method_types import deferred_methods
 from .integrations import _detect_render_type, _get_viewer_image, _get_viewer_point_set
@@ -293,10 +293,10 @@ class Viewer:
     def set_layer_visibility(self, visible: bool):
         self.queue_request('setLayerVisibility', visible)
 
-    def add_point_set(self, pointSet: Point_Set):
+    def add_point_set(self, pointSet: PointSet):
         pointSet = _get_viewer_point_set(pointSet)
         self.queue_request('addPointSet', pointSet)
-    def set_point_set(self, pointSet: Point_Set):
+    def set_point_set(self, pointSet: PointSet):
         pointSet = _get_viewer_point_set(pointSet)
         self.queue_request('setPointSets', pointSet)
 
