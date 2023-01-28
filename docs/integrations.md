@@ -23,7 +23,7 @@ gaussian_mean = [0.0, 0.0, 0.0]
 gaussian_cov = [[1.0, 0.0, 0.0], [0.0, 2.0, 0.0], [0.0, 0.0, 0.5]]
 point_set = np.random.multivariate_normal(gaussian_mean, gaussian_cov, number_of_points)
 
-view(point_sets=point_set)
+view(point_set=point_set)
 ```
 
 Or check out the [NumPyArrayPointSet](https://colab.research.google.com/github/InsightSoftwareConsortium/itkwidgets/blob/main/examples/NumPyArrayPointSet.ipynb) example notebook to try it out for yourself!
