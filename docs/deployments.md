@@ -17,7 +17,7 @@ and its dependency. In the Pyodide notebook,
 
 ```python
 import piplite
-piplite.install("itkwidgets==1.0a5")
+piplite.install("itkwidgets==1.0a23")
 ```
 
 Here we are installing the specific pre-release version pre-installed. See
