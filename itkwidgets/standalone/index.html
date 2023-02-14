@@ -30,19 +30,12 @@
     </script>
     <script>
     async function setupHypha(config) {
-        // const toObject = (x) => {
-        //     if(x===undefined || x===null) return x;
-        //     return x.toJs({dict_converter : Object.fromEntries})
-        // }
-        // config = toObject(config)
-        // config.server_token = config.token
         globalThis.config = config
         const url = config.server_url;
         const extraHeaders = {};
         if (config.token) {
           extraHeaders.Authorization = "Bearer " + config.token;
         }
-        // const basePath = new URL(url).pathname;
         // Note: extraHeaders only works for polling transport (the default)
         // If we switch to websocket only, the headers won't be respected
         if(globalThis.server){
@@ -53,47 +46,38 @@
      }
      async function setupViewerForImJoy(api) {
       const version = itkVtkViewer.version
-    //   const api = await server.register_service({
-    //     name: 'itk-vtk-viewer',
-    //     id: 'itk_viewer',
-    //     config: { visibility: "public" },
-    //     version,
-    //     description: '2D / 3D web image, mesh, and point set viewer using itk-wasm and vtk.js ',
-    //     type: 'rpc-window',
-    //     docs: 'https://kitware.github.io/itk-vtk-viewer/docs/imjoy.html',
-    //     authors: ['Matt McCormick', 'Wei Ouyang'],
-    //     license: '3-Clause BSD License',
-    //     labels: ['visualization', 'itk', 'vtk', 'image', 'mesh', 'geometry', 'point set', '2D', '3D'],
-    //     icon: 'https://kitware.github.io/itk-vtk-viewer/app/favicon-32x32.png',
-    //     cover: ['https://kitware.github.io/itk-vtk-viewer/docs/howToUse.jpg', 'https://kitware.github.io/itk-vtk-viewer/docs/imjoy.png'],
-    //   })
+      await api.register_service({
+        name: 'itk-vtk-viewer-service',
+        id: 'itk_viewer',
+        config: { visibility: "public" },
+        version,
+        description: '2D / 3D web image, mesh, and point set viewer using itk-wasm and vtk.js ',
+        type: 'rpc-window',
+        docs: 'https://kitware.github.io/itk-vtk-viewer/docs/imjoy.html',
+        authors: ['Matt McCormick', 'Wei Ouyang'],
+        license: '3-Clause BSD License',
+        labels: ['visualization', 'itk', 'vtk', 'image', 'mesh', 'geometry', 'point set', '2D', '3D'],
+        icon: 'https://kitware.github.io/itk-vtk-viewer/app/favicon-32x32.png',
+        cover: ['https://kitware.github.io/itk-vtk-viewer/docs/howToUse.jpg', 'https://kitware.github.io/itk-vtk-viewer/docs/imjoy.png'],
+
+      })
       itkVtkViewer.imJoyCodecs.forEach((codec) => {
         api.registerCodec(codec)
       })
-      api.export(itkVtkViewer.imJoyPluginAPI)
+      const plugin = new itkVtkViewer.ImJoyPluginAPI()
+      await api.export(plugin)
+      plugin.run({data: {}, config: {}})
       api.log('itk-vtk-viewer loaded successfully.')
     }
 
-
+    const container = document.querySelector('.content')
     const config = {
-        "server_url": "http://localhost:37480"
+        "server_url": "http://localhost:9527",
     }
     setupHypha(config).then(async (server) => {
         console.log('server', server)
         await setupViewerForImJoy(server)
     })
-
-    // inside an iframe
-    // if (window.self !== window.top) {
-    //   setupViewerForImJoy(container)
-    // } else {
-    //   const viewer = itkVtkViewer.processURLParameters(container, {
-    //     fullscreen: true
-    //   });
-    //   if (!viewer) {
-    //     itkVtkViewer.createViewerFromLocalFiles(container)
-    //   }
-    // }
   </script>
   </body>
 </html>
