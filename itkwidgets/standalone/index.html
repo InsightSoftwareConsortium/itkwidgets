@@ -71,8 +71,12 @@
     }
 
     const container = document.querySelector('.content')
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
     const config = {
         "server_url": "http://localhost:9527",
+        "workspace": urlParams.get("workspace"),
+        "token": urlParams.get("token")
     }
     setupHypha(config).then(async (server) => {
         console.log('server', server)

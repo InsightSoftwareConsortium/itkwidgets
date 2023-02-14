@@ -10,6 +10,7 @@ from aiohttp import web
 from imjoy_rpc.hypha import connect_to_server
 from itkwidgets.standalone.config import HYPHA_SERVER_URL, WS_SERVER_URL, WS_PORT
 from pathlib import Path
+from urllib.parse import urlencode
 
 
 sio = socketio.AsyncServer()
@@ -30,12 +31,14 @@ def start_hypha_server():
     subprocess.run([sys.executable, "-m", "hypha.server"], capture_output=True)
 
 async def start_server(server_url, data, app):
-    await connect_to_server({
+    server = await connect_to_server({
         'client_id': 'py-itkwidgets-server',
         'name': 'py-itk-vtk-viewer-server',
         'server_url': server_url,
     })
-    webbrowser.open_new_tab(WS_SERVER_URL)
+    token = await server.generate_token()
+    params = urlencode({'workspace': server.config.workspace, 'token': token})
+    webbrowser.open_new_tab(f'{WS_SERVER_URL}/?{params}')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
