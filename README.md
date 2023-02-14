@@ -9,6 +9,10 @@ Interactive widgets to visualize images, point sets, and 3D geometry on the web.
 
 # Getting Started
 
+## Environment Setup
+
+The [EnvironmentCheck.ipynb](https://github.com/InsightSoftwareConsortium/itkwidgets/blob/main/examples/EnvironmentCheck.ipynb) checks the environment that you are running in to make sure that all required dependencies and extensions are correctly installed. Ideally run first before any other notebooks to prevent common issues around dependencies and extension loading.
+
 ## Installation
 
 To install for all environments:
