@@ -1,5 +1,4 @@
-from imjoy_rpc.hypha import connect_to_server
-from itkwidgets.standalone.config import WS_SERVER_URL
+import argparse
 import asyncio
 
 async def start_server(server_url):
@@ -12,10 +11,8 @@ async def start_server(server_url):
 #     print(ws)
 
 if __name__ == '__main__':
-    # loop = asyncio.new_event_loop()
-    # asyncio.set_event_loop(loop)
-    # loop.run_until_complete(main())
-    loop = asyncio.get_event_loop()
-    loop.create_task(start_server(WS_SERVER_URL))
-    loop.run_forever()
-    # asyncio.run(main())
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--data', type=str, help='path to a data file')
+    parser.add_argument('--type', type=str, help='Type of data (image, label_image, point_set)')
+    opt = parser.parse_args()
