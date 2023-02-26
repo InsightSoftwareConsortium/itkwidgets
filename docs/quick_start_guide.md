@@ -1,11 +1,15 @@
 # Quick Start Guide
 
+## Environment Setup
+
+The [EnvironmentCheck.ipynb](https://github.com/InsightSoftwareConsortium/itkwidgets/blob/main/examples/EnvironmentCheck.ipynb) checks the environment that you are running in to make sure that all required dependencies and extensions are correctly installed. Ideally run first before any other notebooks to prevent common issues around dependencies and extension loading.
+
 ## Installation
 
 To install for all environments:
 
 ```bash
-pip install 'itkwidgets[all]>=1.0a16'
+pip install 'itkwidgets[all]>=1.0a23'
 ```
 
 ### Jupyter Notebook
@@ -13,7 +17,7 @@ pip install 'itkwidgets[all]>=1.0a16'
 To install the widgets for the Jupyter Notebook with pip:
 
 ```bash
-pip install 'itkwidgets[notebook]>=1.0a16'
+pip install 'itkwidgets[notebook]>=1.0a23'
 ```
 
 Then look for the ImJoy icon at the top in the Jupyter Notebook:
@@ -25,7 +29,7 @@ Then look for the ImJoy icon at the top in the Jupyter Notebook:
 For Jupyter Lab 3 run:
 
 ```bash
-pip install 'itkwidgets[lab]>=1.0a16'
+pip install 'itkwidgets[lab]>=1.0a23'
 ```
 
 Then look for the ImJoy icon at the top in the Jupyter Notebook:
@@ -37,7 +41,7 @@ Then look for the ImJoy icon at the top in the Jupyter Notebook:
 For Google Colab run:
 
 ```bash
-pip install 'itkwidgets>=1.0a16'
+pip install 'itkwidgets>=1.0a23'
 ```
 
 ## Example Notebooks
