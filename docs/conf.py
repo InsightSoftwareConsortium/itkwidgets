@@ -39,7 +39,8 @@ version = release
 extensions = ['myst_parser',]
 
 html_theme_options = dict(
-    github_url='https://github.com/InsightSoftwareConsortium/itkwidgets'
+    github_url='https://github.com/InsightSoftwareConsortium/itkwidgets',
+    icon_links=[],
 )
 
 # jupyterlite_config = jupyterlite_dir / "jupyterlite_config.json"
