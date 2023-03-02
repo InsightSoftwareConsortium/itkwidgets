@@ -11,10 +11,12 @@ import uuid
 from ._type_aliases import Gaussians, Style, Image, PointSet
 from ._initialization_params import init_params_dict
 from ._method_types import deferred_methods
+from .imjoy import register_itkwasm_imjoy_codecs
 from .integrations import _detect_render_type, _get_viewer_image, _get_viewer_point_set
 from .integrations.environment import ENVIRONMENT, Env
 from .render_types import RenderType
 from .viewer_config import ITK_VIEWER_SRC, PYDATA_SPHINX_HREF, MUI_HREF
+from imjoy_rpc import register_default_codecs
 
 __all__ = [
     "Viewer",
@@ -31,7 +33,14 @@ class ViewerRPC:
     def __init__(
         self, ui_collapsed=True, rotate=False, ui="pydata-sphinx", data=None
     ):
+        global _codecs_registered
         """Create a viewer."""
+        # Register codecs if they haven't been already
+        if not _codecs_registered:
+            register_default_codecs()
+            register_itkwasm_imjoy_codecs()
+            _codecs_registered = True
+
         self._init_viewer_kwargs = dict(ui_collapsed=ui_collapsed, rotate=rotate, ui=ui)
         self.init_data = data
         self.img = display(HTML(f'<div />'), display_id=str(uuid.uuid4()))
