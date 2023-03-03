@@ -1,10 +1,4 @@
 {
-    "LiteBuildConfig": {
-        "federated_extensions": [
-            "https://files.pythonhosted.org/packages/15/ef/d7553d9968f317d02ee3e7819be5c9fc6cfa48e9fb3cf0cf92043c6a4205/imjoy_jupyterlab_extension-0.1.13-py3-none-any.whl"
-        ],
-        "ignore_sys_prefix": true
-    },
     "PipliteAddon": {
         "piplite_urls": [
             "https://files.pythonhosted.org/packages/14/f7/ea85b5e4f59db353340543d450cd3d1c5befcde8bee0cc41a9de78fed82f/itkwasm-1.0b1-py3-none-any.whl",
