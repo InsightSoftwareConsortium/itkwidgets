@@ -1,3 +1,4 @@
+imjoy_jupyterlab_extension
 pydata-sphinx-theme
 myst-parser
 jupyterlite[all]==0.1.0b17

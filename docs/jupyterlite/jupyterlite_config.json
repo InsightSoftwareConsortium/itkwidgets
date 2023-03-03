@@ -1,17 +1,11 @@
 {
-    "LiteBuildConfig": {
-        "federated_extensions": [
-            "https://files.pythonhosted.org/packages/15/ef/d7553d9968f317d02ee3e7819be5c9fc6cfa48e9fb3cf0cf92043c6a4205/imjoy_jupyterlab_extension-0.1.13-py3-none-any.whl"
-        ],
-        "ignore_sys_prefix": true
-    },
     "PipliteAddon": {
         "piplite_urls": [
-            "https://files.pythonhosted.org/packages/14/f7/ea85b5e4f59db353340543d450cd3d1c5befcde8bee0cc41a9de78fed82f/itkwasm-1.0b1-py3-none-any.whl",
+            "https://files.pythonhosted.org/packages/4c/ee/56f970ca26375176d3e4885f58471a12d5a6794bcefe8ad0ccb8d7158ca3/itkwasm-1.0b82-py3-none-any.whl",
             "https://files.pythonhosted.org/packages/6c/55/c3fc7e2b9671d15f0c0becdcb9fad6c330172988744ad6eaa17b71bace88/imjoy_rpc-0.5.16-py3-none-any.whl",
             "https://files.pythonhosted.org/packages/69/d9/5a6c8af2f4b4f49a809ae316ae4c12937d7dfda4e5b2f9e4167df5f15c0e/imjoy_utils-0.1.2-py3-none-any.whl",
-            "https://files.pythonhosted.org/packages/e7/bb/1d1e90cd601003719ee4c638e8d40332b727f6565a3239a52b36cf454cf1/itkwidgets-1.0a23-py3-none-any.whl",
-            "https://files.pythonhosted.org/packages/f0/45/390f8ac76a7d063e878fb9c8346b70d6f25f39f5bd70a66c3ef578db6533/ngff_zarr-0.1.4-py3-none-any.whl"
+            "https://files.pythonhosted.org/packages/c9/dc/3504845528418aff0b71f4b622bb0e8e12adec2d8f2c1ba21d695b9ac6e6/itkwidgets-1.0a24-py3-none-any.whl",
+            "https://files.pythonhosted.org/packages/bb/3e/3667ac685ae83887b874896bcb55584797ba6b52a292df3e4b37736a9610/ngff_zarr-0.1.6-py3-none-any.whl"
         ]
     }
 }
