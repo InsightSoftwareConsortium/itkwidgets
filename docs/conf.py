@@ -26,7 +26,7 @@ copyright = '2023, NumFOCUS'
 author = 'Matthew McCormick'
 
 # The full version, including alpha/beta/rc tags.
-release = re.sub('^v', '', os.popen('git describe').read().strip())
+release = re.sub('^v', '', os.popen('git tag --list "v1.0*" --sort=creatordate').readlines()[-1].strip())
 # The short X.Y version.
 version = release
 
