@@ -22,7 +22,7 @@ import re
 # -- Project information -----------------------------------------------------
 
 project = 'itkwidgets'
-copyright = '2022, Matthew McCormick'
+copyright = '2023, NumFOCUS'
 author = 'Matthew McCormick'
 
 # The full version, including alpha/beta/rc tags.
