@@ -12,17 +12,21 @@ Try it!
 
 To use itkwidgets in a JupyterLite deployment, install the
 [imjoy-jupyterlab-extension](https://pypi.org/project/imjoy-jupyterlab-extension/)
-JupyterLab 3 federated extension. Optionally, pre-install the itkwidgets wheel
-and its dependency. In the Pyodide notebook,
+JupyterLab 3 federated extension in the environment used to build JupyterLite.
+See also [the JupyterLite configuration used for this
+documentation](https://github.com/InsightSoftwareConsortium/itkwidgets/blob/main/docs/jupyterlite/jupyterlite_config.json).
+Currently, [this dask-image
+wheel](https://github.com/InsightSoftwareConsortium/itkwidgets/blob/main/docs/jupyterlite/pypi/dask_image-2022.9.0-py2.py3-none-any.whl)
+should also be added to the *pypi* directory of the jupyterlite configuration.
+
+In the Pyodide notebook,
 
 ```python
 import piplite
-piplite.install("itkwidgets==1.0a23")
+await piplite.install("itkwidgets==1.0a24")
 ```
 
-Here we are installing the specific pre-release version pre-installed. See
-also [the JupyterLite configuration used for this documentation](https://github.com/InsightSoftwareConsortium/itkwidgets/blob/main/docs/jupyterlite/jupyterlite_config.json) and the
-[Sphinx / ReadTheDocs
+See also the [Sphinx / ReadTheDocs
 configuration](https://github.com/InsightSoftwareConsortium/itkwidgets/blob/main/docs/conf.py)
 used for this documentation.
 
