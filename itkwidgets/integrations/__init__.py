@@ -1,7 +1,7 @@
 import itkwasm
 import numpy as np
 import zarr
-from ngff_zarr import to_multiscales, to_ngff_zarr, to_ngff_image, itk_image_to_ngff_image, Methods
+from ngff_zarr import to_multiscales, to_ngff_zarr, to_ngff_image, itk_image_to_ngff_image, Methods, NgffImage, Multiscales
 
 import dask
 from .itk import HAVE_ITK, itk_group_spatial_object_to_wasm_point_set
@@ -49,6 +49,15 @@ def _get_viewer_image(image, label=False):
         method = Methods.DASK_IMAGE_GAUSSIAN
 
     store, chunk_store = _make_multiscale_store()
+
+    if isinstance(image, NgffImage):
+        multiscales = to_multiscales(image, method=method)
+        to_ngff_zarr(store, multiscales, chunk_store=chunk_store)
+        return store
+
+    if isinstance(image, Multiscales):
+        to_ngff_zarr(store, image, chunk_store=chunk_store)
+        return store
 
     if HAVE_MULTISCALE_SPATIAL_IMAGE:
         from multiscale_spatial_image import MultiscaleSpatialImage
@@ -159,6 +168,10 @@ def _detect_render_type(data, input_type) -> RenderType:
     elif input_type == 'point_set':
         return RenderType.POINT_SET
     if isinstance(data, itkwasm.Image):
+        return RenderType.IMAGE
+    elif isinstance(data, NgffImage):
+        return RenderType.IMAGE
+    elif isinstance(data, Multiscales):
         return RenderType.IMAGE
     elif isinstance(data, itkwasm.PointSet):
         return RenderType.POINT_SET
