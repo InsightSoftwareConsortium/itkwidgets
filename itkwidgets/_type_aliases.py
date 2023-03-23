@@ -33,3 +33,5 @@ if HAVE_XARRAY:
     import xarray
     Image = Union[Image, xarray.DataArray, xarray.Dataset]
     PointSet = Union[PointSet, xarray.DataArray, xarray.Dataset]
+
+CompareOptions = Dict[str, Union[str, List[int], bool]]

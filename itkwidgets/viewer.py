@@ -8,7 +8,7 @@ from IPython.display import display, HTML
 from IPython.lib import backgroundjobs as bg
 import uuid
 
-from ._type_aliases import Gaussians, Style, Image, PointSet
+from ._type_aliases import Gaussians, Style, Image, PointSet, CompareOptions
 from ._initialization_params import init_params_dict
 from ._method_types import deferred_methods
 from .imjoy import register_itkwasm_imjoy_codecs
@@ -230,11 +230,11 @@ class Viewer:
     def set_background_color(self, bgColor: List[float]):
         self.queue_request('setBackgroundColor', bgColor)
 
-    def set_image(self, image: Image):
+    def set_image(self, image: Image, name: str = 'image'):
         render_type = _detect_render_type(image, 'image')
         if render_type is RenderType.IMAGE:
             image = _get_viewer_image(image, label=False)
-            self.queue_request('setImage', image)
+            self.queue_request('setImage', image, name)
         elif render_type is RenderType.POINT_SET:
             image = _get_viewer_point_set(image)
             self.queue_request('setPointSets', image)
@@ -274,6 +274,9 @@ class Viewer:
 
     def set_image_volume_scattering_blend(self, scattering_blend: float):
         self.queue_request('setImageVolumeScatteringBlend', scattering_blend)
+
+    def set_compare_images(self, fixed_name: str, moving_name: str, options: CompareOptions):
+        self.queue_request('setCompareImages', fixed_name, moving_name, options)
 
     def set_label_image(self, label_image: Image):
         render_type = _detect_render_type(label_image, 'image')
