@@ -73,7 +73,7 @@ def _get_viewer_image(image, label=False):
 
     if HAVE_ITK:
         import itk
-        if isinstance(image, itk.Image):
+        if isinstance(image, itk.Image) or isinstance(image, itk.VectorImage):
             ngff_image = itk_image_to_ngff_image(image)
             multiscales = to_multiscales(ngff_image, method=method)
             to_ngff_zarr(store, multiscales, chunk_store=chunk_store)
@@ -188,6 +188,8 @@ def _detect_render_type(data, input_type) -> RenderType:
     elif HAVE_ITK:
         import itk
         if isinstance(data, itk.Image):
+            return RenderType.IMAGE
+        elif isinstance(data, itk.VectorImage):
             return RenderType.IMAGE
         elif isinstance(data, itk.PointSet):
             return RenderType.POINT_SET
