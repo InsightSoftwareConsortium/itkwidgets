@@ -275,8 +275,8 @@ class Viewer:
     def set_image_volume_scattering_blend(self, scattering_blend: float):
         self.queue_request('setImageVolumeScatteringBlend', scattering_blend)
 
-    def set_compare_images(self, fixed_name: str, moving_name: str, options: CompareOptions):
-        self.queue_request('setCompareImages', fixed_name, moving_name, options)
+    def compare_images(self, fixed_name: str, moving_name: str, options: CompareOptions):
+        self.queue_request('compareImages', fixed_name, moving_name, options)
 
     def set_label_image(self, label_image: Image):
         render_type = _detect_render_type(label_image, 'image')
