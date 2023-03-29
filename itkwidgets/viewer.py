@@ -8,7 +8,7 @@ from IPython.display import display, HTML
 from IPython.lib import backgroundjobs as bg
 import uuid
 
-from ._type_aliases import Gaussians, Style, Image, PointSet, CompareOptions
+from ._type_aliases import Gaussians, Style, Image, PointSet, Image_Param
 from ._initialization_params import init_params_dict
 from ._method_types import deferred_methods
 from .imjoy import register_itkwasm_imjoy_codecs
@@ -275,7 +275,19 @@ class Viewer:
     def set_image_volume_scattering_blend(self, scattering_blend: float):
         self.queue_request('setImageVolumeScatteringBlend', scattering_blend)
 
-    def compare_images(self, fixed_name: str, moving_name: str, options: CompareOptions):
+    def compare_images(self, fixed_image: Image_Param = 'Fixed', moving_image: Image_Param = 'Image', method: str = 'checkerboard', pattern: tuple[int, int, int] = [4, 4, 4], swap_image_order: bool = False):
+        # image args may be image name or image object
+        fixed_name = 'Fixed'
+        if(isinstance(fixed_image, str)): 
+            fixed_name = fixed_image
+        else:
+            self.set_image(fixed_image, fixed_name)
+        moving_name = 'Moving'
+        if(isinstance(moving_image, str)): 
+            moving_name = moving_image
+        else:
+            self.set_image(moving_image, moving_name)
+        options = { 'method': method, 'pattern': pattern, 'swapImageOrder': swap_image_order }
         self.queue_request('compareImages', fixed_name, moving_name, options)
 
     def set_label_image(self, label_image: Image):

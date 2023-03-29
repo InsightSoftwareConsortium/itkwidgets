@@ -34,4 +34,4 @@ if HAVE_XARRAY:
     Image = Union[Image, xarray.DataArray, xarray.Dataset]
     PointSet = Union[PointSet, xarray.DataArray, xarray.Dataset]
 
-CompareOptions = Dict[str, Union[str, List[int], bool]]
+Image_Param = Union[str, Image]
