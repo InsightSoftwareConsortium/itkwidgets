@@ -3,12 +3,12 @@ import os
 import queue
 import threading
 from imjoy_rpc import api
-from typing import List
+from typing import List, Union, Tuple
 from IPython.display import display, HTML
 from IPython.lib import backgroundjobs as bg
 import uuid
 
-from ._type_aliases import Gaussians, Style, Image, PointSet, Image_Param
+from ._type_aliases import Gaussians, Style, Image, PointSet
 from ._initialization_params import init_params_dict
 from ._method_types import deferred_methods
 from .imjoy import register_itkwasm_imjoy_codecs
@@ -230,7 +230,7 @@ class Viewer:
     def set_background_color(self, bgColor: List[float]):
         self.queue_request('setBackgroundColor', bgColor)
 
-    def set_image(self, image: Image, name: str = 'image'):
+    def set_image(self, image: Image, name: str = 'Image'):
         render_type = _detect_render_type(image, 'image')
         if render_type is RenderType.IMAGE:
             image = _get_viewer_image(image, label=False)
@@ -275,15 +275,15 @@ class Viewer:
     def set_image_volume_scattering_blend(self, scattering_blend: float):
         self.queue_request('setImageVolumeScatteringBlend', scattering_blend)
 
-    def compare_images(self, fixed_image: Image_Param = 'Fixed', moving_image: Image_Param = 'Image', method: str = 'checkerboard', pattern: tuple[int, int, int] = [4, 4, 4], swap_image_order: bool = False):
+    def compare_images(self, fixed_image: Union[str, Image], moving_image: Union[str, Image], method: str = 'checkerboard', pattern: Tuple[int, int, int] = [4, 4, 4], swap_image_order: bool = False):
         # image args may be image name or image object
         fixed_name = 'Fixed'
-        if(isinstance(fixed_image, str)): 
+        if isinstance(fixed_image, str): 
             fixed_name = fixed_image
         else:
             self.set_image(fixed_image, fixed_name)
         moving_name = 'Moving'
-        if(isinstance(moving_image, str)): 
+        if isinstance(moving_image, str): 
             moving_name = moving_image
         else:
             self.set_image(moving_image, moving_name)
@@ -466,3 +466,11 @@ def view(data=None, **kwargs):
     viewer = Viewer(data=data, **kwargs)
 
     return viewer
+
+
+def compare_images(*args, **kwargs):
+    """Fuse 2 images with a checkerboard filter"""
+    viewer = view()
+    viewer.compare_images(*args, **kwargs)
+    return viewer
+
