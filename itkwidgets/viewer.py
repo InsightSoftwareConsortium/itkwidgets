@@ -275,7 +275,7 @@ class Viewer:
     def set_image_volume_scattering_blend(self, scattering_blend: float):
         self.queue_request('setImageVolumeScatteringBlend', scattering_blend)
 
-    def compare_images(self, fixed_image: Union[str, Image], moving_image: Union[str, Image], method: str = 'checkerboard', pattern: Tuple[int, int, int] = [4, 4, 4], swap_image_order: bool = False):
+    def compare_images(self, fixed_image: Union[str, Image], moving_image: Union[str, Image], method: str = 'checkerboard', pattern: Tuple[int, int, int] = [4, 4, 4], swap_image_order: bool = False, image_mix: float = .5):
         # image args may be image name or image object
         fixed_name = 'Fixed'
         if isinstance(fixed_image, str): 
@@ -287,7 +287,7 @@ class Viewer:
             moving_name = moving_image
         else:
             self.set_image(moving_image, moving_name)
-        options = { 'method': method, 'pattern': pattern, 'swapImageOrder': swap_image_order }
+        options = { 'method': method, 'pattern': pattern, 'swapImageOrder': swap_image_order, 'imageMix': image_mix }
         self.queue_request('compareImages', fixed_name, moving_name, options)
 
     def set_label_image(self, label_image: Image):
