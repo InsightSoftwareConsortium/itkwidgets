@@ -467,9 +467,38 @@ def view(data=None, **kwargs):
 
     return viewer
 
-
 def compare_images(*args, **kwargs):
-    """Fuse 2 images with a checkerboard filter"""
+    """Fuse 2 images with a checkerboard filter or as a 2 component image.  
+
+    The moving image is re-sampled to the fixed image space.
+    
+    Parameters
+    ----------
+    fixed_image: array_like, itk.Image, or vtk.vtkImageData
+        Static image the moving image is re-sampled to.
+
+    moving_image: array_like, itk.Image, or vtk.vtkImageData
+        Image is re-sampled to the fixed_image.
+
+    method: string, default: 'checkerboard', possible values: 'cyan-magenta', 'blend', 'checkerboard'
+        checkerboard picks pixels from the fixed and moving image to create a
+        checkerboard pattern.
+        cyan-magenta method puts the fixed image on component 0, moving image on component 1
+        and changes the color map for fixed image to cyan, moving image to magenta.
+        blend method puts the fixed image on component 0, moving image on component 1
+        and changes the color maps for both to grayscale.
+
+    pattern: Tuple[int, int, int], default: [4, 4, 4] 
+        An array with the number of checkerboard boxes for each dimension.
+
+    swap_image_order: bool, default: false
+        Reverses which image is sampled for each checkerboard box.
+    
+    imageMix: float, default: 0.5
+        Changes the percent contribution the fixed vs moving image makes to the
+        render by modifying the opacity transfer function. Value of 1 means max opacity for
+        moving image, 0 for fixed image. Only active when method is cyan-magenta or blend.
+    """
     viewer = view()
     viewer.compare_images(*args, **kwargs)
     return viewer
