@@ -478,7 +478,7 @@ def view(data=None, **kwargs):
 
     return viewer
 
-def compare_images(*args, **kwargs):
+def compare_images(fixed_image: Union[str, Image], moving_image: Union[str, Image], method: str = None, image_mix: float = None, checkerboard: bool = None, pattern: Tuple[int, int, int] = None, swap_image_order: bool = None):
     """Fuse 2 images with a checkerboard filter or as a 2 component image.  
 
     The moving image is re-sampled to the fixed image space. Set a keyword argument to None to use defaults based on method.
@@ -486,35 +486,37 @@ def compare_images(*args, **kwargs):
     Parameters
     ----------
     fixed_image: array_like, itk.Image, or vtk.vtkImageData
-        Static image the moving image is re-sampled to.
+        Static image the moving image is re-sampled to. For 'blend and 'cyan-magenta' methods, the fixed image is on the first component.
 
     moving_image: array_like, itk.Image, or vtk.vtkImageData
-        Image is re-sampled to the fixed_image.
+        Image is re-sampled to the fixed_image. For 'blend and 'cyan-magenta' methods, the moving image is on the second component.
 
-    method: string, default: None, possible values: 'cyan-magenta', 'blend', 'checkerboard'
+    method: string, default: None, possible values: 'cyan-magenta', 'blend', 'checkerboard', 'disabled'
         checkerboard method picks pixels from the fixed and moving image to create a
-        checkerboard pattern.
+        checkerboard pattern. The checkerboard as method turns on the checkerboard flag. 
         cyan-magenta method puts the fixed image on component 0, moving image on component 1
         and changes the color map for fixed image to cyan, moving image to magenta.
-        blend method puts the fixed image on component 0, moving image on component 1
-        and changes the color maps for both to grayscale.
+        Blend method puts the fixed image on component 0, moving image on component 1. 
 
-    imageMix: float, default: None
+    image_mix: float, default: None
         Changes the percent contribution the fixed vs moving image makes to the
         render by modifying the opacity transfer function. Value of 1 means max opacity for
-        moving image, 0 for fixed image. Only active when method is cyan-magenta or blend.
+        moving image, 0 for fixed image. If value is None and the method is "blend" or "cyan-magenta",
+        the image_mix is set to 0.5.  If the method is "checkerboard", the image_mix is set to 0.
     
     checkerboard: bool, default: None
-        Forces checkerboard pattern for cyan-magenta and blend methods.
+        Forces the checkerboard mixing of fixed and moving images for the cyan-magenta and blend methods.
+        The rendered image has 2 components, each component reverses which image is sampled for each
+        checkerboard box.
 
     pattern: Tuple[int, int, int], default: None
-        An array with the number of checkerboard boxes for each dimension.
+        The number of checkerboard boxes for each dimension.
 
     swap_image_order: bool, default: None
-        Reverses which image is sampled for each checkerboard box.
-    
+        Reverses which image is sampled for each checkerboard box.  This simply toggles
+        image_mix between 0 and 1.
     """
     viewer = view()
-    viewer.compare_images(*args, **kwargs)
+    viewer.compare_images(fixed_image, moving_image, method, image_mix, checkerboard, pattern, swap_image_order)
     return viewer
 
