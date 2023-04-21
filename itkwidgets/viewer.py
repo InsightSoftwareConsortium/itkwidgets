@@ -275,7 +275,7 @@ class Viewer:
     def set_image_volume_scattering_blend(self, scattering_blend: float):
         self.queue_request('setImageVolumeScatteringBlend', scattering_blend)
 
-    def compare_images(self, fixed_image: Union[str, Image], moving_image: Union[str, Image], method: str = 'checkerboard', pattern: Tuple[int, int, int] = [4, 4, 4], swap_image_order: bool = False):
+    def compare_images(self, fixed_image: Union[str, Image], moving_image: Union[str, Image], method: str = None, image_mix: float = None, checkerboard: bool = None, pattern: Union[Tuple[int, int], Tuple[int, int, int]] = None, swap_image_order: bool = None):
         # image args may be image name or image object
         fixed_name = 'Fixed'
         if isinstance(fixed_image, str): 
@@ -287,7 +287,18 @@ class Viewer:
             moving_name = moving_image
         else:
             self.set_image(moving_image, moving_name)
-        options = { 'method': method, 'pattern': pattern, 'swapImageOrder': swap_image_order }
+        options = {}
+        # if None let viewer use defaults or last value.
+        if method is not None:
+            options['method'] = method
+        if image_mix is not None:
+            options['imageMix'] = image_mix
+        if checkerboard is not None:
+            options['checkerboard'] = checkerboard
+        if pattern is not None:
+            options['pattern'] = pattern
+        if swap_image_order is not None:
+            options['swapImageOrder'] = swap_image_order
         self.queue_request('compareImages', fixed_name, moving_name, options)
 
     def set_label_image(self, label_image: Image):
@@ -467,10 +478,44 @@ def view(data=None, **kwargs):
 
     return viewer
 
+def compare_images(fixed_image: Union[str, Image], moving_image: Union[str, Image], method: str = None, image_mix: float = None, checkerboard: bool = None, pattern: Union[Tuple[int, int], Tuple[int, int, int]] = None, swap_image_order: bool = None):
+    """Fuse 2 images with a checkerboard filter or as a 2 component image.  
 
-def compare_images(*args, **kwargs):
-    """Fuse 2 images with a checkerboard filter"""
+    The moving image is re-sampled to the fixed image space. Set a keyword argument to None to use defaults based on method.
+    
+    Parameters
+    ----------
+    fixed_image: array_like, itk.Image, or vtk.vtkImageData
+        Static image the moving image is re-sampled to. For 'blend and 'cyan-magenta' methods, the fixed image is on the first component.
+
+    moving_image: array_like, itk.Image, or vtk.vtkImageData
+        Image is re-sampled to the fixed_image. For 'blend and 'cyan-magenta' methods, the moving image is on the second component.
+
+    method: string, default: None, possible values: 'cyan-magenta', 'blend', 'checkerboard', 'disabled'
+        The checkerboard method picks pixels from the fixed and moving image to create a
+        checkerboard pattern. Setting the method to checkerboard turns on the checkerboard flag. 
+        The blend and cyan-magenta method puts the fixed image on component 0, moving image on component 1.
+        The cyan-magenta method also changes the color map for fixed image to cyan, moving image to magenta.
+
+    image_mix: float, default: None
+        Changes the percent contribution the fixed vs moving image makes to the
+        render by modifying the opacity transfer function. Value of 1 means max opacity for
+        moving image, 0 for fixed image. If value is None and the method is "blend" or "cyan-magenta",
+        the image_mix is set to 0.5.  If the method is "checkerboard", the image_mix is set to 0.
+    
+    checkerboard: bool, default: None
+        Forces the checkerboard mixing of fixed and moving images for the cyan-magenta and blend methods.
+        The rendered image has 2 components, each component reverses which image is sampled for each
+        checkerboard box.
+
+    pattern: Union[Tuple[int, int], Tuple[int, int, int]], default: None
+        The number of checkerboard boxes for each dimension.
+
+    swap_image_order: bool, default: None
+        Reverses which image is sampled for each checkerboard box.  This simply toggles
+        image_mix between 0 and 1.
+    """
     viewer = view()
-    viewer.compare_images(*args, **kwargs)
+    viewer.compare_images(fixed_image=fixed_image, moving_image=moving_image, method=method, image_mix=image_mix, checkerboard=checkerboard, pattern=pattern, swap_image_order=swap_image_order)
     return viewer
 
