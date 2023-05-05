@@ -31,7 +31,7 @@ class ViewerRPC:
     """Viewer remote procedure interface."""
 
     def __init__(
-        self, ui_collapsed=True, rotate=False, ui="pydata-sphinx", data=None
+        self, ui_collapsed=True, rotate=False, ui="pydata-sphinx", init_data=None, **add_data_kwargs
     ):
         global _codecs_registered
         """Create a viewer."""
@@ -42,7 +42,8 @@ class ViewerRPC:
             _codecs_registered = True
 
         self._init_viewer_kwargs = dict(ui_collapsed=ui_collapsed, rotate=rotate, ui=ui)
-        self.init_data = data
+        self._init_viewer_kwargs.update(**add_data_kwargs)
+        self.init_data = init_data
         self.img = display(HTML(f'<div />'), display_id=str(uuid.uuid4()))
         self.wid = None
         if ENVIRONMENT is not Env.JUPYTERLITE:
@@ -147,7 +148,7 @@ class Viewer:
         data = self.init_data(input_data)
         """Create a viewer."""
         self.viewer_rpc = ViewerRPC(
-            ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, data=data
+            ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, init_data=data, **add_data_kwargs
         )
         if ENVIRONMENT is not Env.JUPYTERLITE:
             self.bg_jobs = bg.BackgroundJobManager()
