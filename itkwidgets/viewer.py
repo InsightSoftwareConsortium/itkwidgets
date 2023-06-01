@@ -487,21 +487,22 @@ def compare_images(fixed_image: Union[str, Image], moving_image: Union[str, Imag
     Parameters
     ----------
     fixed_image: array_like, itk.Image, or vtk.vtkImageData
-        Static image the moving image is re-sampled to. For 'blend and 'cyan-magenta' methods, the fixed image is on the first component.
+        Static image the moving image is re-sampled to. For non-checkerboard methods ('blend', 'green-magenta', etc.), the fixed image is on the first component.
 
     moving_image: array_like, itk.Image, or vtk.vtkImageData
-        Image is re-sampled to the fixed_image. For 'blend and 'cyan-magenta' methods, the moving image is on the second component.
+        Image is re-sampled to the fixed_image. For non-checkerboard methods ('blend', 'green-magenta', etc.), the moving image is on the second component.
 
-    method: string, default: None, possible values: 'cyan-magenta', 'blend', 'checkerboard', 'disabled'
+    method: string, default: None, possible values: 'green-magenta', 'cyan-red', 'cyan-magenta', 'blend', 'checkerboard', 'disabled'
         The checkerboard method picks pixels from the fixed and moving image to create a
         checkerboard pattern. Setting the method to checkerboard turns on the checkerboard flag. 
-        The blend and cyan-magenta method puts the fixed image on component 0, moving image on component 1.
-        The cyan-magenta method also changes the color map for fixed image to cyan, moving image to magenta.
+        The non-checkerboard methods ('blend', 'green-magenta', etc.) put the fixed image on component 0, moving image on component 1.
+        The 'green-magenta' and 'red-cyan' change the color maps so matching images are grayish white.  
+        The 'cyan-magenta' color maps produce a purple if the images match.  
 
     image_mix: float, default: None
         Changes the percent contribution the fixed vs moving image makes to the
         render by modifying the opacity transfer function. Value of 1 means max opacity for
-        moving image, 0 for fixed image. If value is None and the method is "blend" or "cyan-magenta",
+        moving image, 0 for fixed image. If value is None and the method is not checkerboard,
         the image_mix is set to 0.5.  If the method is "checkerboard", the image_mix is set to 0.
     
     checkerboard: bool, default: None
