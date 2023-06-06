@@ -26,6 +26,7 @@ __all__ = [
 _viewer_count = 1
 _codecs_registered = False
 
+
 class ViewerRPC:
     """Viewer remote procedure interface."""
 
@@ -35,7 +36,7 @@ class ViewerRPC:
         global _codecs_registered
         """Create a viewer."""
         # Register codecs if they haven't been already
-        if not _codecs_registered:
+        if not _codecs_registered and ENVIRONMENT is not Env.HYPHA:
             register_default_codecs()
             register_itkwasm_imjoy_codecs()
             _codecs_registered = True
@@ -45,12 +46,20 @@ class ViewerRPC:
         self.init_data = init_data
         self.img = display(HTML(f'<div />'), display_id=str(uuid.uuid4()))
         self.wid = None
-        if ENVIRONMENT is not Env.JUPYTERLITE:
+        if ENVIRONMENT is not Env.JUPYTERLITE and ENVIRONMENT is not Env.HYPHA:
             self.viewer_event = threading.Event()
             self.data_event = threading.Event()
 
     async def setup(self):
-        pass
+        if ENVIRONMENT is Env.HYPHA:
+            services = await api.list_services()
+            service = [s for s in services if s["name"] == "itkwidgets_client"][0]
+            itk_viewer = await api.get_service(service)
+            for key, val in self.init_data.items():
+                method = f'set{key[:1].upper()}{key[1:]}'
+                fn = getattr(itk_viewer, method)
+                fn(val)
+            self.itk_viewer = itk_viewer
 
     async def run(self, ctx):
         """ImJoy plugin setup function."""
@@ -86,7 +95,7 @@ class ViewerRPC:
             config=config,
         )
         _viewer_count += 1
-        if ENVIRONMENT is not Env.JUPYTERLITE:
+        if ENVIRONMENT is not Env.JUPYTERLITE and ENVIRONMENT is not Env.HYPHA:
             itk_viewer.registerEventListener(
                 'renderedImageAssigned', self.set_event
             )
@@ -149,7 +158,7 @@ class Viewer:
         self.viewer_rpc = ViewerRPC(
             ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, init_data=data, **add_data_kwargs
         )
-        if ENVIRONMENT is not Env.JUPYTERLITE:
+        if ENVIRONMENT is not Env.JUPYTERLITE and ENVIRONMENT is not Env.HYPHA:
             self.bg_jobs = bg.BackgroundJobManager()
             self.queue = queue.Queue()
             self.deferred_queue = queue.Queue()
@@ -213,7 +222,7 @@ class Viewer:
         loop.run_until_complete(task)
 
     def queue_request(self, method, *args, **kwargs):
-        if ENVIRONMENT is Env.JUPYTERLITE or self.has_viewer:
+        if (ENVIRONMENT is Env.JUPYTERLITE or ENVIRONMENT is Env.HYPHA) or self.has_viewer:
             fn = getattr(self.viewer_rpc.itk_viewer, method)
             fn(*args, **kwargs)
         elif method in deferred_methods():

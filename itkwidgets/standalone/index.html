@@ -3,7 +3,7 @@
   <head>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
 
-    <link rel="manifest" href="static/manifest.json">
+    <!-- <link rel="manifest" href="static/manifest.json"> -->
 
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -26,9 +26,36 @@
   <body>
     <div class="content" style="position: absolute; width: 100vw; height: 100vh; top: 0; left: 0; overflow: hidden; background: black; margin: 0; padding: 0;"></div>
     <!-- <script type="text/javascript" src="static/itkVtkViewer.js"> -->
-    <script type="text/javascript" src="https://kitware.github.io/itk-vtk-viewer/app/itkVtkViewer.js">
+    <script type="text/javascript" src="https://kitware.github.io/itk-vtk-viewer@14.43.0/app/itkVtkViewer.js">
     </script>
     <script>
+    function classToObject(toConvert) {
+        let obj = {};
+        Object.getOwnPropertyNames(toConvert).forEach((prop) => {
+            const val = toConvert[prop];
+            if (prop !== 'toJSON' && prop !== 'constructor') {
+              if (typeof val === 'function') {
+                  obj[prop] = val.bind(obj);
+                  return;
+              }
+              obj[prop] = val;
+            }
+        });
+
+        const inherited = Object.getPrototypeOf(toConvert);
+        if (inherited !== null) {
+            Object.keys(this.classToObject(inherited)).forEach(key => {
+                if (!!obj[key] || key === 'constructor' || key === 'toJSON')
+                    return;
+                if (typeof inherited[key] === 'function') {
+                    obj[key] = inherited[key].bind(obj);
+                    return;
+                }
+                obj[key] = inherited[key];
+            });
+        }
+        return obj;
+    }
     async function setupHypha(config) {
         globalThis.config = config
         const url = config.server_url;
@@ -46,13 +73,13 @@
      }
      async function setupViewerForImJoy(api) {
       const version = itkVtkViewer.version
-      await api.register_service({
-        name: 'itk-vtk-viewer-service',
-        id: 'itk_viewer',
+      const config = {
+        name: 'itkwidgets-service',
+        id: 'itkwidgets_service',
         config: { visibility: "public" },
         version,
         description: '2D / 3D web image, mesh, and point set viewer using itk-wasm and vtk.js ',
-        type: 'rpc-window',
+        type: 'window',
         docs: 'https://kitware.github.io/itk-vtk-viewer/docs/imjoy.html',
         authors: ['Matt McCormick', 'Wei Ouyang'],
         license: '3-Clause BSD License',
@@ -60,12 +87,12 @@
         icon: 'https://kitware.github.io/itk-vtk-viewer/app/favicon-32x32.png',
         cover: ['https://kitware.github.io/itk-vtk-viewer/docs/howToUse.jpg', 'https://kitware.github.io/itk-vtk-viewer/docs/imjoy.png'],
 
-      })
+      }
       itkVtkViewer.imJoyCodecs.forEach((codec) => {
         api.registerCodec(codec)
       })
-      const plugin = new itkVtkViewer.ImJoyPluginAPI()
-      await api.export(plugin)
+      const plugin = classToObject(new itkVtkViewer.ImJoyPluginAPI())
+      await api.export({...config, ...plugin})
       plugin.run({data: {}, config: {}})
       api.log('itk-vtk-viewer loaded successfully.')
     }
@@ -74,12 +101,13 @@
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
     const config = {
+        'client_id': 'itkwidgets-client',
+        'name': 'itkwidgets_client',
         "server_url": "http://localhost:9527",
         "workspace": urlParams.get("workspace"),
         "token": urlParams.get("token")
     }
     setupHypha(config).then(async (server) => {
-        console.log('server', server)
         await setupViewerForImJoy(server)
     })
   </script>

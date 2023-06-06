@@ -47,4 +47,8 @@ def register_itkwasm_imjoy_codecs():
 
     api.registerCodec({'name': 'itkwasm-image', 'type': itkwasm.Image, 'encoder': encode_itkwasm_image})
     api.registerCodec({'name': 'zarr-store', 'type': zarr.storage.BaseStore, 'encoder': encode_zarr_store})
- 
+
+
+def register_itkwasm_imjoy_codecs_cli(server):
+    server.register_codec({'name': 'itkwasm-image', 'type': itkwasm.Image, 'encoder': encode_itkwasm_image})
+    server.register_codec({'name': 'zarr-store', 'type': zarr.storage.BaseStore, 'encoder': encode_zarr_store})

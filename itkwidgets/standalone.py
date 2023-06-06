@@ -1,14 +1,20 @@
 import argparse
 import asyncio
+import code
 import functools
+
+import numpy as np
+
+import imjoy
+import itk
 import socketio
-import subprocess
-import sys
 import webbrowser
 
 from aiohttp import web
 from imjoy_rpc.hypha import connect_to_server
 from itkwidgets.standalone.config import HYPHA_SERVER_URL, WS_SERVER_URL, WS_PORT
+from itkwidgets.imjoy import register_itkwasm_imjoy_codecs_cli
+from itkwidgets.viewer import view
 from pathlib import Path
 from urllib.parse import urlencode
 
@@ -17,8 +23,8 @@ sio = socketio.AsyncServer()
 app = web.Application()
 sio.attach(app)
 server = None
-
 this_dir = Path(__file__).resolve().parent
+
 
 async def index(request):
     '''Serve the client-side application.'''
@@ -27,18 +33,42 @@ async def index(request):
 
 app.router.add_get('/', index)
 
-def start_hypha_server():
-    subprocess.run([sys.executable, "-m", "hypha.server"], capture_output=True)
 
 async def start_server(server_url, data, app):
     server = await connect_to_server({
-        'client_id': 'py-itkwidgets-server',
-        'name': 'py-itk-vtk-viewer-server',
+        'client_id': 'itkwidgets-server',
+        'name': 'itkwidgets_server',
         'server_url': server_url,
     })
+    imjoy.api.update(server)
+    register_itkwasm_imjoy_codecs_cli(server)
     token = await server.generate_token()
-    params = urlencode({'workspace': server.config.workspace, 'token': token})
+    params = urlencode({'workspace': server.config.workspace, 'token': token, 'data': data.data})
     webbrowser.open_new_tab(f'{WS_SERVER_URL}/?{params}')
+    loop.create_task(poll_for_services(server, data))
+
+async def poll_for_services(server, data):
+    while True:
+        summary = await server.get_summary()
+        names = [s["name"] for s in summary["services"]]
+        if "itkwidgets_client" in names:
+            # plugin has been exported
+            break
+    image = itk.imread(data.data)
+    # number_of_points = 3000
+    # gaussian_mean = [0.0, 0.0, 0.0]
+    # gaussian_cov = [[1.0, 0.0, 0.0], [0.0, 2.0, 0.0], [0.0, 0.0, 0.5]]
+    # point_set = np.random.multivariate_normal(gaussian_mean, gaussian_cov, number_of_points)
+    viewer = view(image)
+    # loop.create_task(poll_for_viewer(viewer))
+
+# async def poll_for_viewer(viewer):
+#     while True:
+#         await asyncio.sleep(2)
+#         if viewer.has_viewer:
+#             break
+#     code.interact(local=locals())
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -47,7 +77,6 @@ if __name__ == '__main__':
     parser.add_argument('--type', type=str, help='Type of data (image, label_image, point_set)')
     opt = parser.parse_args()
 
-    start_hypha_server()
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
