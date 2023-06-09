@@ -1,5 +1,6 @@
-HYPHA_PORT = 9527
-WS_PORT = 37480
-SERVER_URL = "http://127.0.0.1"
-HYPHA_SERVER_URL = f"{SERVER_URL}:{HYPHA_PORT}"
-WS_SERVER_URL = f"{SERVER_URL}:{WS_PORT}"
+from pathlib import Path
+
+SERVER_PORT = 37480
+SERVER_HOST = "127.0.0.1"
+
+VIEWER_HTML = str(Path(__file__).parent.resolve().absolute() / "index.html")

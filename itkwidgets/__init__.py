@@ -2,11 +2,11 @@
 from .integrations.environment import ENVIRONMENT, Env
 
 if ENVIRONMENT is not Env.HYPHA:
-  from imjoy_rpc import register_default_codecs
-  register_default_codecs()
+    from imjoy_rpc import register_default_codecs
+    register_default_codecs()
 
-  from .imjoy import register_itkwasm_imjoy_codecs
-  register_itkwasm_imjoy_codecs()
+    from .imjoy import register_itkwasm_imjoy_codecs
+    register_itkwasm_imjoy_codecs()
 
 from .viewer import Viewer, view, compare_images
 

@@ -19,14 +19,16 @@
     <!-- <link rel="icon" type="image/png" sizes="50x50" href="/itk-vtk-viewer/logo.png"> -->
     <!-- <link rel="apple-touch-icon" type="image/png" sizes="50x50" href="/itk-vtk-viewer/logo.png"> -->
 
-    <script src="https://cdn.jsdelivr.net/npm/imjoy-rpc@0.5.6/dist/hypha-rpc-websocket.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/imjoy-rpc@0.5.21/dist/hypha-rpc-websocket.min.js"></script>
+    <!--<script type="text/javascript" src="https://bafybeiauuswm657tct7b7kpnorrsz7hvvaljpsbeuw35hkfobtyyrbblpm.on.fleek.co/itkVtkViewer.js"></script>-->
     <link rel="icon" type="image/png" href="static/favicon-32x32.png">
   </head>
 
   <body>
     <div class="content" style="position: absolute; width: 100vw; height: 100vh; top: 0; left: 0; overflow: hidden; background: black; margin: 0; padding: 0;"></div>
     <!-- <script type="text/javascript" src="static/itkVtkViewer.js"> -->
-    <script type="text/javascript" src="https://kitware.github.io/itk-vtk-viewer@14.43.0/app/itkVtkViewer.js">
+    <script type="text/javascript" src="https://bafybeiauuswm657tct7b7kpnorrsz7hvvaljpsbeuw35hkfobtyyrbblpm.on.fleek.co/itkVtkViewer.js">
+    <!--<script type="text/javascript" src="https://kitware.github.io/itk-vtk-viewer@14.43.0/app/itkVtkViewer.js">-->
     </script>
     <script>
     function classToObject(toConvert) {
@@ -71,7 +73,7 @@
         const server = await hyphaWebsocketClient.connectToServer(config)
         return server
      }
-     async function setupViewerForImJoy(api) {
+     async function setupViewerForImJoy(server) {
       const version = itkVtkViewer.version
       const config = {
         name: 'itkwidgets-service',
@@ -89,12 +91,17 @@
 
       }
       itkVtkViewer.imJoyCodecs.forEach((codec) => {
-        api.registerCodec(codec)
+        server.registerCodec(codec)
       })
       const plugin = classToObject(new itkVtkViewer.ImJoyPluginAPI())
-      await api.export({...config, ...plugin})
-      plugin.run({data: {}, config: {}})
-      api.log('itk-vtk-viewer loaded successfully.')
+      console.log('plugin', plugin)
+      console.log('config', config)
+      console.log(itkVtkViewer)
+      console.log(server)
+      await server.export({...config, ...plugin})
+      await plugin.run({data: {}, config: {}})
+      server.log('itk-vtk-viewer loaded successfully.')
+      console.log('itk-vtk-viewer loaded successfully.')
     }
 
     const container = document.querySelector('.content')
@@ -103,7 +110,7 @@
     const config = {
         'client_id': 'itkwidgets-client',
         'name': 'itkwidgets_client',
-        "server_url": "http://localhost:9527",
+        "server_url": document.location.origin,
         "workspace": urlParams.get("workspace"),
         "token": urlParams.get("token")
     }

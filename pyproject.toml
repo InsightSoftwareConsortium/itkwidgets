@@ -68,6 +68,10 @@ lab = [
     "imjoy-jupyterlab-extension >=0.1.13",
     "imjoy-elfinder[jupyter]"
 ]
+cli = [
+    "hypha >= 0.15.15",
+]
+
 notebook = [
     "imjoy-jupyter-extension >=0.3.0",
     "imjoy-elfinder[jupyter]"
