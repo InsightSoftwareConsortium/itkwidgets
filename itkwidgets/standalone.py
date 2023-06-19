@@ -17,20 +17,30 @@ import itk
 from imjoy_rpc.hypha import connect_to_server
 from itkwidgets.standalone.config import SERVER_HOST, SERVER_PORT, VIEWER_HTML
 from itkwidgets.imjoy import register_itkwasm_imjoy_codecs_cli
-from itkwidgets._initialization_params import build_config, parse_input_data, build_init_data
+from itkwidgets._initialization_params import build_config, build_init_data
 from pathlib import Path
 from urllib.parse import urlencode
 
 
-def input_dict():
-    image = itk.imread(opts.image)
-    user_input = vars(opts)
-    user_input['image'] = image
+def _snake_to_camel(variable):
+    first, *words = variable.split('_')
+    return first + ''.join([w.capitalize() for w in words])
 
-    input_data = parse_input_data(user_input)
-    data = build_init_data(input_data)
+
+def input_dict():
+    user_input = vars(opts)
+    if opts.image:
+        image = itk.imread(opts.image)
+        user_input['image'] = image
+    if opts.label_image:
+        label_image = itk.imread(opts.label_image)
+        user_input['label_image'] = label_image
+
+    data = build_init_data(user_input)
+    data = {_snake_to_camel(k):v for k, v in data.items()}
     ui = user_input.get('ui', "reference")
     data['config'] = build_config(ui)
+
     return { 'data': data }
 
 
@@ -106,6 +116,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--image', type=str, help='path to an image data file')
+    parser.add_argument('--label-image', type=str, help='path to a label image data file')
+    parser.add_argument('--point-set', type=str, help='path to a point set data file')
+    parser.add_argument('--use2D', dest='use2D', action='store_true', default=False, help='Image is 2D')
+    parser.add_argument('--rotate', dest='rotate', action='store_true', default=False, help='initialize viewer with rotating image')
+    parser.add_argument('--ui', type=str, choices=['reference', 'pydata-sphinx'], default='reference', help='Which UI to use')
+    parser.add_argument('--gradient-opacity', type=float, help='Set the gradient opacity in the volume rendering. Values range from 0.0 to 1.0.')
     opts = parser.parse_args()
 
     main(opts)

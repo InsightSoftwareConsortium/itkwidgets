@@ -66,6 +66,17 @@
       const remoteService = await server.getService(`${remoteID}:itkwidgets-input-obj`);
       const data = await remoteService.inputObject();
       const viewer = await itkVtkViewer.createViewer(container, data.data);
+      await server.registerService({
+        name: "itk_vtk_viewer",
+        id: "itk-vtk-viewer",
+        description: "Retrieve the itk-vtk-viewer object",
+        config: {
+          visibility: "protected",
+          requireContext: false,
+          runInExecutor: false,
+        },
+        viewer: () => viewer
+      });
     }
 
     const container = document.querySelector('.content')
