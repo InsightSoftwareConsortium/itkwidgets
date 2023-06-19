@@ -4,7 +4,7 @@ import zarr
 from ngff_zarr import to_multiscales, to_ngff_zarr, to_ngff_image, itk_image_to_ngff_image, Methods, NgffImage, Multiscales
 
 import dask
-from .itk import HAVE_ITK, itk_group_spatial_object_to_wasm_point_set
+from .itk import HAVE_ITK
 from .pytorch import HAVE_TORCH
 from .vtk import HAVE_VTK, vtk_image_to_ngff_image, vtk_polydata_to_vtkjs
 from .xarray import HAVE_XARRAY, HAVE_MULTISCALE_SPATIAL_IMAGE, xarray_data_array_to_numpy, xarray_data_set_to_numpy

@@ -20,44 +20,13 @@
     <!-- <link rel="apple-touch-icon" type="image/png" sizes="50x50" href="/itk-vtk-viewer/logo.png"> -->
 
     <script src="https://cdn.jsdelivr.net/npm/imjoy-rpc@0.5.21/dist/hypha-rpc-websocket.min.js"></script>
-    <!--<script type="text/javascript" src="https://bafybeiauuswm657tct7b7kpnorrsz7hvvaljpsbeuw35hkfobtyyrbblpm.on.fleek.co/itkVtkViewer.js"></script>-->
     <link rel="icon" type="image/png" href="static/favicon-32x32.png">
   </head>
 
   <body>
     <div class="content" style="position: absolute; width: 100vw; height: 100vh; top: 0; left: 0; overflow: hidden; background: black; margin: 0; padding: 0;"></div>
-    <!-- <script type="text/javascript" src="static/itkVtkViewer.js"> -->
-    <script type="text/javascript" src="https://bafybeiauuswm657tct7b7kpnorrsz7hvvaljpsbeuw35hkfobtyyrbblpm.on.fleek.co/itkVtkViewer.js">
-    <!--<script type="text/javascript" src="https://kitware.github.io/itk-vtk-viewer@14.43.0/app/itkVtkViewer.js">-->
-    </script>
+    <script type="text/javascript" src="https://bafybeiauuswm657tct7b7kpnorrsz7hvvaljpsbeuw35hkfobtyyrbblpm.on.fleek.co/itkVtkViewer.js">    </script>
     <script>
-    function classToObject(toConvert) {
-        let obj = {};
-        Object.getOwnPropertyNames(toConvert).forEach((prop) => {
-            const val = toConvert[prop];
-            if (prop !== 'toJSON' && prop !== 'constructor') {
-              if (typeof val === 'function') {
-                  obj[prop] = val.bind(obj);
-                  return;
-              }
-              obj[prop] = val;
-            }
-        });
-
-        const inherited = Object.getPrototypeOf(toConvert);
-        if (inherited !== null) {
-            Object.keys(this.classToObject(inherited)).forEach(key => {
-                if (!!obj[key] || key === 'constructor' || key === 'toJSON')
-                    return;
-                if (typeof inherited[key] === 'function') {
-                    obj[key] = inherited[key].bind(obj);
-                    return;
-                }
-                obj[key] = inherited[key];
-            });
-        }
-        return obj;
-    }
     async function setupHypha(config) {
         globalThis.config = config
         const url = config.server_url;
@@ -75,7 +44,7 @@
      }
      async function setupViewerForImJoy(server) {
       const version = itkVtkViewer.version
-      const config = {
+      await server.registerService({
         name: 'itkwidgets-service',
         id: 'itkwidgets_service',
         config: { visibility: "public" },
@@ -89,29 +58,25 @@
         icon: 'https://kitware.github.io/itk-vtk-viewer/app/favicon-32x32.png',
         cover: ['https://kitware.github.io/itk-vtk-viewer/docs/howToUse.jpg', 'https://kitware.github.io/itk-vtk-viewer/docs/imjoy.png'],
 
-      }
+      });
       itkVtkViewer.imJoyCodecs.forEach((codec) => {
         server.registerCodec(codec)
       })
-      const plugin = classToObject(new itkVtkViewer.ImJoyPluginAPI())
-      console.log('plugin', plugin)
-      console.log('config', config)
-      console.log(itkVtkViewer)
-      console.log(server)
-      await server.export({...config, ...plugin})
-      await plugin.run({data: {}, config: {}})
-      server.log('itk-vtk-viewer loaded successfully.')
-      console.log('itk-vtk-viewer loaded successfully.')
+      const remoteID = `${workspace}/itkwidgets-server`;
+      const remoteService = await server.getService(`${remoteID}:itkwidgets-input-obj`);
+      const data = await remoteService.inputObject();
+      const viewer = await itkVtkViewer.createViewer(container, data.data);
     }
 
     const container = document.querySelector('.content')
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
+    const workspace = urlParams.get("workspace");
     const config = {
         'client_id': 'itkwidgets-client',
         'name': 'itkwidgets_client',
         "server_url": document.location.origin,
-        "workspace": urlParams.get("workspace"),
+        "workspace": workspace,
         "token": urlParams.get("token")
     }
     setupHypha(config).then(async (server) => {

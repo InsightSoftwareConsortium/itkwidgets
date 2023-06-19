@@ -1,14 +1,11 @@
 import argparse
 import asyncio
-import code
 import uuid
 import os
 import subprocess
 import sys
 import time
 from pathlib import Path
-
-import numpy as np
 
 import requests
 from requests import RequestException
@@ -20,38 +17,24 @@ import itk
 from imjoy_rpc.hypha import connect_to_server
 from itkwidgets.standalone.config import SERVER_HOST, SERVER_PORT, VIEWER_HTML
 from itkwidgets.imjoy import register_itkwasm_imjoy_codecs_cli
-from itkwidgets.viewer import view, Viewer
+from itkwidgets._initialization_params import build_config, parse_input_data, build_init_data
 from pathlib import Path
 from urllib.parse import urlencode
 
-async def test_numpy_array(socketio_server):
-    """Test numpy array."""
-    ws = await connect_to_server(
-        {"client_id": "test-plugin", "server_url": WS_SERVER_URL}
-    )
-    await ws.export(ImJoyPlugin(ws))
-    workspace = ws.config.workspace
-    token = await ws.generate_token()
 
-    api = await connect_to_server(
-        {
-            "client_id": "client",
-            "workspace": workspace,
-            "token": token,
-            "server_url": WS_SERVER_URL,
-        }
-    )
-    plugin = await api.get_service("test-plugin:default")
-    result = await plugin.add(2.1)
-    assert result == 2.1 + 1.0
+def input_dict():
+    image = itk.imread(opts.image)
+    user_input = vars(opts)
+    user_input['image'] = image
 
-    large_array = np.zeros([2048, 2048, 4], dtype="float32")
-    result = await plugin.add(large_array)
-    np.testing.assert_array_equal(result, large_array + 1.0)
+    input_data = parse_input_data(user_input)
+    data = build_init_data(input_data)
+    ui = user_input.get('ui', "reference")
+    data['config'] = build_config(ui)
+    return { 'data': data }
 
-async def start_viewer(server_url, viewer_opts):
-    data = viewer_opts.data
 
+async def start_viewer(server_url):
     server = await connect_to_server({
         'client_id': 'itkwidgets-server',
         'name': 'itkwidgets_server',
@@ -59,49 +42,27 @@ async def start_viewer(server_url, viewer_opts):
     })
     imjoy_rpc.api.update(server)
     register_itkwasm_imjoy_codecs_cli(server)
+
+    await server.register_service({
+        "name": "itkwidgets_input_obj",
+        "id": "itkwidgets-input-obj",
+        "description":
+            "Provide the data and config object required to create a viewer.",
+        "config": {
+            "visibility": "protected",
+            "require_context": False,
+            "run_in_executor": False,
+        },
+        "inputObject": input_dict
+    })
+
+    workspace = server.config.workspace
     token = await server.generate_token()
-    # params = urlencode({'workspace': server.config.workspace, 'token': token, 'data': data})
-    params = urlencode({'workspace': server.config.workspace, 'token': token})
+    params = urlencode({'workspace': workspace, 'token': token})
     webbrowser.open_new_tab(f'{server_url}/itkwidgets/index.html?{params}')
 
-    # Needed?
-    await poll_for_services(server)
-    print('services found')
 
-    image = itk.imread(data)
-    # number_of_points = 3000
-    # gaussian_mean = [0.0, 0.0, 0.0]
-    # gaussian_cov = [[1.0, 0.0, 0.0], [0.0, 2.0, 0.0], [0.0, 0.0, 0.5]]
-    # point_set = np.random.multivariate_normal(gaussian_mean, gaussian_cov, number_of_points)
-    # viewer = view(image)
-    # print(viewer)
-    viewer = Viewer()
-    print(viewer)
-    await poll_for_viewer(viewer)
-
-    # viewer.set_image(image)
-    await viewer.set_image_async(image)
-    # time.sleep(30)
-    await asyncio.sleep(30)
-    # await poll_for_viewer(viewer)
-    # loop.create_task(poll_for_viewer(viewer))
-
-async def poll_for_services(server):
-    while True:
-        summary = await server.get_summary()
-        names = [s["name"] for s in summary["services"]]
-        if "itkwidgets_client" in names:
-            # plugin has been exported
-            break
-
-async def poll_for_viewer(viewer):
-    while True:
-        await asyncio.sleep(2)
-        if viewer.has_viewer:
-            break
-    # code.interact(local=locals())
-
-def main(viewer_opts):
+def main():
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
@@ -132,8 +93,7 @@ def main(viewer_opts):
             timeout -= 0.1
             time.sleep(0.1)
 
-        # loop.run_until_complete(start_viewer(server_url, viewer_opts))
-        loop.create_task(start_viewer(server_url, viewer_opts))
+        loop.create_task(start_viewer(server_url))
         loop.run_forever()
         time.sleep(30)
         loop.close()
@@ -145,8 +105,7 @@ def main(viewer_opts):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--data', type=str, help='path to a data file')
-    parser.add_argument('--type', type=str, help='Type of data (image, label_image, point_set)')
+    parser.add_argument('--image', type=str, help='path to an image data file')
     opts = parser.parse_args()
 
     main(opts)

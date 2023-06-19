@@ -1,5 +1,4 @@
 import asyncio
-import os
 import queue
 import threading
 from imjoy_rpc import api
@@ -9,13 +8,18 @@ from IPython.lib import backgroundjobs as bg
 import uuid
 
 from ._type_aliases import Gaussians, Style, Image, PointSet
-from ._initialization_params import init_params_dict
+from ._initialization_params import (
+    init_params_dict,
+    build_config,
+    parse_input_data,
+    build_init_data,
+)
 from ._method_types import deferred_methods
 from .imjoy import register_itkwasm_imjoy_codecs
 from .integrations import _detect_render_type, _get_viewer_image, _get_viewer_point_set
 from .integrations.environment import ENVIRONMENT, Env
 from .render_types import RenderType
-from .viewer_config import ITK_VIEWER_SRC, PYDATA_SPHINX_HREF, MUI_HREF
+from .viewer_config import ITK_VIEWER_SRC
 from imjoy_rpc import register_default_codecs
 
 __all__ = [
@@ -51,40 +55,13 @@ class ViewerRPC:
             self.data_event = threading.Event()
 
     async def setup(self):
-        if ENVIRONMENT is Env.HYPHA:
-            services = await api.list_services()
-            service = [s for s in services if s["name"] == "itkwidgets_client"][0]
-            itk_viewer = await api.get_service(service)
-            print('hypha itk_viewer setup')
-            # for key, val in self.init_data.items():
-            #     method = f'set{key[:1].upper()}{key[1:]}'
-            #     fn = getattr(itk_viewer, method)
-            #     fn(val)
-            self.itk_viewer = itk_viewer
+        pass
 
     async def run(self, ctx):
         """ImJoy plugin setup function."""
         global _viewer_count
         ui = self._init_viewer_kwargs.get("ui", None)
-        if ui == "pydata-sphinx":
-            config = {
-                "uiMachineOptions": {
-                    "href": PYDATA_SPHINX_HREF,
-                    "export": "default",
-                }
-            }
-        elif ui == "mui":
-            config = {
-                "uiMachineOptions": {
-                    "href": MUI_HREF,
-                    "export": "default",
-                }
-            }
-        elif ui != "reference":
-            config = ui
-        else:
-            config = {}
-        config['maxConcurrency'] = os.cpu_count() * 2
+        config = build_config(ui)
 
         if ENVIRONMENT is not Env.HYPHA:
             itk_viewer = await api.createWindow(
@@ -155,8 +132,8 @@ class Viewer:
         self, ui_collapsed=True, rotate=False, ui="pydata-sphinx", **add_data_kwargs
     ):
         """Create a viewer."""
-        input_data = self.input_data(add_data_kwargs)
-        data = self.init_data(input_data)
+        input_data = parse_input_data(add_data_kwargs)
+        data = build_init_data(input_data)
         self.viewer_rpc = ViewerRPC(
             ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, init_data=data, **add_data_kwargs
         )
@@ -174,33 +151,6 @@ class Viewer:
     @property
     def has_viewer(self):
         return hasattr(self.viewer_rpc, 'itk_viewer')
-
-    def input_data(self, init_data_kwargs):
-        input_options = ["data", "image", "label_image", "point_set"]
-        inputs = []
-        for option in input_options:
-            data = init_data_kwargs.get(option, None)
-            if data is not None:
-                inputs.append((option, data))
-        return inputs
-
-    def init_data(self, input_data):
-        _init_data = {}
-        result= None
-        for (input_type, data) in input_data:
-            render_type = _detect_render_type(data, input_type)
-            if render_type is RenderType.IMAGE:
-                if input_type == 'label_image':
-                    result = _get_viewer_image(data, label=True)
-                    render_type = RenderType.LABELIMAGE
-                else:
-                    result = _get_viewer_image(data, label=False)
-            elif render_type is RenderType.POINT_SET:
-                result = _get_viewer_point_set(data)
-            if result is None:
-                raise RuntimeError(f"Could not process the viewer {input_type}")
-            _init_data[render_type.value] = result
-        return _init_data
 
     async def run_queued_requests(self):
         def _run_queued_requests(queue):

@@ -1,3 +1,9 @@
+import os
+from itkwidgets.integrations import _detect_render_type, _get_viewer_image, _get_viewer_point_set
+from itkwidgets.render_types import RenderType
+from itkwidgets.viewer_config import MUI_HREF, PYDATA_SPHINX_HREF
+
+
 def init_params_dict(itk_viewer):
     return {
         'annotations': itk_viewer.setAnnotationsEnabled,
@@ -29,3 +35,59 @@ def init_params_dict(itk_viewer):
         'y_slice': itk_viewer.setYSlice,
         'z_slice': itk_viewer.setZSlice,
     }
+
+
+def build_config(ui=None):
+    if ui == "pydata-sphinx":
+        config = {
+            "uiMachineOptions": {
+                "href": PYDATA_SPHINX_HREF,
+                "export": "default",
+            }
+        }
+    elif ui == "mui":
+        config = {
+            "uiMachineOptions": {
+                "href": MUI_HREF,
+                "export": "default",
+            }
+        }
+    elif ui != "reference":
+        config = ui
+    else:
+        config = {}
+    config['maxConcurrency'] = os.cpu_count() * 2
+
+    return config
+
+
+def parse_input_data(init_data_kwargs):
+    print(f'init_data_kwargs: {init_data_kwargs}')
+    input_options = ["data", "image", "label_image", "point_set"]
+    inputs = []
+    for option in input_options:
+        data = init_data_kwargs.get(option, None)
+        if data is not None:
+            inputs.append((option, data))
+    return inputs
+
+
+def build_init_data(input_data):
+    _init_data = {}
+    result= None
+    print(f'build_init_data: {input_data}')
+    for (input_type, data) in input_data:
+        print(f'input_type {input_type} data: {type(data)}')
+        render_type = _detect_render_type(data, input_type)
+        if render_type is RenderType.IMAGE:
+            if input_type == 'label_image':
+                result = _get_viewer_image(data, label=True)
+                render_type = RenderType.LABELIMAGE
+            else:
+                result = _get_viewer_image(data, label=False)
+        elif render_type is RenderType.POINT_SET:
+            result = _get_viewer_point_set(data)
+        if result is None:
+            raise RuntimeError(f"Could not process the viewer {input_type}")
+        _init_data[render_type.value] = result
+    return _init_data
