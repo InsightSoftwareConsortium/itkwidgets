@@ -22,11 +22,6 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlparse
 
 
-def _snake_to_camel(variable):
-    first, *words = variable.split('_')
-    return first + ''.join([w.capitalize() for w in words])
-
-
 async def standalone_viewer(url):
     query = parse_qs(urlparse(url).query)
     server_url = f"http://{SERVER_HOST}:{SERVER_PORT}"
@@ -56,7 +51,6 @@ def input_dict():
         user_input['label_image'] = label_image
 
     data = build_init_data(user_input)
-    data = {_snake_to_camel(k):v for k, v in data.items()}
     ui = user_input.get('ui', "reference")
     data['config'] = build_config(ui)
 
@@ -140,7 +134,7 @@ if __name__ == '__main__':
     parser.add_argument('--use2D', dest='use2D', action='store_true', default=False, help='Image is 2D')
     parser.add_argument('--rotate', dest='rotate', action='store_true', default=False, help='initialize viewer with rotating image')
     parser.add_argument('--ui', type=str, choices=['reference', 'pydata-sphinx'], default='reference', help='Which UI to use')
-    parser.add_argument('--gradient-opacity', type=float, help='Set the gradient opacity in the volume rendering. Values range from 0.0 to 1.0.')
+    parser.add_argument('--gradientOpacity', type=float, help='Set the gradient opacity in the volume rendering. Values range from 0.0 to 1.0.')
     opts = parser.parse_args()
 
     main()
