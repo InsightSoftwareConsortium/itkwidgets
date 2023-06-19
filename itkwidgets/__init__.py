@@ -15,3 +15,7 @@ __all__ = [
   "view",
   "compare_images",
 ]
+
+if ENVIRONMENT is not Env.JUPYTERLITE:
+  from .standalone_server import standalone_viewer
+  __all__.append("standalone_viewer")

@@ -19,12 +19,31 @@ from itkwidgets.standalone.config import SERVER_HOST, SERVER_PORT, VIEWER_HTML
 from itkwidgets.imjoy import register_itkwasm_imjoy_codecs_cli
 from itkwidgets._initialization_params import build_config, build_init_data
 from pathlib import Path
-from urllib.parse import urlencode
+from urllib.parse import parse_qs, urlencode, urlparse
 
 
 def _snake_to_camel(variable):
     first, *words = variable.split('_')
     return first + ''.join([w.capitalize() for w in words])
+
+
+async def standalone_viewer(url):
+    query = parse_qs(urlparse(url).query)
+    server_url = f"http://{SERVER_HOST}:{SERVER_PORT}"
+    workspace = query["workspace"][0]
+    token = query["token"][0]
+
+    server = await connect_to_server({
+        'client_id': 'itkwidgets-interactive',
+        'name': 'itkwidgets_interactive',
+        "server_url": server_url,
+        "workspace": workspace,
+        "token": token
+    })
+
+    svc = await server.get_service(
+        f'{workspace}/itkwidgets-client:itk-vtk-viewer')
+    return await svc.viewer()
 
 
 def input_dict():
@@ -124,4 +143,4 @@ if __name__ == '__main__':
     parser.add_argument('--gradient-opacity', type=float, help='Set the gradient opacity in the volume rendering. Values range from 0.0 to 1.0.')
     opts = parser.parse_args()
 
-    main(opts)
+    main()
