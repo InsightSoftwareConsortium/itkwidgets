@@ -63,7 +63,7 @@
         server.registerCodec(codec)
       })
       const remoteID = `${workspace}/itkwidgets-server`;
-      const remoteService = await server.getService(`${remoteID}:itkwidgets-input-obj`);
+      let remoteService = await server.getService(`${remoteID}:itkwidgets-input-obj`);
       const data = await remoteService.inputObject();
       const viewer = await itkVtkViewer.createViewer(container, data.data);
       await server.registerService({
@@ -77,6 +77,8 @@
         },
         viewer: () => viewer
       });
+      remoteService = await server.getService(`${remoteID}:itkwidgets-viewer-ready`);
+      await remoteService.viewerReady(viewer);
     }
 
     const container = document.querySelector('.content')
