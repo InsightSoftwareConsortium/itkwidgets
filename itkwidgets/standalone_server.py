@@ -12,7 +12,6 @@ from requests import RequestException
 import webbrowser
 
 import imjoy_rpc
-import itk
 
 from imjoy_rpc.hypha import connect_to_server
 from itkwidgets.standalone.config import SERVER_HOST, SERVER_PORT, VIEWER_HTML
@@ -20,8 +19,10 @@ from itkwidgets.imjoy import register_itkwasm_imjoy_codecs_cli
 from itkwidgets._initialization_params import (
     build_config,
     build_init_data,
-    init_params_dict
+    init_params_dict,
+    INPUT_OPTIONS,
 )
+from ngff_zarr import detect_cli_io_backend, cli_input_to_ngff_image, ConversionBackend
 from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlparse
 
@@ -46,19 +47,26 @@ async def standalone_viewer(url):
 
 
 def input_dict():
-    user_input = vars(opts)
-    if opts.image:
-        image = itk.imread(opts.image)
-        user_input['image'] = image
-    if opts.label_image:
-        label_image = itk.imread(opts.label_image)
-        user_input['label_image'] = label_image
-
+    user_input = read_files()
     data = build_init_data(user_input)
-    ui = user_input.get('ui', "reference")
-    data['config'] = build_config(ui)
+    ui = user_input.get("ui", "reference")
+    data["config"] = build_config(ui)
+    return {"data": data}
 
-    return { 'data': data }
+
+def read_files():
+    user_input = vars(opts)
+    reader = user_input.get("reader", None)
+    for param in INPUT_OPTIONS:
+        input = user_input.get(param, None)
+        if input:
+            if reader:
+                reader = ConversionBackend(reader)
+            else:
+                reader = detect_cli_io_backend(input)
+            ngff_image = cli_input_to_ngff_image(reader, [input])
+            user_input[param] = ngff_image
+    return user_input
 
 
 def viewer_ready(itk_viewer):
@@ -160,6 +168,12 @@ if __name__ == "__main__":
     parser.add_argument("--point-set", type=str, help="Path to a point set data file.")
     parser.add_argument(
         "--use2D", dest="use2D", action="store_true", default=False, help="Image is 2D."
+    )
+    parser.add_argument(
+        "--reader",
+        type=str,
+        choices=["ngff_zarr", "zarr", "itk", "tifffile", "imageio"],
+        help="Backend to use to read the data file(s). Optional.",
     )
     # General Interface
     parser.add_argument(
