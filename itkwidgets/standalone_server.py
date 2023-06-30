@@ -13,7 +13,7 @@ import webbrowser
 
 import imjoy_rpc
 
-from imjoy_rpc.hypha import connect_to_server
+from imjoy_rpc.hypha import connect_to_server, connect_to_server_sync
 from itkwidgets.standalone.config import SERVER_HOST, SERVER_PORT, VIEWER_HTML
 from itkwidgets.imjoy import register_itkwasm_imjoy_codecs_cli
 from itkwidgets._initialization_params import (
@@ -27,23 +27,21 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlparse
 
 
-async def standalone_viewer(url):
+def standalone_viewer(url):
     query = parse_qs(urlparse(url).query)
     server_url = f"http://{SERVER_HOST}:{SERVER_PORT}"
     workspace = query["workspace"][0]
     token = query["token"][0]
 
-    server = await connect_to_server({
-        'client_id': 'itkwidgets-interactive',
-        'name': 'itkwidgets_interactive',
+    server = connect_to_server_sync({
         "server_url": server_url,
         "workspace": workspace,
         "token": token
     })
 
-    svc = await server.get_service(
+    svc = server.get_service(
         f'{workspace}/itkwidgets-client:itk-vtk-viewer')
-    return await svc.viewer()
+    return svc.viewer()
 
 
 def input_dict():
