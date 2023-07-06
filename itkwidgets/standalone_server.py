@@ -1,5 +1,4 @@
 import argparse
-import asyncio
 import uuid
 import os
 import subprocess
@@ -70,7 +69,7 @@ def read_files():
     return user_input
 
 
-def viewer_ready(itk_viewer):
+async def viewer_ready(itk_viewer):
     init_viewer_kwargs = vars(opts)
     settings = init_params_dict(itk_viewer)
     for key, value in init_viewer_kwargs.items():
@@ -78,51 +77,51 @@ def viewer_ready(itk_viewer):
             settings[key](value)
 
 
-async def start_viewer(server_url):
-    server = await connect_to_server({
-        'client_id': 'itkwidgets-server',
-        'name': 'itkwidgets_server',
-        'server_url': server_url,
-    })
+def start_viewer(server_url):
+    server = connect_to_server_sync(
+        {
+            "client_id": "itkwidgets-server",
+            "name": "itkwidgets_server",
+            "server_url": server_url,
+        }
+    )
     register_itkwasm_imjoy_codecs_cli(server)
 
-    await server.register_service({
-        "name": "itkwidgets_input_obj",
-        "id": "itkwidgets-input-obj",
-        "description":
-            "Provide the data and config object required to create a viewer.",
-        "config": {
-            "visibility": "protected",
-            "require_context": False,
-            "run_in_executor": False,
-        },
-        "inputObject": input_dict
-    })
+    server.register_service(
+        {
+            "name": "itkwidgets_input_obj",
+            "id": "itkwidgets-input-obj",
+            "description": "Provide the data and config object required to create a viewer.",
+            "config": {
+                "visibility": "protected",
+                "require_context": False,
+                "run_in_executor": True,
+            },
+            "inputObject": input_dict,
+        }
+    )
 
-    await server.register_service({
-        "name": "itkwidgets_viewer_ready",
-        "id": "itkwidgets-viewer-ready",
-        "description": "",
-        "config": {
-            "visibility": "protected",
-            "require_context": False,
-            "run_in_executor": False,
-        },
-        "viewerReady": viewer_ready
-    })
+    server.register_service(
+        {
+            "name": "itkwidgets_viewer_ready",
+            "id": "itkwidgets-viewer-ready",
+            "description": "",
+            "config": {
+                "visibility": "protected",
+                "require_context": False,
+                "run_in_executor": True,
+            },
+            "viewerReady": viewer_ready,
+        }
+    )
 
     workspace = server.config.workspace
-    token = await server.generate_token()
+    token = server.generate_token()
     params = urlencode({'workspace': workspace, 'token': token})
     webbrowser.open_new_tab(f'{server_url}/itkwidgets/index.html?{params}')
 
 
 def main():
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-
     JWT_SECRET = str(uuid.uuid4())
     os.environ["JWT_SECRET"] = JWT_SECRET
     hypha_server_env = os.environ.copy()
@@ -148,13 +147,7 @@ def main():
             timeout -= 0.1
             time.sleep(0.1)
 
-        loop.create_task(start_viewer(server_url))
-        loop.run_forever()
-        time.sleep(30)
-        loop.close()
-
-        proc.kill()
-        proc.terminate()
+        start_viewer(server_url)
 
 
 if __name__ == "__main__":
