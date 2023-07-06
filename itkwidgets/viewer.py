@@ -187,9 +187,6 @@ class Viewer:
     def queue_request(self, method, *args, **kwargs):
         if (ENVIRONMENT is Env.JUPYTERLITE or ENVIRONMENT is Env.HYPHA) or self.has_viewer:
             fn = getattr(self.itk_viewer, method)
-            # TODO: test in JupyterLite
-            print('calling', fn, args, kwargs)
-            # self.loop.create_task(fn(*args, **kwargs))
             fn(*args, **kwargs)
         elif method in deferred_methods():
             self.deferred_queue.put((method, args, kwargs))
@@ -210,17 +207,6 @@ class Viewer:
         if render_type is RenderType.IMAGE:
             image = _get_viewer_image(image, label=False)
             self.queue_request('setImage', image, name)
-        elif render_type is RenderType.POINT_SET:
-            image = _get_viewer_point_set(image)
-            self.queue_request('setPointSets', image)
-
-    async def set_image_async(self, image: Image, name: str = 'Image'):
-        render_type = _detect_render_type(image, 'image')
-        if render_type is RenderType.IMAGE:
-            image = _get_viewer_image(image, label=False)
-            fn = getattr(self.viewer_rpc.itk_viewer, 'setImage')
-            await fn(image, name)
-            # self.queue_request('setImage', image, name)
         elif render_type is RenderType.POINT_SET:
             image = _get_viewer_point_set(image)
             self.queue_request('setPointSets', image)
