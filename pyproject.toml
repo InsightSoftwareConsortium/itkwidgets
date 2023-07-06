@@ -36,7 +36,7 @@ keywords = [
 requires-python = ">=3.8"
 dependencies = [
     "itkwasm >= 1.0b.78",
-    "imjoy-rpc >= 0.5.16",
+    "imjoy-rpc >= 0.5.31",
     "imjoy-utils >= 0.1.2",
     "importlib-metadata == 4.13.0 ; python_version == '3.7'",
     "ngff-zarr[dask-image] >= 0.4.3",
@@ -69,7 +69,7 @@ lab = [
     "imjoy-elfinder[jupyter]"
 ]
 cli = [
-    "hypha >= 0.15.15",
+    "hypha >= 0.15.27",
 ]
 
 notebook = [
