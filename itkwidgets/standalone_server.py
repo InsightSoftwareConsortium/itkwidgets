@@ -22,6 +22,7 @@ from itkwidgets._initialization_params import (
     init_params_dict,
     INPUT_OPTIONS,
 )
+from itkwidgets.viewer import Viewer
 from ngff_zarr import detect_cli_io_backend, cli_input_to_ngff_image, ConversionBackend
 from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlparse
@@ -38,10 +39,12 @@ def standalone_viewer(url):
         "workspace": workspace,
         "token": token
     })
+    imjoy_rpc.api.update(server.server)
+    register_itkwasm_imjoy_codecs_cli(server.server)
 
     svc = server.get_service(
         f'{workspace}/itkwidgets-client:itk-vtk-viewer')
-    return svc.viewer()
+    return Viewer(itk_viewer=svc.viewer())
 
 
 def input_dict():
@@ -81,7 +84,6 @@ async def start_viewer(server_url):
         'name': 'itkwidgets_server',
         'server_url': server_url,
     })
-    imjoy_rpc.api.update(server)
     register_itkwasm_imjoy_codecs_cli(server)
 
     await server.register_service({

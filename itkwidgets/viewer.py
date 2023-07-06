@@ -134,15 +134,18 @@ class Viewer:
         """Create a viewer."""
         input_data = parse_input_data(add_data_kwargs)
         data = build_init_data(input_data)
-        self.viewer_rpc = ViewerRPC(
-            ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, init_data=data, **add_data_kwargs
-        )
-        if ENVIRONMENT is not Env.JUPYTERLITE and ENVIRONMENT is not Env.HYPHA:
-            self.bg_jobs = bg.BackgroundJobManager()
-            self.queue = queue.Queue()
-            self.deferred_queue = queue.Queue()
-            self.bg_thread = self.bg_jobs.new(self.queue_worker)
-        api.export(self.viewer_rpc)
+        if ENVIRONMENT is not Env.HYPHA:
+            self.viewer_rpc = ViewerRPC(
+                ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, init_data=data, **add_data_kwargs
+            )
+            if ENVIRONMENT is not Env.JUPYTERLITE:
+                self.bg_jobs = bg.BackgroundJobManager()
+                self.queue = queue.Queue()
+                self.deferred_queue = queue.Queue()
+                self.bg_thread = self.bg_jobs.new(self.queue_worker)
+            api.export(self.viewer_rpc)
+        else:
+            self._itk_viewer = add_data_kwargs.get('itk_viewer', None)
 
     @property
     def loop(self):
@@ -150,12 +153,20 @@ class Viewer:
 
     @property
     def has_viewer(self):
-        return hasattr(self.viewer_rpc, 'itk_viewer')
+        if hasattr(self, "viewer_rpc"):
+            return hasattr(self.viewer_rpc, "itk_viewer")
+        return self.itk_viewer
+
+    @property
+    def itk_viewer(self):
+        if hasattr(self, "viewer_rpc"):
+            return self.viewer_rpc.itk_viewer
+        return self._itk_viewer
 
     async def run_queued_requests(self):
         def _run_queued_requests(queue):
             method_name, args, kwargs = queue.get()
-            fn = getattr(self.viewer_rpc.itk_viewer, method_name)
+            fn = getattr(self.itk_viewer, method_name)
             self.loop.call_soon_threadsafe(asyncio.ensure_future, fn(*args, **kwargs))
 
         # Wait for the viewer to be created
@@ -175,7 +186,7 @@ class Viewer:
 
     def queue_request(self, method, *args, **kwargs):
         if (ENVIRONMENT is Env.JUPYTERLITE or ENVIRONMENT is Env.HYPHA) or self.has_viewer:
-            fn = getattr(self.viewer_rpc.itk_viewer, method)
+            fn = getattr(self.itk_viewer, method)
             # TODO: test in JupyterLite
             print('calling', fn, args, kwargs)
             # self.loop.create_task(fn(*args, **kwargs))
