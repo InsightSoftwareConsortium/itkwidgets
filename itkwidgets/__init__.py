@@ -9,13 +9,11 @@ if ENVIRONMENT is not Env.HYPHA:
     register_itkwasm_imjoy_codecs()
 
 from .viewer import Viewer, view, compare_images
+from .standalone_server import standalone_viewer
 
 __all__ = [
   "Viewer",
   "view",
   "compare_images",
+  "standalone_viewer",
 ]
-
-if ENVIRONMENT is not Env.JUPYTERLITE:
-  from .standalone_server import standalone_viewer
-  __all__.append("standalone_viewer")

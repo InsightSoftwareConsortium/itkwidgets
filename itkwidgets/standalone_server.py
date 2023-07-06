@@ -1,4 +1,5 @@
 import argparse
+import logging
 import uuid
 import os
 import subprocess
@@ -6,8 +7,6 @@ import sys
 import time
 from pathlib import Path
 
-import requests
-from requests import RequestException
 import webbrowser
 
 import imjoy_rpc
@@ -25,7 +24,9 @@ from itkwidgets.viewer import Viewer
 from ngff_zarr import detect_cli_io_backend, cli_input_to_ngff_image, ConversionBackend
 from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlparse
+from urllib3 import PoolManager, exceptions
 
+logging.getLogger("urllib3").setLevel(logging.ERROR)
 
 def standalone_viewer(url):
     query = parse_qs(urlparse(url).query)
@@ -139,10 +140,11 @@ def main():
         timeout = 10
         while timeout > 0:
             try:
-                response = requests.get(f"{server_url}/health/liveness")
-                if response.ok:
+                http = PoolManager()
+                response = http.request("GET", f"{server_url}/health/liveness")
+                if response.status == 200:
                     break
-            except RequestException:
+            except exceptions.MaxRetryError:
                 pass
             timeout -= 0.1
             time.sleep(0.1)
