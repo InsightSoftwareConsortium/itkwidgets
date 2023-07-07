@@ -1,5 +1,6 @@
 import argparse
 import logging
+import socket
 import uuid
 import os
 import subprocess
@@ -28,22 +29,33 @@ from urllib3 import PoolManager, exceptions
 
 logging.getLogger("urllib3").setLevel(logging.ERROR)
 
-def standalone_viewer(url):
-    query = parse_qs(urlparse(url).query)
-    server_url = f"http://{SERVER_HOST}:{SERVER_PORT}"
-    workspace = query["workspace"][0]
-    token = query["token"][0]
+def find_port(port=SERVER_PORT):
+    # Find first available port starting at SERVER_PORT
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        if s.connect_ex((SERVER_HOST, port)) == 0:
+            # Port in use, try again
+            return find_port(port=port + 1)
+        else:
+            return port
 
-    server = connect_to_server_sync({
-        "server_url": server_url,
-        "workspace": workspace,
-        "token": token
-    })
+
+PORT = find_port()
+
+
+def standalone_viewer(url):
+    parsed = urlparse(url)
+    query = parse_qs(parsed.query)
+    server_url = f"http://{SERVER_HOST}:{parsed.port}"
+    workspace = query.get("workspace", [""])[0]
+    token = query.get("token", [""])[0]
+
+    server = connect_to_server_sync(
+        {"server_url": server_url, "workspace": workspace, "token": token}
+    )
     imjoy_rpc.api.update(server.server)
     register_itkwasm_imjoy_codecs_cli(server.server)
 
-    svc = server.get_service(
-        f'{workspace}/itkwidgets-client:itk-vtk-viewer')
+    svc = server.get_service(f"{workspace}/itkwidgets-client:itk-vtk-viewer")
     return Viewer(itk_viewer=svc.viewer())
 
 
@@ -127,12 +139,12 @@ def main():
     os.environ["JWT_SECRET"] = JWT_SECRET
     hypha_server_env = os.environ.copy()
 
-    server_url = f"http://{SERVER_HOST}:{SERVER_PORT}"
+    server_url = f"http://{SERVER_HOST}:{PORT}"
     viewer_mount_dir = str(Path(VIEWER_HTML).parent)
 
     with subprocess.Popen(
         [sys.executable, "-m", "hypha.server", f"--host={SERVER_HOST}",
-         f"--port={SERVER_PORT}", "--static-mounts",
+         f"--port={PORT}", "--static-mounts",
          f"/itkwidgets:{viewer_mount_dir}"],
         env=hypha_server_env,
     ) as proc:
