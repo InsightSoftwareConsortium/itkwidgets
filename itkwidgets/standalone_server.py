@@ -40,6 +40,7 @@ def find_port(port=SERVER_PORT):
 
 
 PORT = find_port()
+OPTS = None
 
 
 def standalone_viewer(url):
@@ -68,7 +69,7 @@ def input_dict():
 
 
 def read_files():
-    user_input = vars(opts)
+    user_input = vars(OPTS)
     reader = user_input.get("reader", None)
     for param in INPUT_OPTIONS:
         input = user_input.get(param, None)
@@ -83,7 +84,7 @@ def read_files():
 
 
 async def viewer_ready(itk_viewer):
-    init_viewer_kwargs = vars(opts)
+    init_viewer_kwargs = vars(OPTS)
     settings = init_params_dict(itk_viewer)
     for key, value in init_viewer_kwargs.items():
         if key in settings.keys() and value is not None:
@@ -164,7 +165,9 @@ def main():
         start_viewer(server_url)
 
 
-if __name__ == "__main__":
+def cli_entrypoint():
+    global OPTS
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument("data", nargs="?", type=str, help="Path to a data file.")
@@ -338,6 +341,6 @@ if __name__ == "__main__":
         "--units", type=str, help="Units to display in the scale bar."
     )
 
-    opts = parser.parse_args()
+    OPTS = parser.parse_args()
 
     main()

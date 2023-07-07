@@ -81,3 +81,6 @@ test = [
     "nbmake",
 ]
 doc = ["sphinx"]
+
+[project.scripts]
+itkwidgets = "itkwidgets.standalone_server:cli_entrypoint"
