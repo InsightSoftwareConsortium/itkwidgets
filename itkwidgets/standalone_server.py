@@ -143,13 +143,22 @@ def main():
     server_url = f"http://{SERVER_HOST}:{PORT}"
     viewer_mount_dir = str(Path(VIEWER_HTML).parent)
 
+    out = None if OPTS.verbose else subprocess.DEVNULL
+    err = None if OPTS.verbose else subprocess.STDOUT
     with subprocess.Popen(
-        [sys.executable, "-m", "hypha.server", f"--host={SERVER_HOST}",
-         f"--port={PORT}", "--static-mounts",
-         f"/itkwidgets:{viewer_mount_dir}"],
+        [
+            sys.executable,
+            "-m",
+            "hypha.server",
+            f"--host={SERVER_HOST}",
+            f"--port={PORT}",
+            "--static-mounts",
+            f"/itkwidgets:{viewer_mount_dir}",
+        ],
         env=hypha_server_env,
-    ) as proc:
-
+        stdout=out,
+        stderr=err,
+    ):
         timeout = 10
         while timeout > 0:
             try:
@@ -184,6 +193,13 @@ def cli_entrypoint():
         type=str,
         choices=["ngff_zarr", "zarr", "itk", "tifffile", "imageio"],
         help="Backend to use to read the data file(s). Optional.",
+    )
+    parser.add_argument(
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        default=False,
+        help="Print all log messages to stdout.",
     )
     # General Interface
     parser.add_argument(
