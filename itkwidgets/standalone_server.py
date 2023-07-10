@@ -131,8 +131,8 @@ def start_viewer(server_url):
 
     workspace = server.config.workspace
     token = server.generate_token()
-    params = urlencode({'workspace': workspace, 'token': token})
-    webbrowser.open_new_tab(f'{server_url}/itkwidgets/index.html?{params}')
+    params = urlencode({"workspace": workspace, "token": token})
+    webbrowser.open_new_tab(f"{server_url}/itkwidgets/index.html?{params}")
 
 
 def main():
@@ -236,7 +236,7 @@ def cli_entrypoint():
     parser.add_argument(
         "--bg-color",
         type=tuple,
-        nargs='+',
+        nargs="+",
         help="Background color: (red, green, blue) tuple, components from 0.0 to 1.0.",
     )
     # Images
@@ -248,7 +248,7 @@ def cli_entrypoint():
     parser.add_argument(
         "--label-names",
         type=list,
-        nargs='+',
+        nargs="+",
         help="String names associated with the integer label values. List of (label_value, label_name).",
     )
     parser.add_argument(
@@ -264,13 +264,13 @@ def cli_entrypoint():
     parser.add_argument(
         "--color-range",
         type=list,
-        nargs='+',
+        nargs="+",
         help="The [min, max] range of intensity values mapped to colors for the given image component identified by name.",
     )
     parser.add_argument(
         "--color-bounds",
         type=list,
-        nargs='+',
+        nargs="+",
         help="The [min, max] range of intensity values for color maps that provide a bounds for user inputs.",
     )
     parser.add_argument(
@@ -353,9 +353,7 @@ def cli_entrypoint():
         type=float,
         help="Sampling distance for volume rendering, normalized from 0.0 to 1.0. Lower values result in a higher quality rendering. High values improve the framerate.",
     )
-    parser.add_argument(
-        "--units", type=str, help="Units to display in the scale bar."
-    )
+    parser.add_argument("--units", type=str, help="Units to display in the scale bar.")
 
     OPTS = parser.parse_args()
 

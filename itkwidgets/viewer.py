@@ -185,7 +185,9 @@ class Viewer:
         loop.run_until_complete(task)
 
     def queue_request(self, method, *args, **kwargs):
-        if (ENVIRONMENT is Env.JUPYTERLITE or ENVIRONMENT is Env.HYPHA) or self.has_viewer:
+        if (
+            ENVIRONMENT is Env.JUPYTERLITE or ENVIRONMENT is Env.HYPHA
+        ) or self.has_viewer:
             fn = getattr(self.itk_viewer, method)
             fn(*args, **kwargs)
         elif method in deferred_methods():
