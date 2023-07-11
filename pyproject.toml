@@ -17,7 +17,6 @@ classifiers = [
     'Intended Audience :: Science/Research',
     'Topic :: Multimedia :: Graphics',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
@@ -34,7 +33,7 @@ keywords = [
     "webgpu",
 ]
 
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 dependencies = [
     "itkwasm >= 1.0b.78",
     "imjoy-rpc >= 0.5.16",
@@ -61,9 +60,9 @@ Source = "https://github.com/InsightSoftwareConsortium/itkwidgets"
 
 [project.optional-dependencies]
 all = [
-    "imjoy-jupyterlab-extension >=0.1.13 ; python_version > '3.7'",
-    "imjoy-elfinder[jupyter] ; python_version > '3.7'",
-    "imjoy-jupyter-extension >=0.3.0 ; python_version > '3.7'"
+    "imjoy-jupyterlab-extension >=0.1.13",
+    "imjoy-elfinder[jupyter]",
+    "imjoy-jupyter-extension >=0.3.0"
 ]
 lab = [
     "imjoy-jupyterlab-extension >=0.1.13",
