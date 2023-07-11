@@ -1,6 +1,8 @@
 import argparse
 import logging
 import socket
+import code
+import threading
 import uuid
 import os
 import subprocess
@@ -12,7 +14,7 @@ import webbrowser
 
 import imjoy_rpc
 
-from imjoy_rpc.hypha import connect_to_server, connect_to_server_sync
+from imjoy_rpc.hypha import connect_to_server_sync
 from itkwidgets.standalone.config import SERVER_HOST, SERVER_PORT, VIEWER_HTML
 from itkwidgets.imjoy import register_itkwasm_imjoy_codecs_cli
 from itkwidgets._initialization_params import (
@@ -21,13 +23,14 @@ from itkwidgets._initialization_params import (
     init_params_dict,
     INPUT_OPTIONS,
 )
-from itkwidgets.viewer import Viewer
+from itkwidgets.viewer import view
 from ngff_zarr import detect_cli_io_backend, cli_input_to_ngff_image, ConversionBackend
 from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlparse
 from urllib3 import PoolManager, exceptions
 
 logging.getLogger("urllib3").setLevel(logging.ERROR)
+
 
 def find_port(port=SERVER_PORT):
     # Find first available port starting at SERVER_PORT
@@ -41,6 +44,7 @@ def find_port(port=SERVER_PORT):
 
 PORT = find_port()
 OPTS = None
+EVENT = threading.Event()
 
 
 def standalone_viewer(url):
@@ -90,6 +94,8 @@ async def viewer_ready(itk_viewer):
         if key in settings.keys() and value is not None:
             settings[key](value)
 
+    EVENT.set()
+
 
 def start_viewer(server_url):
     server = connect_to_server_sync(
@@ -101,6 +107,7 @@ def start_viewer(server_url):
     )
     register_itkwasm_imjoy_codecs_cli(server)
 
+    input_obj = input_dict()
     server.register_service(
         {
             "name": "itkwidgets_input_obj",
@@ -111,7 +118,7 @@ def start_viewer(server_url):
                 "require_context": False,
                 "run_in_executor": True,
             },
-            "inputObject": input_dict,
+            "inputObject": lambda: input_obj,
         }
     )
 
@@ -133,6 +140,7 @@ def start_viewer(server_url):
     token = server.generate_token()
     params = urlencode({"workspace": workspace, "token": token})
     webbrowser.open_new_tab(f"{server_url}/itkwidgets/index.html?{params}")
+    return server
 
 
 def main():
@@ -171,7 +179,19 @@ def main():
             timeout -= 0.1
             time.sleep(0.1)
 
-        start_viewer(server_url)
+        server = start_viewer(server_url)
+        if OPTS.repl:
+            EVENT.wait()  # Wait until viewer is created before launching REPL
+            workspace = server.config.workspace
+            svc = server.get_service(f"{workspace}/itkwidgets-client:itk-vtk-viewer")
+            viewer = view(itk_viewer=svc.viewer())
+            banner = f"""
+                Welcome to the itkwidgets command line tool! Press CTRL+D or
+                run `exit()` to terminate the REPL session. Use the `viewer`
+                object to manipulate the viewer.
+            """
+            exitmsg = "Exiting REPL. Press CTRL+C to teminate CLI tool."
+            code.interact(banner=banner, local={"viewer": viewer}, exitmsg=exitmsg)
 
 
 def cli_entrypoint():
@@ -200,6 +220,13 @@ def cli_entrypoint():
         action="store_true",
         default=False,
         help="Print all log messages to stdout.",
+    )
+    parser.add_argument(
+        "--repl",
+        dest="repl",
+        action="store_true",
+        default=False,
+        help="Start interactive REPL after launching viewer.",
     )
     # General Interface
     parser.add_argument(
