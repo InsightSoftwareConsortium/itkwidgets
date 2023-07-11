@@ -69,7 +69,7 @@ lab = [
     "imjoy-elfinder[jupyter]"
 ]
 cli = [
-    "hypha >= 0.15.27",
+    "hypha >= 0.15.28",
 ]
 
 notebook = [
