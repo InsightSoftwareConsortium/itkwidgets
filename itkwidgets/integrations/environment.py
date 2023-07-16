@@ -27,7 +27,7 @@ def find_env():
                 return Env.JUPYTER_NOTEBOOK
             else:
                 return Env.SAGEMAKER
-        except AttributeError:
+        except:
             try:
                 import js
                 return Env.JUPYTERLITE
@@ -37,7 +37,7 @@ def find_env():
 
 ENVIRONMENT = find_env()
 
-if ENVIRONMENT is not Env.JUPYTERLITE:
+if ENVIRONMENT is not Env.JUPYTERLITE and ENVIRONMENT is not Env.HYPHA:
     if ENVIRONMENT is not Env.COLAB:
         if ENVIRONMENT is Env.JUPYTER_NOTEBOOK and sys.version_info.minor > 7:
             try:
