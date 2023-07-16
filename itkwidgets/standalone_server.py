@@ -61,7 +61,7 @@ def standalone_viewer(url):
     register_itkwasm_imjoy_codecs_cli(server.server)
 
     svc = server.get_service(f"{workspace}/itkwidgets-client:itk-vtk-viewer")
-    return Viewer(itk_viewer=svc.viewer())
+    return view(itk_viewer=svc.viewer())
 
 
 def input_dict():
