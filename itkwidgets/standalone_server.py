@@ -385,3 +385,7 @@ def cli_entrypoint():
     OPTS = parser.parse_args()
 
     main()
+
+
+if __name__ == "__main__":
+    cli_entrypoint()
