@@ -146,6 +146,8 @@ class Viewer:
             api.export(self.viewer_rpc)
         else:
             self._itk_viewer = add_data_kwargs.get('itk_viewer', None)
+            self.server = add_data_kwargs.get('server', None)
+            self.workspace = self.server.config.workspace
 
     @property
     def loop(self):
@@ -208,7 +210,13 @@ class Viewer:
         render_type = _detect_render_type(image, 'image')
         if render_type is RenderType.IMAGE:
             image = _get_viewer_image(image, label=False)
-            self.queue_request('setImage', image, name)
+            if ENVIRONMENT is Env.HYPHA:
+                self.image = image
+                svc_name = f'{self.workspace}/itkwidgets-server:data-set'
+                svc = self.server.get_service(svc_name)
+                svc.set_label_or_image('image')
+            else:
+                self.queue_request('setImage', image, name)
         elif render_type is RenderType.POINT_SET:
             image = _get_viewer_point_set(image)
             self.queue_request('setPointSets', image)
@@ -279,7 +287,13 @@ class Viewer:
         render_type = _detect_render_type(label_image, 'image')
         if render_type is RenderType.IMAGE:
             label_image = _get_viewer_image(label_image, label=True)
-            self.queue_request('setLabelImage', label_image)
+            if ENVIRONMENT is Env.HYPHA:
+                self.label_image = label_image
+                svc_name = f"{self.workspace}/itkwidgets-server:data-set"
+                svc = self.server.get_service(svc_name)
+                svc.set_label_or_image('label_image')
+            else:
+                self.queue_request('setLabelImage', label_image)
         elif render_type is RenderType.POINT_SET:
             label_image = _get_viewer_point_set(label_image)
             self.queue_request('setPointSets', label_image)

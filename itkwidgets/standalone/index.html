@@ -77,6 +77,26 @@
         },
         viewer: () => viewer
       });
+      await server.registerService({
+        name: "setLabelOrImage",
+        id: "set-label-or-image",
+        description: "Set the image or label image.",
+        config: {
+          visibility: "protected",
+          require_context: false,
+          run_in_executor: true,
+        },
+        set_label_image: async () => {
+          remoteService = await server.getService(`${remoteID}:fetch-zarr-store`);
+          let labelImage = await remoteService.fetchZarrStore("label_image");
+          viewer.setLabelImage(labelImage);
+        },
+        set_image: async () => {
+          remoteService = await server.getService(`${remoteID}:fetch-zarr-store`);
+          let image = await remoteService.fetchZarrStore("image");
+          viewer.setImage(image);
+        }
+      });
       remoteService = await server.getService(`${remoteID}:itkwidgets-viewer-ready`);
       await remoteService.viewerReady(viewer);
     }

@@ -1,4 +1,5 @@
 import argparse
+import functools
 import logging
 import socket
 import code
@@ -45,6 +46,7 @@ def find_port(port=SERVER_PORT):
 PORT = find_port()
 OPTS = None
 EVENT = threading.Event()
+VIEWER = None
 
 
 def standalone_viewer(url):
@@ -97,6 +99,16 @@ async def viewer_ready(itk_viewer):
     EVENT.set()
 
 
+def set_label_or_image(server, type):
+    workspace = server.config.workspace
+    svc = server.get_service(f"{workspace}/itkwidgets-client:set-label-or-image")
+    getattr(svc, f"set_{type}")()
+
+
+def fetch_zarr_store(store_type):
+    return getattr(VIEWER, store_type, None)
+
+
 def start_viewer(server_url):
     server = connect_to_server_sync(
         {
@@ -136,6 +148,34 @@ def start_viewer(server_url):
         }
     )
 
+    server.register_service(
+        {
+            "name": "zarr_store",
+            "id": "zarr-store",
+            "description": "",
+            "config": {
+                "visibility": "protected",
+                "require_context": False,
+                "run_in_executor": True,
+            },
+            "zarr_store": functools.partial(zarr_store, server),
+        }
+    )
+
+    server.register_service(
+        {
+            "name": "data_set",
+            "id": "data-set",
+            "description": "Save the image data set via REPL session.",
+            "config": {
+                "visibility": "protected",
+                "require_context": False,
+                "run_in_executor": True,
+            },
+            "set_label_or_image": functools.partial(set_label_or_image, server),
+        }
+    )
+
     workspace = server.config.workspace
     token = server.generate_token()
     params = urlencode({"workspace": workspace, "token": token})
@@ -144,6 +184,7 @@ def start_viewer(server_url):
 
 
 def main():
+    global VIEWER
     JWT_SECRET = str(uuid.uuid4())
     os.environ["JWT_SECRET"] = JWT_SECRET
     hypha_server_env = os.environ.copy()
@@ -184,14 +225,14 @@ def main():
             EVENT.wait()  # Wait until viewer is created before launching REPL
             workspace = server.config.workspace
             svc = server.get_service(f"{workspace}/itkwidgets-client:itk-vtk-viewer")
-            viewer = view(itk_viewer=svc.viewer())
+            VIEWER = view(itk_viewer=svc.viewer(), server=server)
             banner = f"""
                 Welcome to the itkwidgets command line tool! Press CTRL+D or
                 run `exit()` to terminate the REPL session. Use the `viewer`
                 object to manipulate the viewer.
             """
             exitmsg = "Exiting REPL. Press CTRL+C to teminate CLI tool."
-            code.interact(banner=banner, local={"viewer": viewer}, exitmsg=exitmsg)
+            code.interact(banner=banner, local={"viewer": VIEWER}, exitmsg=exitmsg)
 
 
 def cli_entrypoint():
