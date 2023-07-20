@@ -44,6 +44,7 @@
      }
      async function setupViewerForImJoy(server) {
       const version = itkVtkViewer.version
+
       await server.registerService({
         name: 'itkwidgets-service',
         id: 'itkwidgets_service',
@@ -59,13 +60,16 @@
         cover: ['https://kitware.github.io/itk-vtk-viewer/docs/howToUse.jpg', 'https://kitware.github.io/itk-vtk-viewer/docs/imjoy.png'],
 
       });
+
       itkVtkViewer.imJoyCodecs.forEach((codec) => {
         server.registerCodec(codec)
       })
+
       const remoteID = `${workspace}/itkwidgets-server`;
       let remoteService = await server.getService(`${remoteID}:itkwidgets-input-obj`);
       const data = await remoteService.inputObject();
       const viewer = await itkVtkViewer.createViewer(container, data.data);
+
       await server.registerService({
         name: "itk_vtk_viewer",
         id: "itk-vtk-viewer",
@@ -75,8 +79,26 @@
           require_context: false,
           run_in_executor: true,
         },
-        viewer: () => viewer
+        viewer: () => viewer,
+        capture_screenshot: async () => {
+          const viewProxy = viewer.getViewProxy();
+          const representationProxy = viewProxy.getRepresentations()[0];
+          let mapper = null
+          if (representationProxy && representationProxy.getClassName() === 'vtkVolumeRepresentationProxy') {
+            mapper = representationProxy.getMapper();
+            mapper.setAutoAdjustSampleDistances(false)
+          }
+
+          const capturedImage = await viewer.captureImage()
+
+          if (representationProxy && representationProxy.getClassName() === 'vtkVolumeRepresentationProxy') {
+            mapper.setAutoAdjustSampleDistances(true)
+          }
+
+          return capturedImage
+        },
       });
+
       await server.registerService({
         name: "setLabelOrImage",
         id: "set-label-or-image",
@@ -97,6 +119,7 @@
           viewer.setImage(image);
         }
       });
+
       remoteService = await server.getService(`${remoteID}:itkwidgets-viewer-ready`);
       await remoteService.viewerReady(viewer);
     }

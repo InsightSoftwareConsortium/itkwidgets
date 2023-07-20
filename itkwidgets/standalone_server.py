@@ -10,10 +10,11 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-
+from base64 import b64decode
 import webbrowser
 
 import imjoy_rpc
+import numpy as np
 
 from imjoy_rpc.hypha import connect_to_server_sync
 from itkwidgets.standalone.config import SERVER_HOST, SERVER_PORT, VIEWER_HTML
@@ -31,6 +32,7 @@ from urllib.parse import parse_qs, urlencode, urlparse
 from urllib3 import PoolManager, exceptions
 
 logging.getLogger("urllib3").setLevel(logging.ERROR)
+logging.getLogger("websocket-client").setLevel(logging.ERROR)
 
 
 def find_port(port=SERVER_PORT):
@@ -47,6 +49,7 @@ PORT = find_port()
 OPTS = None
 EVENT = threading.Event()
 VIEWER = None
+BROWSER = None
 
 
 def standalone_viewer(url):
@@ -71,6 +74,18 @@ def input_dict():
     data = build_init_data(user_input)
     ui = user_input.get("ui", "reference")
     data["config"] = build_config(ui)
+
+    if data["view_mode"] is not None:
+        vm = data["view_mode"]
+        if vm == "x":
+            data["view_mode"] = "XPlane"
+        elif vm == "y":
+            data["view_mode"] = "YPlane"
+        elif vm == "z":
+            data["view_mode"] = "ZPlane"
+        elif vm == "v":
+            data["view_mode"] = "Volume"
+
     return {"data": data}
 
 
@@ -83,7 +98,11 @@ def read_files():
             if reader:
                 reader = ConversionBackend(reader)
             else:
-                reader = detect_cli_io_backend(input)
+                reader = detect_cli_io_backend([input])
+            if not input.find('://') == -1 and not Path(input).exists():
+                sys.stderr.write(f"File not found: {input}\n")
+                # hack
+                raise KeyboardInterrupt
             ngff_image = cli_input_to_ngff_image(reader, [input])
             user_input[param] = ngff_image
     return user_input
@@ -176,11 +195,7 @@ def start_viewer(server_url):
         }
     )
 
-    workspace = server.config.workspace
-    token = server.generate_token()
-    params = urlencode({"workspace": workspace, "token": token})
-    webbrowser.open_new_tab(f"{server_url}/itkwidgets/index.html?{params}")
-    return server
+    return server, input_obj
 
 
 def main():
@@ -220,19 +235,84 @@ def main():
             timeout -= 0.1
             time.sleep(0.1)
 
-        server = start_viewer(server_url)
+        server, input_obj = start_viewer(server_url)
+        workspace = server.config.workspace
+        token = server.generate_token()
+        params = urlencode({"workspace": workspace, "token": token})
+        url = f"{server_url}/itkwidgets/index.html?{params}"
+
+        # Updates for resolution progression
+        rate = 1.0
+        fast_rate = 0.05
+        if OPTS.rotate:
+            rate = fast_rate
+
+        if OPTS.browser:
+            sys.stdout.write(f"Viewer url:\n\n  {url}\n\n")
+            webbrowser.open_new_tab(f"{server_url}/itkwidgets/index.html?{params}")
+        else:
+            from playwright.sync_api import sync_playwright
+            playwright = sync_playwright().start()
+            args = [
+                "--enable-unsafe-webgpu",
+            ]
+            browser = playwright.chromium.launch(args=args)
+            BROWSER = browser
+            page = browser.new_page()
+
+            terminal_size = os.get_terminal_size()
+            width = terminal_size.columns * 10
+            is_tmux = 'TMUX' in os.environ and 'tmux' in os.environ['TMUX']
+            # https://github.com/tmux/tmux/issues/1502
+            if is_tmux:
+                width = min(width, 400)
+            else:
+                width = min(width, 768)
+            height = width
+            page.set_viewport_size({"width": width, "height": height})
+
+            response = page.goto(url, timeout=0, wait_until="load")
+            assert response.status == 200, (
+                "Failed to start browser app instance, "
+                f"status: {response.status}, url: {url}"
+            )
+
+            input_data = input_obj["data"]
+            if not input_data["use2D"]:
+                if input_data["x_slice"] is None and input_data["view_mode"] == "XPlane":
+                    page.locator('label[itk-vtk-tooltip-content="X plane play scroll"]').click()
+                    rate = fast_rate
+                elif input_data["y_slice"] is None and input_data["view_mode"] == "YPlane":
+                    page.locator('label[itk-vtk-tooltip-content="Y plane play scroll"]').click()
+                    rate = fast_rate
+                elif input_data["y_slice"] is None and input_data["view_mode"] == "ZPlane":
+                    page.locator('label[itk-vtk-tooltip-content="Z plane play scroll"]').click()
+                    rate = fast_rate
+
+        EVENT.wait()  # Wait until viewer is created before launching REPL
+        workspace = server.config.workspace
+        svc = server.get_service(f"{workspace}/itkwidgets-client:itk-vtk-viewer")
+        VIEWER = view(itk_viewer=svc.viewer(), server=server)
+        if not OPTS.browser:
+            from imgcat import imgcat
+            terminal_height = min(terminal_size.lines - 1, terminal_size.columns // 3)
+
+
+            while True:
+                png_bin = b64decode(svc.capture_screenshot()[22:])
+                imgcat(png_bin, height=terminal_height)
+                time.sleep(rate)
+                CSI = b'\033['
+                sys.stdout.buffer.write(CSI + str(terminal_height).encode() + b"F")
+
         if OPTS.repl:
-            EVENT.wait()  # Wait until viewer is created before launching REPL
-            workspace = server.config.workspace
-            svc = server.get_service(f"{workspace}/itkwidgets-client:itk-vtk-viewer")
-            VIEWER = view(itk_viewer=svc.viewer(), server=server)
             banner = f"""
                 Welcome to the itkwidgets command line tool! Press CTRL+D or
                 run `exit()` to terminate the REPL session. Use the `viewer`
                 object to manipulate the viewer.
             """
-            exitmsg = "Exiting REPL. Press CTRL+C to teminate CLI tool."
-            code.interact(banner=banner, local={"viewer": VIEWER}, exitmsg=exitmsg)
+            exitmsg = "Exiting REPL. Press CTRL+C to exit the viewer."
+            code.interact(banner=banner, local={"viewer": VIEWER, "svc": svc, "server": server}, exitmsg=exitmsg)
 
 
 def cli_entrypoint():
@@ -241,11 +321,11 @@ def cli_entrypoint():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("data", nargs="?", type=str, help="Path to a data file.")
-    parser.add_argument("--image", type=str, help="Path to an image data file.")
+    parser.add_argument("-i", "--image", dest="image", type=str, help="Path to an image data file.")
     parser.add_argument(
-        "--label-image", type=str, help="Path to a label image data file."
+        "-l", "--label-image", dest="label_image", type=str, help="Path to a label image data file."
     )
-    parser.add_argument("--point-set", type=str, help="Path to a point set data file.")
+    parser.add_argument("-p", "--point-set", dest="point_set", type=str, help="Path to a point set data file.")
     parser.add_argument(
         "--use2D", dest="use2D", action="store_true", default=False, help="Image is 2D."
     )
@@ -263,6 +343,13 @@ def cli_entrypoint():
         help="Print all log messages to stdout.",
     )
     parser.add_argument(
+        "-b", "--browser",
+        dest="browser",
+        action="store_true",
+        default=False,
+        help="Render to a browser tab instead of the terminal.",
+    )
+    parser.add_argument(
         "--repl",
         dest="repl",
         action="store_true",
@@ -271,7 +358,7 @@ def cli_entrypoint():
     )
     # General Interface
     parser.add_argument(
-        "--rotate",
+        "-r", "--rotate",
         dest="rotate",
         action="store_true",
         default=False,
@@ -305,6 +392,7 @@ def cli_entrypoint():
         "--bg-color",
         type=tuple,
         nargs="+",
+        default=(0.0, 0.0, 0.0),
         help="Background color: (red, green, blue) tuple, components from 0.0 to 1.0.",
     )
     # Images
@@ -398,9 +486,9 @@ def cli_entrypoint():
         help="Whether to used gradient-based shadows in the volume rendering.",
     )
     parser.add_argument(
-        "--view-mode",
+        "-m", "--view-mode",
         type=str,
-        choices=["XPlane", "YPlane", "ZPlane", "Volume"],
+        choices=["x", "y", "z", "v"],
         help="Only relevant for 3D scenes.",
     )
     parser.add_argument(
@@ -425,7 +513,17 @@ def cli_entrypoint():
 
     OPTS = parser.parse_args()
 
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        if BROWSER:
+            BROWSER.close()
+        if not OPTS.browser:
+            # Clear `^C%`
+            CSI = b'\033['
+            sys.stdout.buffer.write(CSI + b"1K")
+            sys.stdout.buffer.write(b"\n")
+        sys.exit(0)
 
 
 if __name__ == "__main__":
