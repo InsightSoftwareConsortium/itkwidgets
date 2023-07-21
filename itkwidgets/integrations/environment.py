@@ -28,11 +28,10 @@ def find_env():
             else:
                 return Env.SAGEMAKER
         except:
-            try:
-                import js
+            import sys
+            if sys.platform == 'emscripten':
                 return Env.JUPYTERLITE
-            except ImportError:
-                return Env.HYPHA
+            return Env.HYPHA
 
 
 ENVIRONMENT = find_env()
