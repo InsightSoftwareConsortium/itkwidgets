@@ -14,7 +14,6 @@ from base64 import b64decode
 import webbrowser
 
 import imjoy_rpc
-import numpy as np
 
 from imjoy_rpc.hypha import connect_to_server_sync
 from itkwidgets.standalone.config import SERVER_HOST, SERVER_PORT, VIEWER_HTML
@@ -141,43 +140,17 @@ def start_viewer(server_url):
     input_obj = input_dict()
     server.register_service(
         {
-            "name": "itkwidgets_input_obj",
-            "id": "itkwidgets-input-obj",
-            "description": "Provide the data and config object required to create a viewer.",
+            "name": "parsed_data",
+            "id": "parsed-data",
+            "description": "Provide parsed data to the client.",
             "config": {
                 "visibility": "protected",
                 "require_context": False,
                 "run_in_executor": True,
             },
             "inputObject": lambda: input_obj,
-        }
-    )
-
-    server.register_service(
-        {
-            "name": "itkwidgets_viewer_ready",
-            "id": "itkwidgets-viewer-ready",
-            "description": "",
-            "config": {
-                "visibility": "protected",
-                "require_context": False,
-                "run_in_executor": True,
-            },
             "viewerReady": viewer_ready,
-        }
-    )
-
-    server.register_service(
-        {
-            "name": "zarr_store",
-            "id": "zarr-store",
-            "description": "",
-            "config": {
-                "visibility": "protected",
-                "require_context": False,
-                "run_in_executor": True,
-            },
-            "zarr_store": functools.partial(zarr_store, server),
+            "fetchZarrStore": fetch_zarr_store,
         }
     )
 

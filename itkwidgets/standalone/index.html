@@ -66,7 +66,7 @@
       })
 
       const remoteID = `${workspace}/itkwidgets-server`;
-      let remoteService = await server.getService(`${remoteID}:itkwidgets-input-obj`);
+      let remoteService = await server.getService(`${remoteID}:parsed-data`);
       const data = await remoteService.inputObject();
       const viewer = await itkVtkViewer.createViewer(container, data.data);
 
@@ -77,7 +77,6 @@
         config: {
           visibility: "protected",
           require_context: false,
-          run_in_executor: true,
         },
         viewer: () => viewer,
         capture_screenshot: async () => {
@@ -106,21 +105,20 @@
         config: {
           visibility: "protected",
           require_context: false,
-          run_in_executor: true,
         },
         set_label_image: async () => {
-          remoteService = await server.getService(`${remoteID}:fetch-zarr-store`);
+          remoteService = await server.getService(`${remoteID}:parsed-data`);
           let labelImage = await remoteService.fetchZarrStore("label_image");
           viewer.setLabelImage(labelImage);
         },
         set_image: async () => {
-          remoteService = await server.getService(`${remoteID}:fetch-zarr-store`);
+          remoteService = await server.getService(`${remoteID}:parsed-data`);
           let image = await remoteService.fetchZarrStore("image");
           viewer.setImage(image);
         }
       });
 
-      remoteService = await server.getService(`${remoteID}:itkwidgets-viewer-ready`);
+      remoteService = await server.getService(`${remoteID}:parsed-data`);
       await remoteService.viewerReady(viewer);
     }
 
