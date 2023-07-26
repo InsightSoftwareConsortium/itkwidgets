@@ -1,5 +1,4 @@
 import asyncio
-import os
 import queue
 import threading
 from imjoy_rpc import api
@@ -9,13 +8,18 @@ from IPython.lib import backgroundjobs as bg
 import uuid
 
 from ._type_aliases import Gaussians, Style, Image, PointSet
-from ._initialization_params import init_params_dict
+from ._initialization_params import (
+    init_params_dict,
+    build_config,
+    parse_input_data,
+    build_init_data,
+)
 from ._method_types import deferred_methods
 from .imjoy import register_itkwasm_imjoy_codecs
 from .integrations import _detect_render_type, _get_viewer_image, _get_viewer_point_set
 from .integrations.environment import ENVIRONMENT, Env
 from .render_types import RenderType
-from .viewer_config import ITK_VIEWER_SRC, PYDATA_SPHINX_HREF, MUI_HREF
+from .viewer_config import ITK_VIEWER_SRC
 from imjoy_rpc import register_default_codecs
 
 __all__ = [
@@ -36,7 +40,7 @@ class ViewerRPC:
         global _codecs_registered
         """Create a viewer."""
         # Register codecs if they haven't been already
-        if not _codecs_registered:
+        if not _codecs_registered and ENVIRONMENT is not Env.HYPHA:
             register_default_codecs()
             register_itkwasm_imjoy_codecs()
             _codecs_registered = True
@@ -46,7 +50,7 @@ class ViewerRPC:
         self.init_data = init_data
         self.img = display(HTML(f'<div />'), display_id=str(uuid.uuid4()))
         self.wid = None
-        if ENVIRONMENT is not Env.JUPYTERLITE:
+        if ENVIRONMENT is not Env.JUPYTERLITE and ENVIRONMENT is not Env.HYPHA:
             self.viewer_event = threading.Event()
             self.data_event = threading.Event()
 
@@ -57,57 +61,40 @@ class ViewerRPC:
         """ImJoy plugin setup function."""
         global _viewer_count
         ui = self._init_viewer_kwargs.get("ui", None)
-        if ui == "pydata-sphinx":
-            config = {
-                "uiMachineOptions": {
-                    "href": PYDATA_SPHINX_HREF,
-                    "export": "default",
-                }
-            }
-        elif ui == "mui":
-            config = {
-                "uiMachineOptions": {
-                    "href": MUI_HREF,
-                    "export": "default",
-                }
-            }
-        elif ui != "reference":
-            config = ui
-        else:
-            config = {}
-        config['maxConcurrency'] = os.cpu_count() * 2
+        config = build_config(ui)
 
-        itk_viewer = await api.createWindow(
-            name=f"itkwidgets viewer {_viewer_count}",
-            type="itk-vtk-viewer",
-            src=ITK_VIEWER_SRC,
-            fullscreen=True,
-            data=self.init_data,
-            # config should be a python data dictionary and can't be a string e.g. 'pydata-sphinx',
-            config=config,
-        )
-        _viewer_count += 1
-        if ENVIRONMENT is not Env.JUPYTERLITE:
-            itk_viewer.registerEventListener(
-                'renderedImageAssigned', self.set_event
+        if ENVIRONMENT is not Env.HYPHA:
+            itk_viewer = await api.createWindow(
+                name=f"itkwidgets viewer {_viewer_count}",
+                type="itk-vtk-viewer",
+                src=ITK_VIEWER_SRC,
+                fullscreen=True,
+                data=self.init_data,
+                # config should be a python data dictionary and can't be a string e.g. 'pydata-sphinx',
+                config=config,
             )
-            # Once the viewer has been created any queued requests can be run
-            asyncio.get_running_loop().call_soon_threadsafe(self.viewer_event.set)
+            _viewer_count += 1
+            if ENVIRONMENT is not Env.JUPYTERLITE:
+                itk_viewer.registerEventListener(
+                    'renderedImageAssigned', self.set_event
+                )
+                # Once the viewer has been created any queued requests can be run
+                asyncio.get_running_loop().call_soon_threadsafe(self.viewer_event.set)
 
-        self.set_default_ui_values(itk_viewer)
-        self.itk_viewer = itk_viewer
-        self.wid = self.itk_viewer.config.window_id
+            self.set_default_ui_values(itk_viewer)
+            self.itk_viewer = itk_viewer
+            self.wid = self.itk_viewer.config.window_id
 
-        # Create the initial screenshot
-        await self.create_screenshot()
-        # Wait and then update the screenshot in case rendered level changed
-        await asyncio.sleep(10)
-        await self.create_screenshot()
-        # Set up an event listener so that the embedded
-        # screenshot is updated when the user requests
-        itk_viewer.registerEventListener(
-            'screenshotTaken', self.update_screenshot
-        )
+            # Create the initial screenshot
+            await self.create_screenshot()
+            # Wait and then update the screenshot in case rendered level changed
+            await asyncio.sleep(10)
+            await self.create_screenshot()
+            # Set up an event listener so that the embedded
+            # screenshot is updated when the user requests
+            itk_viewer.registerEventListener(
+                'screenshotTaken', self.update_screenshot
+            )
 
     def set_default_ui_values(self, itk_viewer):
         settings = init_params_dict(itk_viewer)
@@ -144,18 +131,23 @@ class Viewer:
     def __init__(
         self, ui_collapsed=True, rotate=False, ui="pydata-sphinx", **add_data_kwargs
     ):
-        input_data = self.input_data(add_data_kwargs)
-        data = self.init_data(input_data)
         """Create a viewer."""
-        self.viewer_rpc = ViewerRPC(
-            ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, init_data=data, **add_data_kwargs
-        )
-        if ENVIRONMENT is not Env.JUPYTERLITE:
-            self.bg_jobs = bg.BackgroundJobManager()
-            self.queue = queue.Queue()
-            self.deferred_queue = queue.Queue()
-            self.bg_thread = self.bg_jobs.new(self.queue_worker)
-        api.export(self.viewer_rpc)
+        input_data = parse_input_data(add_data_kwargs)
+        data = build_init_data(input_data)
+        if ENVIRONMENT is not Env.HYPHA:
+            self.viewer_rpc = ViewerRPC(
+                ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, init_data=data, **add_data_kwargs
+            )
+            if ENVIRONMENT is not Env.JUPYTERLITE:
+                self.bg_jobs = bg.BackgroundJobManager()
+                self.queue = queue.Queue()
+                self.deferred_queue = queue.Queue()
+                self.bg_thread = self.bg_jobs.new(self.queue_worker)
+            api.export(self.viewer_rpc)
+        else:
+            self._itk_viewer = add_data_kwargs.get('itk_viewer', None)
+            self.server = add_data_kwargs.get('server', None)
+            self.workspace = self.server.config.workspace
 
     @property
     def loop(self):
@@ -163,39 +155,20 @@ class Viewer:
 
     @property
     def has_viewer(self):
-        return hasattr(self.viewer_rpc, 'itk_viewer')
+        if hasattr(self, "viewer_rpc"):
+            return hasattr(self.viewer_rpc, "itk_viewer")
+        return self.itk_viewer
 
-    def input_data(self, init_data_kwargs):
-        input_options = ["data", "image", "label_image", "point_set"]
-        inputs = []
-        for option in input_options:
-            data = init_data_kwargs.get(option, None)
-            if data is not None:
-                inputs.append((option, data))
-        return inputs
-
-    def init_data(self, input_data):
-        _init_data = {}
-        result= None
-        for (input_type, data) in input_data:
-            render_type = _detect_render_type(data, input_type)
-            if render_type is RenderType.IMAGE:
-                if input_type == 'label_image':
-                    result = _get_viewer_image(data, label=True)
-                    render_type = RenderType.LABELIMAGE
-                else:
-                    result = _get_viewer_image(data, label=False)
-            elif render_type is RenderType.POINT_SET:
-                result = _get_viewer_point_set(data)
-            if result is None:
-                raise RuntimeError(f"Could not process the viewer {input_type}")
-            _init_data[render_type.value] = result
-        return _init_data
+    @property
+    def itk_viewer(self):
+        if hasattr(self, "viewer_rpc"):
+            return self.viewer_rpc.itk_viewer
+        return self._itk_viewer
 
     async def run_queued_requests(self):
         def _run_queued_requests(queue):
             method_name, args, kwargs = queue.get()
-            fn = getattr(self.viewer_rpc.itk_viewer, method_name)
+            fn = getattr(self.itk_viewer, method_name)
             self.loop.call_soon_threadsafe(asyncio.ensure_future, fn(*args, **kwargs))
 
         # Wait for the viewer to be created
@@ -214,8 +187,10 @@ class Viewer:
         loop.run_until_complete(task)
 
     def queue_request(self, method, *args, **kwargs):
-        if ENVIRONMENT is Env.JUPYTERLITE or self.has_viewer:
-            fn = getattr(self.viewer_rpc.itk_viewer, method)
+        if (
+            ENVIRONMENT is Env.JUPYTERLITE or ENVIRONMENT is Env.HYPHA
+        ) or self.has_viewer:
+            fn = getattr(self.itk_viewer, method)
             fn(*args, **kwargs)
         elif method in deferred_methods():
             self.deferred_queue.put((method, args, kwargs))
@@ -235,7 +210,13 @@ class Viewer:
         render_type = _detect_render_type(image, 'image')
         if render_type is RenderType.IMAGE:
             image = _get_viewer_image(image, label=False)
-            self.queue_request('setImage', image, name)
+            if ENVIRONMENT is Env.HYPHA:
+                self.image = image
+                svc_name = f'{self.workspace}/itkwidgets-server:data-set'
+                svc = self.server.get_service(svc_name)
+                svc.set_label_or_image('image')
+            else:
+                self.queue_request('setImage', image, name)
         elif render_type is RenderType.POINT_SET:
             image = _get_viewer_point_set(image)
             self.queue_request('setPointSets', image)
@@ -306,7 +287,13 @@ class Viewer:
         render_type = _detect_render_type(label_image, 'image')
         if render_type is RenderType.IMAGE:
             label_image = _get_viewer_image(label_image, label=True)
-            self.queue_request('setLabelImage', label_image)
+            if ENVIRONMENT is Env.HYPHA:
+                self.label_image = label_image
+                svc_name = f"{self.workspace}/itkwidgets-server:data-set"
+                svc = self.server.get_service(svc_name)
+                svc.set_label_or_image('label_image')
+            else:
+                self.queue_request('setLabelImage', label_image)
         elif render_type is RenderType.POINT_SET:
             label_image = _get_viewer_point_set(label_image)
             self.queue_request('setPointSets', label_image)

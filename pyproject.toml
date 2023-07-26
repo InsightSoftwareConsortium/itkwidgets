@@ -36,9 +36,8 @@ keywords = [
 requires-python = ">=3.8"
 dependencies = [
     "itkwasm >= 1.0b.78",
-    "imjoy-rpc >= 0.5.16",
+    "imjoy-rpc >= 0.5.42",
     "imjoy-utils >= 0.1.2",
-    "importlib-metadata == 4.13.0 ; python_version == '3.7'",
     "ngff-zarr[dask-image] >= 0.4.3",
     "numcodecs",
     "zarr",
@@ -68,6 +67,15 @@ lab = [
     "imjoy-jupyterlab-extension >=0.1.13",
     "imjoy-elfinder[jupyter]"
 ]
+cli = [
+    "hypha >= 0.15.28",
+    "imgcat",
+    "IPython >= 8.4.0",
+    "itk-io >= 5.3.0",
+    "ngff-zarr[cli]",
+    "playwright",
+]
+
 notebook = [
     "imjoy-jupyter-extension >=0.3.0",
     "imjoy-elfinder[jupyter]"
@@ -77,3 +85,6 @@ test = [
     "nbmake",
 ]
 doc = ["sphinx"]
+
+[project.scripts]
+itkwidgets = "itkwidgets.standalone_server:cli_entrypoint"

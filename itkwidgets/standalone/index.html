@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+
+    <!-- <link rel="manifest" href="static/manifest.json"> -->
+
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="image-viewer">
+    <meta name="apple-mobile-web-app-title" content="image-viewer">
+    <meta name="theme-color" content="#8B8B8B">
+    <meta name="msapplication-navbutton-color" content="#8B8B8B">
+    <meta name="apple-mobile-web-app-status-bar-style"
+    content="black-translucent">
+    <meta name="msapplication-starturl" content="/itk-vtk-viewer/app/">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- <link rel="icon" type="image/png" sizes="50x50" href="/itk-vtk-viewer/logo.png"> -->
+    <!-- <link rel="apple-touch-icon" type="image/png" sizes="50x50" href="/itk-vtk-viewer/logo.png"> -->
+
+    <script src="https://cdn.jsdelivr.net/npm/imjoy-rpc@0.5.42/dist/hypha-rpc-websocket.min.js"></script>
+    <link rel="icon" type="image/png" href="static/favicon-32x32.png">
+  </head>
+
+  <body>
+    <div class="content" style="position: absolute; width: 100vw; height: 100vh; top: 0; left: 0; overflow: hidden; background: black; margin: 0; padding: 0;"></div>
+    <script type="text/javascript" src="https://bafybeiauuswm657tct7b7kpnorrsz7hvvaljpsbeuw35hkfobtyyrbblpm.on.fleek.co/itkVtkViewer.js">    </script>
+    <script>
+    async function setupHypha(config) {
+        globalThis.config = config
+        const url = config.server_url;
+        const extraHeaders = {};
+        if (config.token) {
+          extraHeaders.Authorization = "Bearer " + config.token;
+        }
+        // Note: extraHeaders only works for polling transport (the default)
+        // If we switch to websocket only, the headers won't be respected
+        if(globalThis.server){
+          globalThis.server.disconnect();
+        }
+        const server = await hyphaWebsocketClient.connectToServer(config)
+        return server
+     }
+     async function setupViewerForImJoy(server) {
+      const version = itkVtkViewer.version
+
+      await server.registerService({
+        name: 'itkwidgets-service',
+        id: 'itkwidgets_service',
+        config: { visibility: "public" },
+        version,
+        description: '2D / 3D web image, mesh, and point set viewer using itk-wasm and vtk.js ',
+        type: 'window',
+        docs: 'https://kitware.github.io/itk-vtk-viewer/docs/imjoy.html',
+        authors: ['Matt McCormick', 'Wei Ouyang'],
+        license: '3-Clause BSD License',
+        labels: ['visualization', 'itk', 'vtk', 'image', 'mesh', 'geometry', 'point set', '2D', '3D'],
+        icon: 'https://kitware.github.io/itk-vtk-viewer/app/favicon-32x32.png',
+        cover: ['https://kitware.github.io/itk-vtk-viewer/docs/howToUse.jpg', 'https://kitware.github.io/itk-vtk-viewer/docs/imjoy.png'],
+
+      });
+
+      itkVtkViewer.imJoyCodecs.forEach((codec) => {
+        server.registerCodec(codec)
+      })
+
+      const remoteID = `${workspace}/itkwidgets-server`;
+      let remoteService = await server.getService(`${remoteID}:parsed-data`);
+      const data = await remoteService.inputObject();
+      const viewer = await itkVtkViewer.createViewer(container, data.data);
+
+      await server.registerService({
+        name: "itk_vtk_viewer",
+        id: "itk-vtk-viewer",
+        description: "Retrieve the itk-vtk-viewer object",
+        config: {
+          visibility: "protected",
+          require_context: false,
+        },
+        viewer: () => viewer,
+        capture_screenshot: async () => {
+          const viewProxy = viewer.getViewProxy();
+          const representationProxy = viewProxy.getRepresentations()[0];
+          let mapper = null
+          if (representationProxy && representationProxy.getClassName() === 'vtkVolumeRepresentationProxy') {
+            mapper = representationProxy.getMapper();
+            mapper.setAutoAdjustSampleDistances(false)
+          }
+
+          const capturedImage = await viewer.captureImage()
+
+          if (representationProxy && representationProxy.getClassName() === 'vtkVolumeRepresentationProxy') {
+            mapper.setAutoAdjustSampleDistances(true)
+          }
+
+          return capturedImage
+        },
+      });
+
+      await server.registerService({
+        name: "setLabelOrImage",
+        id: "set-label-or-image",
+        description: "Set the image or label image.",
+        config: {
+          visibility: "protected",
+          require_context: false,
+        },
+        set_label_image: async () => {
+          remoteService = await server.getService(`${remoteID}:parsed-data`);
+          let labelImage = await remoteService.fetchZarrStore("label_image");
+          viewer.setLabelImage(labelImage);
+        },
+        set_image: async () => {
+          remoteService = await server.getService(`${remoteID}:parsed-data`);
+          let image = await remoteService.fetchZarrStore("image");
+          viewer.setImage(image);
+        }
+      });
+
+      remoteService = await server.getService(`${remoteID}:parsed-data`);
+      await remoteService.viewerReady(viewer);
+    }
+
+    const container = document.querySelector('.content')
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const workspace = urlParams.get("workspace");
+    const config = {
+        'client_id': 'itkwidgets-client',
+        'name': 'itkwidgets_client',
+        "server_url": document.location.origin,
+        "workspace": workspace,
+        "token": urlParams.get("token")
+    }
+    setupHypha(config).then(async (server) => {
+        await setupViewerForImJoy(server)
+    })
+  </script>
+  </body>
+</html>
