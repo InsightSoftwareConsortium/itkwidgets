@@ -45,8 +45,6 @@ def find_port(port=SERVER_PORT):
 
 
 PORT = find_port()
-OPTS = None
-EVENT = threading.Event()
 VIEWER = None
 BROWSER = None
 
@@ -68,8 +66,8 @@ def standalone_viewer(url):
     return view(itk_viewer=svc.viewer())
 
 
-def input_dict():
-    user_input = read_files()
+def input_dict(viewer_options):
+    user_input = read_files(viewer_options)
     data = build_init_data(user_input)
     ui = user_input.get("ui", "reference")
     data["config"] = build_config(ui)
@@ -88,8 +86,8 @@ def input_dict():
     return {"data": data}
 
 
-def read_files():
-    user_input = vars(OPTS)
+def read_files(viewer_options):
+    user_input = vars(viewer_options)
     reader = user_input.get("reader", None)
     for param in INPUT_OPTIONS:
         input = user_input.get(param, None)
@@ -107,14 +105,22 @@ def read_files():
     return user_input
 
 
-async def viewer_ready(itk_viewer):
-    init_viewer_kwargs = vars(OPTS)
-    settings = init_params_dict(itk_viewer)
-    for key, value in init_viewer_kwargs.items():
-        if key in settings.keys() and value is not None:
-            settings[key](value)
+class ViewerReady:
+    def __init__(self, viewer_options, init_params_dict):
+        self.init_viewer_kwargs = vars(viewer_options)
+        self.init_params_dict = init_params_dict
+        self.event = threading.Event()
 
-    EVENT.set()
+    async def on_ready(self, itk_viewer):
+        settings = self.init_params_dict(itk_viewer)
+        for key, value in self.init_viewer_kwargs.items():
+            if key in settings.keys() and value is not None:
+                settings[key](value)
+
+        self.event.set()
+
+    def wait(self):
+        self.event.wait()
 
 
 def set_label_or_image(server, type):
@@ -127,7 +133,7 @@ def fetch_zarr_store(store_type):
     return getattr(VIEWER, store_type, None)
 
 
-def start_viewer(server_url):
+def start_viewer(server_url, viewer_options):
     server = connect_to_server_sync(
         {
             "client_id": "itkwidgets-server",
@@ -137,7 +143,8 @@ def start_viewer(server_url):
     )
     register_itkwasm_imjoy_codecs_cli(server)
 
-    input_obj = input_dict()
+    input_obj = input_dict(viewer_options)
+    viewer_ready = ViewerReady(viewer_options, init_params_dict)
     server.register_service(
         {
             "name": "parsed_data",
@@ -149,7 +156,7 @@ def start_viewer(server_url):
                 "run_in_executor": True,
             },
             "inputObject": lambda: input_obj,
-            "viewerReady": viewer_ready,
+            "viewerReady": viewer_ready.on_ready,
             "fetchZarrStore": fetch_zarr_store,
         }
     )
@@ -168,10 +175,10 @@ def start_viewer(server_url):
         }
     )
 
-    return server, input_obj
+    return server, input_obj, viewer_ready
 
 
-def main():
+def main(viewer_options):
     global VIEWER
     JWT_SECRET = str(uuid.uuid4())
     os.environ["JWT_SECRET"] = JWT_SECRET
@@ -180,8 +187,8 @@ def main():
     server_url = f"http://{SERVER_HOST}:{PORT}"
     viewer_mount_dir = str(Path(VIEWER_HTML).parent)
 
-    out = None if OPTS.verbose else subprocess.DEVNULL
-    err = None if OPTS.verbose else subprocess.STDOUT
+    out = None if viewer_options.verbose else subprocess.DEVNULL
+    err = None if viewer_options.verbose else subprocess.STDOUT
     with subprocess.Popen(
         [
             sys.executable,
@@ -208,7 +215,7 @@ def main():
             timeout -= 0.1
             time.sleep(0.1)
 
-        server, input_obj = start_viewer(server_url)
+        server, input_obj, viewer_ready = start_viewer(server_url, viewer_options)
         workspace = server.config.workspace
         token = server.generate_token()
         params = urlencode({"workspace": workspace, "token": token})
@@ -217,10 +224,10 @@ def main():
         # Updates for resolution progression
         rate = 1.0
         fast_rate = 0.05
-        if OPTS.rotate:
+        if viewer_options.rotate:
             rate = fast_rate
 
-        if OPTS.browser:
+        if viewer_options.browser:
             sys.stdout.write(f"Viewer url:\n\n  {url}\n\n")
             webbrowser.open_new_tab(f"{server_url}/itkwidgets/index.html?{params}")
         else:
@@ -262,11 +269,11 @@ def main():
                     page.locator('label[itk-vtk-tooltip-content="Z plane play scroll"]').click()
                     rate = fast_rate
 
-        EVENT.wait()  # Wait until viewer is created before launching REPL
+        viewer_ready.wait()  # Wait until viewer is created before launching REPL
         workspace = server.config.workspace
         svc = server.get_service(f"{workspace}/itkwidgets-client:itk-vtk-viewer")
         VIEWER = view(itk_viewer=svc.viewer(), server=server)
-        if not OPTS.browser:
+        if not viewer_options.browser:
             from imgcat import imgcat
             terminal_height = min(terminal_size.lines - 1, terminal_size.columns // 3)
 
@@ -278,7 +285,7 @@ def main():
                 CSI = b'\033['
                 sys.stdout.buffer.write(CSI + str(terminal_height).encode() + b"F")
 
-        if OPTS.repl:
+        if viewer_options.repl:
             banner = f"""
                 Welcome to the itkwidgets command line tool! Press CTRL+D or
                 run `exit()` to terminate the REPL session. Use the `viewer`
@@ -289,8 +296,6 @@ def main():
 
 
 def cli_entrypoint():
-    global OPTS
-
     parser = argparse.ArgumentParser()
 
     parser.add_argument("data", nargs="?", type=str, help="Path to a data file.")
@@ -484,14 +489,14 @@ def cli_entrypoint():
     )
     parser.add_argument("--units", type=str, help="Units to display in the scale bar.")
 
-    OPTS = parser.parse_args()
+    viewer_options = parser.parse_args()
 
     try:
-        main()
+        main(viewer_options)
     except KeyboardInterrupt:
         if BROWSER:
             BROWSER.close()
-        if not OPTS.browser:
+        if not viewer_options.browser:
             # Clear `^C%`
             CSI = b'\033['
             sys.stdout.buffer.write(CSI + b"1K")
