@@ -265,7 +265,7 @@ def main(viewer_options):
                 elif input_data["y_slice"] is None and input_data["view_mode"] == "YPlane":
                     page.locator('label[itk-vtk-tooltip-content="Y plane play scroll"]').click()
                     rate = fast_rate
-                elif input_data["y_slice"] is None and input_data["view_mode"] == "ZPlane":
+                elif input_data["z_slice"] is None and input_data["view_mode"] == "ZPlane":
                     page.locator('label[itk-vtk-tooltip-content="Z plane play scroll"]').click()
                     rate = fast_rate
 
