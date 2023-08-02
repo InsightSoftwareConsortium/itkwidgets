@@ -66,3 +66,51 @@ jupyter lab
 
 If you'd rather interact with remotely hosted notebooks in JupyterLab you can
 also open them in Binder: [![Open in Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/InsightSoftwareConsortium/itkwidgets/main?labpath=examples%2F)
+
+## Command Line (CLI)
+
+To enable quick inspection of your 3D data in the browser or in your terminal you can install the command-line tool.
+
+```bash
+pip install 'itkwidgets[cli]>=1.0a34'
+playwright install --with-deps chromium
+```
+Previewing data in the terminal requires support for the iterm2 inline image protocol. Examples of terminals with this support include [wezterm](https://wezfurlong.org/wezterm/), [VSCode's Terminal](https://code.visualstudio.com/updates/v1_80#_image-support) (with VSCode >= v1.80), and [iTerm2](https://iterm2.com/index.html).
+
+**Note**: If you are using VSCode but are not seeing the images output in the terminal confirm that you are on version `1.80` or later. You may also need to make sure that `Integrated: Gpu Acceleration` is set to `on` rather than `auto`. Find this under `File > Preferences > Settings` and search for `Gpu Acceleration`.
+
+For basic usage the following flags are most commonly used:
+
+**Data Input**
+* `-i, --image`: The path to an image data file. This flag is optional and the image data can also be passed in as the first argument without a flag.
+* `-l, --label-image`: Path to a label image data file
+* `-p, --point-set`: Path to a point set data file
+* `--reader`: Backend to use to read the data file(s) (choices: "ngff_zarr", "zarr", "itk", "tifffile", "imageio")
+
+**For use with browser output**
+* `-b, --browser`: Render to a browser tab instead of the terminal.
+* `--repl`: Start interactive REPL after launching viewer. This allows you to programmatically interact with and update the viewer.
+
+**For use with terminal or browser output**
+* `--verbose`: Print all log messages to stdout. Defaults to supressing log messages.
+* `-r, --rotate`: Continuously rotate the camera around the scene in volume rendering mode.
+* `-m, --view-mode`: Only relevant for 3D scenes (choices: "x", "y", "z", "v")
+
+### Examples
+
+View the data in the terminal while rotating the camera:
+```bash
+itkwidgets path/to/data -r
+```
+![Image rotating in terminal](images/terminal_rotate.gif)
+
+View the image data in the browser and then programatically set the label image:
+```bash
+itkwidgets -i path/to/data --reader itk --repl
+```
+
+```python
+>>> import itk
+>>> label = itk.imread("path/to/label_image")
+>>> viewer.set_label_image(label)
+```

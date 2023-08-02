@@ -44,6 +44,13 @@ For Google Colab run:
 pip install 'itkwidgets>=1.0a23'
 ```
 
+### Command Line (CLI)
+
+```bash
+pip install 'itkwidgets[cli]>=1.0a34'
+playwright install --with-deps chromium
+```
+
 ## Example Notebooks
 
 Example Notebooks can be accessed locally by cloning the repository:
@@ -59,6 +66,8 @@ cd itkwidgets/examples
 ```
 
 ## Usage
+
+### Notebook
 
 In Jupyter, import the view function:
 
@@ -78,5 +87,18 @@ For information on additional options, see the view function docstring:
 view?
 ```
 
-See the [deployments](deployments.md) section for a more detailed overview of additional notebook
-options as well as other ways to run and interact with your notebooks.
+### CLI
+
+```bash
+itkwidgets path/to/image -b # open viewer in browser -OR-
+
+itkwidgets path/to/image    # display preview in terminal
+```
+
+For information on additional options, see the help:
+
+```bash
+itkwidgets --help
+```
+
+See the [deployments](deployments.md) section for a more detailed overview of additional options as well as other ways to run and interact with the itkwidgets.

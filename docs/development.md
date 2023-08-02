@@ -7,7 +7,7 @@ Setup your system for development:
 ```bash
 git clone https://github.com/InsightSoftwareConsortium/itkwidgets.git
 cd itkwidgets
-pip install -e ".[test,lab,notebook]"
+pip install -e ".[test,lab,notebook,cli]"
 pytest
 pytest --nbmake examples/*.ipynb
 ```
