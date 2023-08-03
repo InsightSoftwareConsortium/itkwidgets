@@ -47,7 +47,7 @@ pip install 'itkwidgets>=1.0a23'
 ### Command Line (CLI)
 
 ```bash
-pip install 'itkwidgets[cli]>=1.0a34'
+pip install 'itkwidgets[cli]>=1.0a35'
 playwright install --with-deps chromium
 ```
 
