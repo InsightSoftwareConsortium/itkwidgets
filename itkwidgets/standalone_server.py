@@ -44,7 +44,6 @@ def find_port(port=SERVER_PORT):
             return port
 
 
-PORT = find_port()
 VIEWER = None
 BROWSER = None
 
@@ -184,7 +183,8 @@ def main(viewer_options):
     os.environ["JWT_SECRET"] = JWT_SECRET
     hypha_server_env = os.environ.copy()
 
-    server_url = f"http://{SERVER_HOST}:{PORT}"
+    port = find_port()
+    server_url = f"http://{SERVER_HOST}:{port}"
     viewer_mount_dir = str(Path(VIEWER_HTML).parent)
 
     out = None if viewer_options.verbose else subprocess.DEVNULL
@@ -195,7 +195,7 @@ def main(viewer_options):
             "-m",
             "hypha.server",
             f"--host={SERVER_HOST}",
-            f"--port={PORT}",
+            f"--port={port}",
             "--static-mounts",
             f"/itkwidgets:{viewer_mount_dir}",
         ],
