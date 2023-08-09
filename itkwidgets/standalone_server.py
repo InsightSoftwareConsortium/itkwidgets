@@ -245,7 +245,10 @@ def main(viewer_options):
             is_tmux = 'TMUX' in os.environ and 'tmux' in os.environ['TMUX']
             # https://github.com/tmux/tmux/issues/1502
             if is_tmux:
-                width = min(width, 400)
+                if viewer_options.use2D:
+                    width = min(width, 320)
+                else:
+                    width = min(width, 420)
             else:
                 width = min(width, 768)
             height = width
