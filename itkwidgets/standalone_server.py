@@ -44,7 +44,6 @@ def find_port(port=SERVER_PORT):
             return port
 
 
-PORT = find_port()
 VIEWER = None
 BROWSER = None
 
@@ -184,7 +183,8 @@ def main(viewer_options):
     os.environ["JWT_SECRET"] = JWT_SECRET
     hypha_server_env = os.environ.copy()
 
-    server_url = f"http://{SERVER_HOST}:{PORT}"
+    port = find_port()
+    server_url = f"http://{SERVER_HOST}:{port}"
     viewer_mount_dir = str(Path(VIEWER_HTML).parent)
 
     out = None if viewer_options.verbose else subprocess.DEVNULL
@@ -195,7 +195,7 @@ def main(viewer_options):
             "-m",
             "hypha.server",
             f"--host={SERVER_HOST}",
-            f"--port={PORT}",
+            f"--port={port}",
             "--static-mounts",
             f"/itkwidgets:{viewer_mount_dir}",
         ],
@@ -245,7 +245,10 @@ def main(viewer_options):
             is_tmux = 'TMUX' in os.environ and 'tmux' in os.environ['TMUX']
             # https://github.com/tmux/tmux/issues/1502
             if is_tmux:
-                width = min(width, 400)
+                if viewer_options.use2D:
+                    width = min(width, 320)
+                else:
+                    width = min(width, 420)
             else:
                 width = min(width, 768)
             height = width
