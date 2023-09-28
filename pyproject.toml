@@ -61,11 +61,13 @@ Source = "https://github.com/InsightSoftwareConsortium/itkwidgets"
 all = [
     "imjoy-jupyterlab-extension >=0.1.13",
     "imjoy-elfinder[jupyter]",
-    "imjoy-jupyter-extension >=0.3.0"
+    "imjoy-jupyter-extension >=0.3.0",
+    "aiohttp>=3.8.2; python_version=='3.11'"
 ]
 lab = [
     "imjoy-jupyterlab-extension >=0.1.13",
-    "imjoy-elfinder[jupyter]"
+    "imjoy-elfinder[jupyter]",
+    "aiohttp>=3.8.2; python_version=='3.11'"
 ]
 cli = [
     "hypha >= 0.15.28",
@@ -78,7 +80,8 @@ cli = [
 
 notebook = [
     "imjoy-jupyter-extension >=0.3.0",
-    "imjoy-elfinder[jupyter]"
+    "imjoy-elfinder[jupyter]",
+    "aiohttp>=3.8.2; python_version=='3.11'"
 ]
 test = [
     "pytest >=2.7.3",
