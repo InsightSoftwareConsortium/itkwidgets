@@ -62,12 +62,12 @@ all = [
     "imjoy-jupyterlab-extension >=0.1.13",
     "imjoy-elfinder[jupyter]",
     "imjoy-jupyter-extension >=0.3.0",
-    "aiohttp>=3.8.2; python_version=='3.11'"
+    "aiohttp <4.0"
 ]
 lab = [
     "imjoy-jupyterlab-extension >=0.1.13",
     "imjoy-elfinder[jupyter]",
-    "aiohttp>=3.8.2; python_version=='3.11'"
+    "aiohttp <4.0"
 ]
 cli = [
     "hypha >= 0.15.28",
@@ -80,8 +80,7 @@ cli = [
 
 notebook = [
     "imjoy-jupyter-extension >=0.3.0",
-    "imjoy-elfinder[jupyter]",
-    "aiohttp>=3.8.2; python_version=='3.11'"
+    "imjoy-elfinder[jupyter]"
 ]
 test = [
     "pytest >=2.7.3",
