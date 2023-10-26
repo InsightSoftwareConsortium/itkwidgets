@@ -1,4 +1,5 @@
-"""itkwidgets: Interactive widgets to visualize images, point sets, and 3D geometry on the web."""
+"""itkwidgets: an elegant Python interface for visualization on the web platform
+to interactively generate insights into multidimensional images, point sets, and geometry."""
 from .integrations.environment import ENVIRONMENT, Env
 
 if ENVIRONMENT is not Env.HYPHA:

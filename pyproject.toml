@@ -7,7 +7,8 @@ name = "itkwidgets"
 authors = [{name = "Matt McCormick", email = "matt.mccormick@kitware.com"}]
 readme = "README.md"
 license = {file = "LICENSE"}
-dynamic = ["version", "description"]
+dynamic = ["version",]
+description = "An elegant Python interface for visualization on the web platform to interactively generate insights into multidimensional images, point sets, and geometry."
 classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python",

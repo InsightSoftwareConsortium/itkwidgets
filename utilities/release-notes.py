@@ -17,7 +17,7 @@ with open(output_file, 'w') as fp:
     version = current_tag[1:]
     fp.write('# itkwidgets {0}\n\n'.format(version))
 
-    fp.write('`itkwidgets` provides interactive widgets to visualize images, point sets, and 3D geometry on the web.\n\n')
+    fp.write('`itkwidgets` provides an elegant Python interface for visualization on the web platform to interactively generate insights into multidimensional images, point sets, and geometry.\n\n')
 
     fp.write('## Installation\n\n')
     fp.write('```\n')
