@@ -46,11 +46,14 @@ if ENVIRONMENT is not Env.JUPYTERLITE and ENVIRONMENT is not Env.HYPHA:
         else:
             try:
                 import_module("imjoy-jupyterlab-extension")
-            except:
-                if ENVIRONMENT is Env.JUPYTERLITE:
-                    raise RuntimeError('imjoy-jupyterlab-extension is required. Install the package and refresh page.')
-                elif sys.version_info.minor > 7:
-                    raise RuntimeError('imjoy-jupyterlab-extension is required. `pip install itkwidgets[lab]` and refresh page.')
+            except ModuleNotFoundError:
+                try:
+                    import_module("imjoy_jupyterlab_extension")
+                except ModuleNotFoundError:
+                    if ENVIRONMENT is Env.JUPYTERLITE:
+                        raise RuntimeError('imjoy-jupyterlab-extension is required. Install the package and refresh page.')
+                    elif sys.version_info.minor > 7:
+                        raise RuntimeError('imjoy-jupyterlab-extension is required. `pip install itkwidgets[lab]` and refresh page.')
 
     try:
         import imjoy_elfinder
