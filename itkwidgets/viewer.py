@@ -83,9 +83,8 @@ class ViewerRPC:
                     'screenshotTaken', self.update_screenshot
                 )
                 # Once the viewer has been created any queued requests can be run
-                asyncio.get_running_loop().call_soon_threadsafe(self.viewer_event.set)
-            else:
                 CellWatcher().update_viewer_status(self.parent)
+                asyncio.get_running_loop().call_soon_threadsafe(self.viewer_event.set)
 
             self.set_default_ui_values(itk_viewer)
             self.itk_viewer = itk_viewer
