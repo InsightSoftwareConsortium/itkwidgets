@@ -23,4 +23,5 @@ quick_start_guide.rst
 deployments.rst
 integrations.rst
 development.rst
+advanced.rst
 ```
