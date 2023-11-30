@@ -30,6 +30,7 @@ __all__ = [
 ]
 
 _viewer_count = 1
+_codecs_registered = False
 CellWatcher() # Instantiate the singleton class right away
 
 
