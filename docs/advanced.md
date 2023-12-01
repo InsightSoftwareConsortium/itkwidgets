@@ -1,5 +1,4 @@
 # Advanced
-----------
 
 ## Returning Values
 
