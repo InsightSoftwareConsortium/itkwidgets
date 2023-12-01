@@ -504,154 +504,155 @@ def view(data=None, **kwargs):
     point set.
 
     The image can be 2D or 3D. The type of the image can be an numpy.array,
-    itk.Image, or vtk.vtkImageData.
+    itkwasm.Image, itk.Image, additional NumPy-arraylike's, such as a dask.Array,
+    or vtk.vtkImageData.
 
     A point set can be visualized. The type of the point set can be an
     numpy.array (Nx3 array of point positions).
 
     Parameters
     ----------
-    General Interface
-    ^^^^^^^^^^^^^^^^^
-    ui_collapsed : bool, default: True
-        Collapse the native widget user interface.
-    rotate : bool, default: False
-        Continuously rotate the camera around the scene in volume rendering
-        mode.
-    annotations: bool, default: True
-        Display annotations describing orientation and the value of a
-        mouse-position-based data probe.
-    axes: bool, default: False
-        Display axes.
-    bg_color: (red, green, blue) tuple, components from 0.0 to 1.0
-        Background color. Default is based on the current Jupyter theme.
-    container_style: dict
-        The CSS style for the rendering view `div`'s.
 
-    Images
-    ^^^^^^
-    image : array_like, itk.Image, or vtk.vtkImageData
-        The 2D or 3D image to visualize.
-    label_image: array_like, itk.Image, or vtk.vtkImageData
-        The 2D or 3D label map to visualize. If an image is also provided, the
-        label map must have the same size.
-    label_blend: float, default: 0.5
-        Label map blend with intensity image, from 0.0 to 1.0.
-    label_names: list of (label_value, label_name)
-        String names associated with the integer label values.
-    label_lut: string, default: 'glasbey'
-        Lookup table for the label map.
-    label_weights: float
-        The rendering weight assigned to current label. Values range from 0.0
-        to 1.0.
-    color_range: list, default: The [min, max] range of the data values
-        The [min, max] range of intensity values mapped to colors for the given
-        image component identified by name.
-    color_bounds: list, default: The [min, max] range of the data values
-        The [min, max] range of intensity values for color maps that provide a
-        bounds for user inputs.
-    cmap: string, default: 'Grayscale'
-        The color map for the current component/channel.
-    x_slice: float, default: None
-        The position in world space of the X slicing plane.
-    y_slice: float, default: None
-        The position in world space of the Y slicing plane.
-    z_slice: float, default: None
-        The position in world space of the Z slicing plane.
-    interpolation: bool, deafult: True
-        Linear as opposed to nearest neighbor interpolation for image slices.
-        Note: Interpolation is not currently supported with label maps.
-    gradient_opacity: float, default: 0.5
-        Gradient opacity for composite volume rendering, in the range
-        (0.0, 1.0].
-    gradient_opacity_scale: float, default: 0.5
-        Gradient opacity scale for composite volume rendering, in the range
-        (0.0, 1.0].
-    gaussians: dict
-        Volume rendering opacity transfer function Gaussian parameters. For
-        each image component, multiple Gaussians can be specified.
-        Default Gaussian parameters:
-          {'position': 0.5, 'height': 1, 'width': 0.5, 'xBias': 0.51, 'yBias': 0.4}
-    blend_mode: string, default: 'Composite'
-        Volume rendering blend mode. Supported modes: 'Composite', 'Maximum',
-        'Minimum', 'Average'.
-    component_visible: bool, default: True
-        The given image intensity component index's visibility.
-    shadow_enabled: bool, default: True
-        Whether to used gradient-based shadows in the volume rendering.
-    view_mode: 'XPlane', 'YPlane', 'ZPlane', or 'Volume', default: 'Volume'
-        Only relevant for 3D scenes.
-        Viewing mode:
-            'XPlane': x-plane
-            'YPlane': y-plane
-            'ZPlane': z-plane
-            'Volume': volume rendering
-    layer: string
-        Select the layer identified by `name` in the user interface.
-    layer_visible: bool, deafult: True
-        Whether the current layer is visible.
+    ### General Interface
 
-    Point Set
-    ^^^^^^^^^^
-    point_set: point set
-        The point set to visualize.
+    :param ui_collapsed: Collapse the native widget user interface. default: True
+    :type  ui_collapsed: bool
+
+    :param rotate: Continuously rotate the camera around the scene in volume rendering mode. default: False
+    :type  rotate: bool
+
+    :param annotations: Display annotations describing orientation and the value of a mouse-position-based data probe. default: True
+    :type  annotations: bool
+
+    :param axes: Display axes. default: False
+    :type  axes: bool
+
+    :param bg_color: Background color. default: based on the current Jupyter theme
+    :type  bg_color: (red, green, blue) tuple, components from 0.0 to 1.0
+
+    :param container_style: The CSS style for the rendering view `div`'s.
+    :type  container_style: dict
+
+    ### Images
+
+    :param image: The image to visualize.
+    :type  image: array_like, itk.Image, or vtk.vtkImageData
+
+    :param label_image: The label map to visualize. If an image is also provided, the label map must have the same size.
+    :type  label_image: array_like, itk.Image, or vtk.vtkImageData
+
+    :param label_blend: Label map blend with intensity image, from 0.0 to 1.0. default: 0.5
+    :type  label_blend: float
+
+    :param label_names: String names associated with the integer label values.
+    :type  label_names: list of (label_value, label_name)
+
+    :param label_lut: Lookup table for the label map. default: 'glasbey'
+    :type  label_lut: string
+
+    :param label_weights: The rendering weight assigned to current label. Values range from 0.0 to 1.0.
+    :type  label_weights: float
+
+    :param color_range: The [min, max] range of the data values mapped to colors for the given image component identified by name.
+    :type  color_range: list, default: The [min, max] range of the data values
+
+    :param color_bounds: The [min, max] range of the data values for color maps that provide a bounds for user inputs.
+    :type  color_bounds: list, default: The [min, max] range of the data values
+
+    :param cmap: The color map for the current component/channel. default: 'Grayscale'
+    :type  cmap: string
+
+    :param x_slice: The position in world space of the X slicing plane.
+    :type  x_slice: float
+
+    :param y_slice: The position in world space of the Y slicing plane.
+    :type  y_slice: float
+
+    :param z_slice: The position in world space of the Z slicing plane.
+    :type  z_slice: float
+
+    :param interpolation: Linear as opposed to nearest neighbor interpolation for image slices. Note: Interpolation is not currently supported with label maps. default: True
+    :type  interpolation: bool
+
+    :param gradient_opacity: Gradient opacity for composite volume rendering, in the range (0.0, 1.0]. default: 0.5
+    :type  gradient_opacity: float
+
+    :param gradient_opacity_scale: Gradient opacity scale for composite volume rendering, in the range (0.0, 1.0]. default: 0.5
+    :type  gradient_opacity_scale: float
+
+    :param gaussians: Volume rendering opacity transfer function Gaussian parameters. For each image component, multiple Gaussians can be specified. Default Gaussian parameters: {'position': 0.5, 'height': 1, 'width': 0.5, 'xBias': 0.51, 'yBias': 0.4}
+    :type  gaussians: dict
+
+    :param blend_mode: Volume rendering blend mode. Supported modes: 'Composite', 'Maximum', 'Minimum', 'Average'. default: 'Composite'
+    :type  blend_mode: string
+
+    :param component_visible: The given image intensity component index's visibility. default: True
+    :type  component_visible: bool
+
+    :param shadow_enabled: Whether to used gradient-based shadows in the volume rendering. default: True
+    :type  shadow_enabled: bool
+
+    :param view_mode: Only relevant for 3D scenes. Viewing mode: 'XPlane', 'YPlane', 'ZPlane', or 'Volume'. default: 'Volume'
+    :type  view_mode: 'XPlane', 'YPlane', 'ZPlane', or 'Volume'
+
+    :param layer: Select the layer identified by `name` in the user interface.
+    :type  layer: string
+
+    :param layer_visible: Whether the current layer is visible. default: True
+    :type  layer_visible: bool
+
+    ### Point Set
+
+    :param point_set: The point set to visualize.
+    :type  point_set: array_like
 
     Other Parameters
     ----------------
-    sample_distance: float, default: 0.2
-        Sampling distance for volume rendering, normalized from 0.0 to 1.0.
-        Lower values result in a higher quality rendering. High values improve
-        the framerate.
-    units: string, default: ''
-        Units to display in the scale bar.
+
+    :param sample_distance: Sampling distance for volume rendering, normalized from 0.0 to 1.0. Lower values result in a higher quality rendering. High values improve the framerate. default: 0.2
+    :type  sample_distance: float
+
+    :param units: Units to display in the scale bar.
+    :type  units: string
 
     Returns
     -------
-    viewer : ipywidget
-        Display by placing at the end of a Jupyter or Colab cell. Query or set
-        properties on the object to change the visualization.
+
+    :return: viewer, display by placing at the end of a Jupyter or Colab cell. Query or set properties on the object to change the visualization.
+    :rtype:  Viewer
     """
     viewer = Viewer(data=data, **kwargs)
 
     return viewer
 
 def compare_images(fixed_image: Union[str, Image], moving_image: Union[str, Image], method: str = None, image_mix: float = None, checkerboard: bool = None, pattern: Union[Tuple[int, int], Tuple[int, int, int]] = None, swap_image_order: bool = None):
-    """Fuse 2 images with a checkerboard filter or as a 2 component image.  
+    """Fuse 2 images with a checkerboard filter or as a 2 component image.
 
     The moving image is re-sampled to the fixed image space. Set a keyword argument to None to use defaults based on method.
-    
-    Parameters
-    ----------
-    fixed_image: array_like, itk.Image, or vtk.vtkImageData
-        Static image the moving image is re-sampled to. For non-checkerboard methods ('blend', 'green-magenta', etc.), the fixed image is on the first component.
 
-    moving_image: array_like, itk.Image, or vtk.vtkImageData
-        Image is re-sampled to the fixed_image. For non-checkerboard methods ('blend', 'green-magenta', etc.), the moving image is on the second component.
+    :param fixed_image: Static image the moving image is re-sampled to. For non-checkerboard methods ('blend', 'green-magenta', etc.), the fixed image is on the first component.
+    :type  fixed_image: array_like, itk.Image, or vtk.vtkImageData
 
-    method: string, default: None, possible values: 'green-magenta', 'cyan-red', 'cyan-magenta', 'blend', 'checkerboard', 'disabled'
-        The checkerboard method picks pixels from the fixed and moving image to create a
-        checkerboard pattern. Setting the method to checkerboard turns on the checkerboard flag. 
-        The non-checkerboard methods ('blend', 'green-magenta', etc.) put the fixed image on component 0, moving image on component 1.
-        The 'green-magenta' and 'red-cyan' change the color maps so matching images are grayish white.  
-        The 'cyan-magenta' color maps produce a purple if the images match.  
+    :param moving_image: Image is re-sampled to the fixed_image. For non-checkerboard methods ('blend', 'green-magenta', etc.), the moving image is on the second component.
+    :type  moving_image: array_like, itk.Image, or vtk.vtkImageData
 
-    image_mix: float, default: None
-        Changes the percent contribution the fixed vs moving image makes to the
-        render by modifying the opacity transfer function. Value of 1 means max opacity for
-        moving image, 0 for fixed image. If value is None and the method is not checkerboard,
-        the image_mix is set to 0.5.  If the method is "checkerboard", the image_mix is set to 0.
-    
-    checkerboard: bool, default: None
-        Forces the checkerboard mixing of fixed and moving images for the cyan-magenta and blend methods.
-        The rendered image has 2 components, each component reverses which image is sampled for each
-        checkerboard box.
+    :param method: The checkerboard method picks pixels from the fixed and moving image to create a checkerboard pattern. Setting the method to checkerboard turns on the checkerboard flag. The non-checkerboard methods ('blend', 'green-magenta', etc.) put the fixed image on component 0, moving image on component 1. The 'green-magenta' and 'red-cyan' change the color maps so matching images are grayish white. The 'cyan-magenta' color maps produce a purple if the images match.
+    :type  method: string, default: None, possible values: 'green-magenta', 'cyan-red', 'cyan-magenta', 'blend', 'checkerboard', 'disabled'
 
-    pattern: Union[Tuple[int, int], Tuple[int, int, int]], default: None
-        The number of checkerboard boxes for each dimension.
+    :param image_mix: Changes the percent contribution the fixed vs moving image makes to the render by modifying the opacity transfer function. Value of 1 means max opacity for moving image, 0 for fixed image. If value is None and the method is not checkerboard, the image_mix is set to 0.5.  If the method is "checkerboard", the image_mix is set to 0.
+    :type  image_mix: float, default: None
 
-    swap_image_order: bool, default: None
-        Reverses which image is sampled for each checkerboard box.  This simply toggles
-        image_mix between 0 and 1.
+    :param checkerboard: Forces the checkerboard mixing of fixed and moving images for the cyan-magenta and blend methods. The rendered image has 2 components, each component reverses which image is sampled for each checkerboard box.
+    :type  checkerboard: bool, default: None
+
+    :param pattern: The number of checkerboard boxes for each dimension.
+    :type  pattern: tuple, default: None
+
+    :param swap_image_order: Reverses which image is sampled for each checkerboard box.  This simply toggles image_mix between 0 and 1.
+    :type  swap_image_order: bool, default: None
+
+    :return: viewer, display by placing at the end of a Jupyter or Colab cell. Query or set properties on the object to change the visualization.
+    :rtype:  Viewer
     """
     viewer = view()
     viewer.compare_images(fixed_image=fixed_image, moving_image=moving_image, method=method, image_mix=image_mix, checkerboard=checkerboard, pattern=pattern, swap_image_order=swap_image_order)

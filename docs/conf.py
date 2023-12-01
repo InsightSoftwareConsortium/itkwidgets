@@ -39,12 +39,22 @@ version = release
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.autosummary',
+    'autodoc2',
     'myst_parser',
     'sphinx_copybutton',
     'sphinx.ext.intersphinx',
     'sphinxext.opengraph',
     'sphinx_design',
 ]
+
+autodoc2_packages = [
+    {
+        "path": "../itkwidgets",
+        "exclude_files": [],
+    },
+]
+autodoc2_render_plugin = "myst"
 
 myst_enable_extensions = [
     "colon_fence",

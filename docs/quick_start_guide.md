@@ -69,19 +69,19 @@ cd itkwidgets/examples
 
 ### Notebook
 
-In Jupyter, import the view function:
+In Jupyter, import the {py:obj}`view <itkwidgets.viewer.view>` function:
 
 ```python
 from itkwidgets import view
 ```
 
-Then, call the view function at the end of a cell, passing in the image to examine:
+Then, call the {py:obj}`view <itkwidgets.viewer.view>` function at the end of a cell, passing in the image to examine:
 
 ```python
 view(image)
 ```
 
-For information on additional options, see the view function docstring:
+For information on additional options, see the {py:obj}`view <itkwidgets.viewer.view>` function docstring:
 
 ```python
 view?
