@@ -57,7 +57,7 @@ image = itk.imread(file_name)
 view(image, rotate=True, gradient_opacity=0.4)
 ```
 
-Get started with ITK in the [3DImage](https://colab.research.google.com/github/InsightSoftwareConsortium/itkwidgets/blob/main/examples/integrations/itk/3DImage.ipynb) notebook. You can also visit the [ITK docs](https://itkpythonpackage.readthedocs.io/en/latest/Quick_start_guide.html#usage) for additional examples for getting started.
+Get started with ITK in the [3DImage](https://colab.research.google.com/github/InsightSoftwareConsortium/itkwidgets/blob/main/examples/integrations/itk/3DImage.ipynb) notebook. You can also visit the [ITK docs](https://docs.itk.org/en/latest/learn/python_quick_start.html) for additional examples for getting started.
 
 ![ITK 3D Image](images/itkimage.png)
 
