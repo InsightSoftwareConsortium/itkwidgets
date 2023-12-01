@@ -30,6 +30,43 @@ Or check out the [NumPyArrayPointSet](https://colab.research.google.com/github/I
 
 ![NumPy Array Point Set](images/numpy.png)
 
+ITK-Wasm
+--------
+
+[ITK-Wasm](https://wasm.itk.org) combines ITK and [WebAssembly](https://webassembly.org/) to enable high-performance spatial analysis in a web browser or system-level environments and reproducible execution across programming languages and hardware architectures.
+
+In Python, ITK-Wasm works with [simple, Pythonic data
+structures](https://wasm.itk.org/en/latest/python/numpy.html) comprised of
+Python dictionaries, lists, and NumPy arrays.
+
+Install an ITK-Wasm package. For example:
+
+```bash
+pip install itkwasm-image-io
+```
+
+You can use ITK-Wasm to read in and filter your data before displaying and interacting with it with the Viewer.
+
+```python
+import os
+from itkwasm_image_io import imread
+from itkwidgets import view
+from urllib.request import urlretrieve
+
+# Download data
+file_name = '005_32months_T2_RegT1_Reg2Atlas_ManualBrainMask_Stripped.nrrd'
+if not os.path.exists(file_name):
+    url = 'https://data.kitware.com/api/v1/file/564a5b078d777f7522dbfaa6/download'
+    urlretrieve(url, file_name)
+
+image = imread(file_name)
+view(image, rotate=True, gradient_opacity=0.4)
+```
+
+Get started with ITK in the [3DImage](https://colab.research.google.com/github/InsightSoftwareConsortium/itkwidgets/blob/main/examples/integrations/itkwasm/3DImage.ipynb) notebook. You can also visit the [ITK-Wasm docs](https://wasm.itk.org/en/latest/python/introduction.html) for more information and see the [ITK-Wasm packages](https://wasm.itk.org/en/latest/introduction/packages.html) for additional examples.
+
+![ITK 3D Image](images/itkimage.png)
+
 ITK
 ---
 
