@@ -24,3 +24,6 @@ venv.bak/
 docs/jupyterlite/.cache/
 docs/jupyterlite/.jupyterlite.doit.db
 docs/jupyterlite/_output/
+
+# autodoc2 generated
+docs/apidocs

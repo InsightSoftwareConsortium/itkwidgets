@@ -19,9 +19,26 @@ Try it with JupyterLite!
 </a>
 
 ```{toctree}
-quick_start_guide.rst
-deployments.rst
-integrations.rst
-development.rst
-advanced.rst
+:maxdepth: 4
+:caption: 📖 Learn
+
+quick_start_guide
+deployments
+integrations
+advanced
+```
+
+```{toctree}
+:maxdepth: 3
+:caption: 📖 Reference
+
+apidocs/index.rst
+```
+
+```{toctree}
+:maxdepth: 2
+:caption: 🔨 Contribute
+
+development
+Code of Conduct <https://docs.itk.org/en/latest/contributing/code_of_conduct.html>
 ```
