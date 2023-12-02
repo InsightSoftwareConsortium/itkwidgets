@@ -60,6 +60,7 @@ def build_config(ui=None):
     else:
         config = {}
     config['maxConcurrency'] = os.cpu_count() * 2
+    config['showSaveRoiButton'] = True
 
     return config
 

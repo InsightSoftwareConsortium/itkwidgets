@@ -82,6 +82,9 @@ class ViewerRPC:
                 itk_viewer.registerEventListener(
                     'screenshotTaken', self.update_screenshot
                 )
+                itk_viewer.registerEventListener(
+                    'saveRoi', self.save_roi
+                )
                 # Once the viewer has been created any queued requests can be run
                 CellWatcher().update_viewer_status(self.parent)
                 asyncio.get_running_loop().call_soon_threadsafe(self.viewer_event.set)
@@ -124,6 +127,9 @@ class ViewerRPC:
                 </script>
             ''')
         self.img.display(html)
+    
+    def save_roi(self, roi):
+        api.log(f'save roi {roi}')
 
     def set_event(self, event_data):
         # Once the data has been set the deferred queue requests can be run
