@@ -1,11 +1,8 @@
 import asyncio
 import functools
-import queue
-import threading
 from imjoy_rpc import api
 from typing import List, Union, Tuple
 from IPython.display import display, HTML
-from IPython.lib import backgroundjobs as bg
 import uuid
 
 from ._type_aliases import Gaussians, Style, Image, PointSet
@@ -15,7 +12,6 @@ from ._initialization_params import (
     parse_input_data,
     build_init_data,
 )
-from ._method_types import deferred_methods
 from .cell_watcher import CellWatcher
 from .imjoy import register_itkwasm_imjoy_codecs
 from .integrations import _detect_render_type, _get_viewer_image, _get_viewer_point_set
@@ -54,9 +50,6 @@ class ViewerRPC:
         self.img = display(HTML(f'<div />'), display_id=str(uuid.uuid4()))
         self.wid = None
         self.parent = parent
-        if ENVIRONMENT is not Env.JUPYTERLITE and ENVIRONMENT is not Env.HYPHA:
-            self.viewer_event = threading.Event()
-            self.data_event = threading.Event()
 
     async def setup(self):
         pass
@@ -83,8 +76,7 @@ class ViewerRPC:
                     'screenshotTaken', self.update_screenshot
                 )
                 # Once the viewer has been created any queued requests can be run
-                CellWatcher().update_viewer_status(self.parent)
-                asyncio.get_running_loop().call_soon_threadsafe(self.viewer_event.set)
+                CellWatcher().update_viewer_status(self.parent, True)
 
             self.set_default_ui_values(itk_viewer)
             self.itk_viewer = itk_viewer
@@ -125,10 +117,6 @@ class ViewerRPC:
             ''')
         self.img.display(html)
 
-    def set_event(self, event_data):
-        # Once the data has been set the deferred queue requests can be run
-        asyncio.get_running_loop().call_soon_threadsafe(self.data_event.set)
-
 
 class Viewer:
     """Pythonic Viewer class."""
@@ -145,23 +133,11 @@ class Viewer:
                 ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, init_data=data, **add_data_kwargs
             )
             self.cw = CellWatcher()
-            if ENVIRONMENT is not Env.JUPYTERLITE:
-                self._setup_queueing()
             api.export(self.viewer_rpc)
         else:
             self._itk_viewer = add_data_kwargs.get('itk_viewer', None)
             self.server = add_data_kwargs.get('server', None)
             self.workspace = self.server.config.workspace
-
-    def _setup_queueing(self):
-        self.bg_jobs = bg.BackgroundJobManager()
-        self.queue = queue.Queue()
-        self.deferred_queue = queue.Queue()
-        self.bg_thread = self.bg_jobs.new(self.queue_worker)
-
-    @property
-    def loop(self):
-        return asyncio.get_running_loop()
 
     @property
     def has_viewer(self):
@@ -175,42 +151,10 @@ class Viewer:
             return self.viewer_rpc.itk_viewer
         return self._itk_viewer
 
-    async def run_queued_requests(self):
-        def _run_queued_requests(queue):
-            method_name, args, kwargs = queue.get()
-            fn = getattr(self.itk_viewer, method_name)
-            self.loop.call_soon_threadsafe(asyncio.ensure_future, fn(*args, **kwargs))
-
-        # Wait for the viewer to be created
-        self.viewer_rpc.viewer_event.wait()
-        while self.queue.qsize():
-            _run_queued_requests(self.queue)
-        # Wait for the data to be set
-        self.viewer_rpc.data_event.wait()
-        while self.deferred_queue.qsize():
-            _run_queued_requests(self.deferred_queue)
-
-    def queue_worker(self):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        task = loop.create_task(self.run_queued_requests())
-        loop.run_until_complete(task)
-
     def call_getter(self, future):
         name = uuid.uuid4()
         CellWatcher().results[name] = future
         future.add_done_callback(functools.partial(CellWatcher()._callback, name))
-
-    def queue_request(self, method, *args, **kwargs):
-        if (
-            ENVIRONMENT is Env.JUPYTERLITE or ENVIRONMENT is Env.HYPHA
-        ) or self.has_viewer:
-            fn = getattr(self.itk_viewer, method)
-            fn(*args, **kwargs)
-        elif method in deferred_methods():
-            self.deferred_queue.put((method, args, kwargs))
-        else:
-            self.queue.put((method, args, kwargs))
 
     def fetch_value(func):
         @functools.wraps(func)
