@@ -184,7 +184,7 @@ class CellWatcher(object):
         keys = [k for k in self.shell.user_ns.keys()]
         for key in keys:
             value = self.shell.user_ns[key]
-            if asyncio.isfuture(value) and isinstance(value, FuturePromise):
+            if asyncio.isfuture(value) and (isinstance(value, FuturePromise) or isinstance(value, asyncio.Task)):
                 # Getters/setters return futures
                 # They should all be resolved now, so use the result
                 self.shell.user_ns[key] = value.result()
