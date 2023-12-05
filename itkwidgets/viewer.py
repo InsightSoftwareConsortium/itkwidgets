@@ -50,6 +50,8 @@ class ViewerRPC:
         self.img = display(HTML(f'<div />'), display_id=str(uuid.uuid4()))
         self.wid = None
         self.parent = parent
+        if ENVIRONMENT is not Env.JUPYTERLITE:
+            CellWatcher().add_viewer(self.parent)
 
     async def setup(self):
         pass
@@ -71,16 +73,17 @@ class ViewerRPC:
                 config=config,
             )
             _viewer_count += 1
+
+            self.set_default_ui_values(itk_viewer)
+            self.itk_viewer = itk_viewer
+            self.wid = self.itk_viewer.config.window_id
+
             if ENVIRONMENT is not Env.JUPYTERLITE:
                 itk_viewer.registerEventListener(
                     'screenshotTaken', self.update_screenshot
                 )
                 # Once the viewer has been created any queued requests can be run
                 CellWatcher().update_viewer_status(self.parent, True)
-
-            self.set_default_ui_values(itk_viewer)
-            self.itk_viewer = itk_viewer
-            self.wid = self.itk_viewer.config.window_id
 
             # Create the initial screenshot
             await self.create_screenshot()
@@ -130,7 +133,7 @@ class Viewer:
         data = build_init_data(input_data)
         if ENVIRONMENT is not Env.HYPHA:
             self.viewer_rpc = ViewerRPC(
-                ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, init_data=data, **add_data_kwargs
+                ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, init_data=data, parent=self.name, **add_data_kwargs
             )
             self.cw = CellWatcher()
             api.export(self.viewer_rpc)

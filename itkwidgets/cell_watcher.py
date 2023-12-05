@@ -43,10 +43,10 @@ class Viewers(object):
             self.add_viewer(view)
         self._data[view]['name'] = name
 
-    def update_viewer_status(self, view):
+    def update_viewer_status(self, view, status):
         if view not in self.data.keys():
             self.add_viewer(view)
-        self._data[view]['status'] = True
+        self._data[view]['status'] = status
 
 
 class CellWatcher(object):
@@ -86,8 +86,8 @@ class CellWatcher(object):
         # Track all Viewer instances
         self.viewers.add_viewer(view)
 
-    def update_viewer_status(self, view):
-        self.viewers.update_viewer_status(view)
+    def update_viewer_status(self, view, status):
+        self.viewers.update_viewer_status(view, status)
         if self.waiting_on_viewer:
             # Might be ready now, try again
             self.create_task(self.execute_next_request)
