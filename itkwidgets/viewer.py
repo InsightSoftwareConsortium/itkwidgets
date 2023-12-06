@@ -1,5 +1,6 @@
 import asyncio
 import functools
+import numpy as np
 from imjoy_rpc import api
 from inspect import isawaitable
 from typing import List, Union, Tuple
@@ -305,6 +306,23 @@ class Viewer:
         return await self.viewer_rpc.itk_viewer.getImageVolumeScatteringBlend()
 
     @fetch_value
+    async def get_current_scale(self):
+        return await self.viewer_rpc.itk_viewer.getLoadedScale()
+
+    @fetch_value
+    async def get_roi_region(self):
+        bounds = await self.viewer_rpc.itk_viewer.getCroppedImageWorldBounds()
+        x0, x1, y0, y1, z0, z1 = bounds
+        return [[z0, y0, x0], [z1, y1, x1]]
+
+    @fetch_value
+    async def get_roi_slice(self, scale=-1):
+        idxs = await self.viewer_rpc.itk_viewer.getCroppedIndexBounds(scale)
+        x0, x1 = idxs['x']
+        y0, y1 = idxs['y']
+        z0, z1 = idxs['z']
+        return np.index_exp[z0:z1, y0:y1, x0:x1]
+
     def compare_images(self, fixed_image: Union[str, Image], moving_image: Union[str, Image], method: str = None, image_mix: float = None, checkerboard: bool = None, pattern: Union[Tuple[int, int], Tuple[int, int, int]] = None, swap_image_order: bool = None):
         # image args may be image name or image object
         fixed_name = 'Fixed'
