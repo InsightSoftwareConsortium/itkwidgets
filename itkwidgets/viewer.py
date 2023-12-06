@@ -202,6 +202,13 @@ class Viewer:
         return await self.viewer_rpc.itk_viewer.getBackgroundColor()
 
     @fetch_value
+    def set_cropping_planes(self, cropping_planes):
+        self.viewer_rpc.itk_viewer.setCroppingPlanes(cropping_planes)
+    @fetch_value
+    async def get_cropping_planes(self):
+        return await self.viewer_rpc.itk_viewer.getCroppingPlanes()
+
+    @fetch_value
     def set_image(self, image: Image, name: str = 'Image'):
         render_type = _detect_render_type(image, 'image')
         if render_type is RenderType.IMAGE:
