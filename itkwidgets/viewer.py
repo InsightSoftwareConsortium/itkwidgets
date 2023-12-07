@@ -247,8 +247,8 @@ class Viewer:
         return await self.viewer_rpc.itk_viewer.getImageColorRangeBounds()
 
     @fetch_value
-    def set_image_component_visibility(self, visibility: bool):
-         self.viewer_rpc.itk_viewer.setImageComponentVisibility(visibility)
+    def set_image_component_visibility(self, visibility: bool, component: int):
+         self.viewer_rpc.itk_viewer.setImageComponentVisibility(visibility, component)
     @fetch_value
     async def get_image_component_visibility(self, component: int):
         return await self.viewer_rpc.itk_viewer.getImageComponentVisibility(component)
@@ -386,8 +386,8 @@ class Viewer:
         return await self.viewer_rpc.itk_viewer.getLayerNames()
 
     @fetch_value
-    def set_layer_visibility(self, visible: bool):
-         self.viewer_rpc.itk_viewer.setLayerVisibility(visible)
+    def set_layer_visibility(self, visible: bool, name: str):
+         self.viewer_rpc.itk_viewer.setLayerVisibility(visible, name)
     @fetch_value
     async def get_layer_visibility(self, name: str):
         return await self.viewer_rpc.itk_viewer.getLayerVisibility(name)
