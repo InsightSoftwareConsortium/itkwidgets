@@ -92,3 +92,8 @@ def build_init_data(input_data):
             raise RuntimeError(f"Could not process the viewer {input_type}")
         input_data[render_type.value] = result
     return input_data
+
+
+def defer_for_data_render(init_data):
+    deferred_keys = ['image', 'labelImage']
+    return any([k in init_data.keys() for k in deferred_keys])

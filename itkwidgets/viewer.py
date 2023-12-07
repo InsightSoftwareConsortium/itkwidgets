@@ -12,6 +12,7 @@ from ._initialization_params import (
     build_config,
     parse_input_data,
     build_init_data,
+    defer_for_data_render,
 )
 from .cell_watcher import CellWatcher
 from .imjoy import register_itkwasm_imjoy_codecs
@@ -82,8 +83,12 @@ class ViewerRPC:
             if ENVIRONMENT is not Env.JUPYTERLITE:
                 # Create the initial screenshot
                 await self.create_screenshot()
-                # Once the viewer has been created any queued requests can be run
-                CellWatcher().update_viewer_status(self.parent, True)
+                itk_viewer.registerEventListener(
+                    'renderedImageAssigned', self.update_viewer_status
+                )
+                if not defer_for_data_render(self.init_data):
+                    # Once the viewer has been created any queued requests can be run
+                    CellWatcher().update_viewer_status(self.parent, True)
 
             # Wait and then update the screenshot in case rendered level changed
             await asyncio.sleep(10)
@@ -117,6 +122,10 @@ class ViewerRPC:
                 </script>
             ''')
         self.img.display(html)
+
+    def update_viewer_status(self, name):
+        if not CellWatcher().viewer_ready(self.parent):
+            CellWatcher().update_viewer_status(self.parent, True)
 
 
 class Viewer:
@@ -201,6 +210,7 @@ class Viewer:
                 svc.set_label_or_image('image')
             else:
                 self.viewer_rpc.itk_viewer.setImage(image, name)
+                CellWatcher().update_viewer_status(self.name, False)
         elif render_type is RenderType.POINT_SET:
             image = _get_viewer_point_set(image)
             self.viewer_rpc.itk_viewer.setPointSets(image)
@@ -318,6 +328,7 @@ class Viewer:
         if swap_image_order is not None:
             options['swapImageOrder'] = swap_image_order
         self.viewer_rpc.itk_viewer.compareImages(fixed_name, moving_name, options)
+        CellWatcher().update_viewer_status(self.name, False)
 
     @fetch_value
     def set_label_image(self, label_image: Image):
@@ -331,6 +342,7 @@ class Viewer:
                 svc.set_label_or_image('label_image')
             else:
                 self.viewer_rpc.itk_viewer.setLabelImage(label_image)
+                CellWatcher().update_viewer_status(self.name, False)
         elif render_type is RenderType.POINT_SET:
             label_image = _get_viewer_point_set(label_image)
             self.viewer_rpc.itk_viewer.setPointSets(label_image)

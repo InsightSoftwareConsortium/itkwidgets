@@ -38,17 +38,22 @@ class Viewers(object):
         return list(self.data.keys())
 
     def add_viewer(self, view):
-        self._data[view] = {'name': None, 'status': False}
+        self.data[view] = {'name': None, 'status': False}
 
     def set_name(self, view, name):
         if view not in self.data.keys():
             self.add_viewer(view)
-        self._data[view]['name'] = name
+        self.data[view]['name'] = name
 
     def update_viewer_status(self, view, status):
         if view not in self.data.keys():
             self.add_viewer(view)
-        self._data[view]['status'] = status
+        self.data[view]['status'] = status
+
+    def viewer_ready(self, view):
+        if viewer := self.data.get(view):
+            return viewer['status']
+        return False
 
 
 class CellWatcher(object):
@@ -93,6 +98,9 @@ class CellWatcher(object):
         if self.waiting_on_viewer:
             # Might be ready now, try again
             self.create_task(self.execute_next_request)
+
+    def viewer_ready(self, view):
+        return self.viewers.viewer_ready(view)
 
     def _task_cleanup(self, task):
         global background_tasks
