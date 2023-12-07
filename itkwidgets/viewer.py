@@ -82,9 +82,6 @@ class ViewerRPC:
             if ENVIRONMENT is not Env.JUPYTERLITE:
                 # Create the initial screenshot
                 await self.create_screenshot()
-                itk_viewer.registerEventListener(
-                    'screenshotTaken', self.update_screenshot
-                )
                 # Once the viewer has been created any queued requests can be run
                 CellWatcher().update_viewer_status(self.parent, True)
 
