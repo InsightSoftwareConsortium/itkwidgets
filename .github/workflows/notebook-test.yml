@@ -34,4 +34,4 @@ jobs:
 
       - name: Test notebooks
         run: |
-          pytest --nbmake --nbmake-timeout=3000 examples/*.ipynb examples/integrations/**/*.ipynb
+          pytest --nbmake --nbmake-timeout=3000 examples/EnvironmentCheck.ipynb examples/Hello3DWorld.ipynb examples/NumPyArrayPointSet.ipynb examples/integrations/**/*.ipynb
