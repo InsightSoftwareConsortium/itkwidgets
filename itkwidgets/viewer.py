@@ -138,6 +138,8 @@ class Viewer:
         self.name = self.__str__()
         input_data = parse_input_data(add_data_kwargs)
         data = build_init_data(input_data)
+        if compare := input_data.get('compare'):
+            data['compare'] = compare
         if ENVIRONMENT is not Env.HYPHA:
             self.viewer_rpc = ViewerRPC(
                 ui_collapsed=ui_collapsed, rotate=rotate, ui=ui, init_data=data, parent=self.name, **add_data_kwargs
@@ -615,7 +617,19 @@ def compare_images(fixed_image: Union[str, Image], moving_image: Union[str, Imag
     :return: viewer, display by placing at the end of a Jupyter or Colab cell. Query or set properties on the object to change the visualization.
     :rtype:  Viewer
     """
-    viewer = view()
-    viewer.compare_images(fixed_image=fixed_image, moving_image=moving_image, method=method, image_mix=image_mix, checkerboard=checkerboard, pattern=pattern, swap_image_order=swap_image_order)
+    options = {}
+    # if None let viewer use defaults or last value.
+    if method is not None:
+        options['method'] = method
+    if image_mix is not None:
+        options['imageMix'] = image_mix
+    if checkerboard is not None:
+        options['checkerboard'] = checkerboard
+    if pattern is not None:
+        options['pattern'] = pattern
+    if swap_image_order is not None:
+        options['swapImageOrder'] = swap_image_order
+
+    viewer = Viewer(data=None, image=moving_image, fixed_image=fixed_image, compare=options)
     return viewer
 

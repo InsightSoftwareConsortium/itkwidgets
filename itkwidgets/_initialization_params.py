@@ -4,8 +4,8 @@ from itkwidgets.render_types import RenderType
 from itkwidgets.viewer_config import MUI_HREF, PYDATA_SPHINX_HREF
 
 
-INPUT_OPTIONS = ["image", "label_image", "point_set", "data"]
-
+DATA_OPTIONS = ["image", "label_image", "point_set", "data", "fixed_image"]
+INPUT_OPTIONS = [*DATA_OPTIONS, "compare"]
 
 def init_params_dict(itk_viewer):
     return {
@@ -75,7 +75,7 @@ def parse_input_data(init_data_kwargs):
 
 def build_init_data(input_data):
     result= None
-    for input_type in INPUT_OPTIONS:
+    for input_type in DATA_OPTIONS:
         data = input_data.pop(input_type, None)
         if data is None:
             continue
@@ -84,6 +84,9 @@ def build_init_data(input_data):
             if input_type == 'label_image':
                 result = _get_viewer_image(data, label=True)
                 render_type = RenderType.LABELIMAGE
+            elif input_type == 'fixed_image':
+                result = _get_viewer_image(data)
+                render_type = RenderType.FIXEDIMAGE
             else:
                 result = _get_viewer_image(data, label=False)
         elif render_type is RenderType.POINT_SET:
@@ -95,5 +98,5 @@ def build_init_data(input_data):
 
 
 def defer_for_data_render(init_data):
-    deferred_keys = ['image', 'labelImage']
+    deferred_keys = ['image', 'labelImage', 'fixedImage']
     return any([k in init_data.keys() for k in deferred_keys])

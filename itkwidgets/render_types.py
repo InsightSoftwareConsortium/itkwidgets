@@ -6,3 +6,4 @@ class RenderType(Enum):
     LABELIMAGE = "labelImage"
     GEOMETRY = "geometry"
     POINT_SET = "pointSets"
+    FIXEDIMAGE = "fixedImage"
