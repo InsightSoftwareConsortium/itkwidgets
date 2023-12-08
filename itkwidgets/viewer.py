@@ -588,7 +588,7 @@ def view(data=None, **kwargs):
 
     return viewer
 
-def compare_images(fixed_image: Union[str, Image], moving_image: Union[str, Image], method: str = None, image_mix: float = None, checkerboard: bool = None, pattern: Union[Tuple[int, int], Tuple[int, int, int]] = None, swap_image_order: bool = None):
+def compare_images(fixed_image: Union[str, Image], moving_image: Union[str, Image], method: str = None, image_mix: float = None, checkerboard: bool = None, pattern: Union[Tuple[int, int], Tuple[int, int, int]] = None, swap_image_order: bool = None, **kwargs):
     """Fuse 2 images with a checkerboard filter or as a 2 component image.
 
     The moving image is re-sampled to the fixed image space. Set a keyword argument to None to use defaults based on method.
@@ -630,6 +630,6 @@ def compare_images(fixed_image: Union[str, Image], moving_image: Union[str, Imag
     if swap_image_order is not None:
         options['swapImageOrder'] = swap_image_order
 
-    viewer = Viewer(data=None, image=moving_image, fixed_image=fixed_image, compare=options)
+    viewer = Viewer(data=None, image=moving_image, fixed_image=fixed_image, compare=options, **kwargs)
     return viewer
 
