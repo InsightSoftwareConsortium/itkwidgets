@@ -59,7 +59,7 @@ def _get_viewer_image(image, label=False):
         to_ngff_zarr(store, image, chunk_store=chunk_store)
         return store
 
-    if isinstance(image, zarr.storage.Store):
+    if isinstance(image, zarr.storage.BaseStore):
         return image
 
     if HAVE_MULTISCALE_SPATIAL_IMAGE:
@@ -188,7 +188,7 @@ def _detect_render_type(data, input_type) -> RenderType:
             return RenderType.POINT_SET
         else:
             return RenderType.IMAGE
-    elif isinstance(data, zarr.storage.Store):
+    elif isinstance(data, zarr.storage.BaseStore):
         return RenderType.IMAGE
     elif HAVE_ITK:
         import itk
