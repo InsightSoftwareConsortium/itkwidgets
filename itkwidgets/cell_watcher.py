@@ -5,8 +5,6 @@ from IPython import get_ipython
 from queue import Queue
 from imjoy_rpc.utils import FuturePromise
 
-import itkwidgets
-
 background_tasks = set()
 
 
@@ -207,6 +205,7 @@ class CellWatcher(object):
             self.create_task(self.execute_next_request)
 
     def find_view_object_names(self):
+        from .viewer import Viewer
         # Used to determine that all references to Viewer
         # objects are ready before a cell is run
         objs = self.viewers.viewer_objects
@@ -214,7 +213,7 @@ class CellWatcher(object):
         for var in user_vars:
             # Identify which variable the view object has been assigned to
             value = self.shell.user_ns[var]
-            if isinstance(value, itkwidgets.viewer.Viewer) and value.__str__() in objs:
+            if isinstance(value, Viewer) and value.__str__() in objs:
                 idx = objs.index(value.__str__())
                 self.viewers.set_name(objs[idx], var)
 
