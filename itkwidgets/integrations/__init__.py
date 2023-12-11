@@ -166,7 +166,9 @@ def _get_viewer_point_set(point_set):
 
 
 def _detect_render_type(data, input_type) -> RenderType:
-    if input_type == 'image' or input_type == 'label_image':
+    if (input_type == 'image' or
+            input_type == 'label_image' or
+            input_type == 'fixed_image'):
         return RenderType.IMAGE
     elif input_type == 'point_set':
         return RenderType.POINT_SET

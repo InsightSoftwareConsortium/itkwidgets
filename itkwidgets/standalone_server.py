@@ -22,7 +22,7 @@ from itkwidgets._initialization_params import (
     build_config,
     build_init_data,
     init_params_dict,
-    INPUT_OPTIONS,
+    DATA_OPTIONS,
 )
 from itkwidgets.viewer import view
 from ngff_zarr import detect_cli_io_backend, cli_input_to_ngff_image, ConversionBackend
@@ -88,7 +88,7 @@ def input_dict(viewer_options):
 def read_files(viewer_options):
     user_input = vars(viewer_options)
     reader = user_input.get("reader", None)
-    for param in INPUT_OPTIONS:
+    for param in DATA_OPTIONS:
         input = user_input.get(param, None)
         if input:
             if reader:
