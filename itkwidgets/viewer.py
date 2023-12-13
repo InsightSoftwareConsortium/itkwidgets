@@ -320,7 +320,7 @@ class Viewer:
     async def get_roi_region(self):
         bounds = await self.viewer_rpc.itk_viewer.getCroppedImageWorldBounds()
         x0, x1, y0, y1, z0, z1 = bounds
-        return { 'x': [x0, x1], 'y': [y0, y1], 'z': [z0, z1] }
+        return [{ 'x': x0, 'y': y0, 'z': z0 }, { 'x': x1, 'y': y1, 'z': z1 }]
 
     @fetch_value
     async def get_roi_slice(self, scale=-1):
