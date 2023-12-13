@@ -228,8 +228,28 @@ class Viewer:
             image = _get_viewer_point_set(image)
             self.viewer_rpc.itk_viewer.setPointSets(image)
     @fetch_value
-    async def get_image(self):
-        return await self.viewer_rpc.itk_viewer.getImage()
+    async def get_image(self, name: str = 'Image') -> NgffImage:
+        """Get the full, highest resolution image.
+
+        :param name: Name of the loaded image data to use. 'Image', the
+        default, selects the first loaded image.
+        :type name:  str
+
+        :return: image
+        :rtype:  NgffImage
+        """
+        if store := self.stores.get(name):
+            multiscales = from_ngff_zarr(store)
+            loaded_image = multiscales.images[0]
+            roi_data = loaded_image.data
+            return to_ngff_image(
+                roi_data,
+                dims=loaded_image.dims,
+                scale=loaded_image.scale,
+                name=name,
+                axes_units=loaded_image.axes_units
+            )
+        raise ValueError(f'No image data found for {name}.')
 
     @fetch_value
     def set_image_blend_mode(self, mode: str):
@@ -441,8 +461,24 @@ class Viewer:
             label_image = _get_viewer_point_set(label_image)
             self.viewer_rpc.itk_viewer.setPointSets(label_image)
     @fetch_value
-    async def get_label_image(self):
-        return await self.viewer_rpc.itk_viewer.getLabelImage()
+    async def get_label_image(self) -> NgffImage:
+        """Get the full, highest resolution label image.
+
+        :return: label_image
+        :rtype:  NgffImage
+        """
+        if store := self.stores.get('LabelImage'):
+            multiscales = from_ngff_zarr(store)
+            loaded_image = multiscales.images[0]
+            roi_data = loaded_image.data
+            return to_ngff_image(
+                roi_data,
+                dims=loaded_image.dims,
+                scale=loaded_image.scale,
+                name='LabelImage',
+                axes_units=loaded_image.axes_units
+            )
+        raise ValueError(f'No label image data found.')
 
     @fetch_value
     def set_label_image_blend(self, blend: float):
