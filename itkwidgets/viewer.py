@@ -361,7 +361,7 @@ class Viewer:
         x0, x1 = idxs['x']
         y0, y1 = idxs['y']
         z0, z1 = idxs['z']
-        return np.index_exp[z0:z1, y0:y1, x0:x1]
+        return np.index_exp[int(z0):int(z1+1), int(y0):int(y1+1), int(x0):int(x1+1)]
 
     def compare_images(self, fixed_image: Union[str, Image], moving_image: Union[str, Image], method: str = None, image_mix: float = None, checkerboard: bool = None, pattern: Union[Tuple[int, int], Tuple[int, int, int]] = None, swap_image_order: bool = None):
         # image args may be image name or image object
