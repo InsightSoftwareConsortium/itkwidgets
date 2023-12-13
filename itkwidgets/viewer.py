@@ -314,16 +314,49 @@ class Viewer:
 
     @fetch_value
     async def get_current_scale(self):
+        """Get the current resolution scale of the primary image.
+
+        0 is the highest resolution. Values increase for lower resolutions.
+
+        :return: scale
+        :rtype:  int
+        """
         return await self.viewer_rpc.itk_viewer.getLoadedScale()
 
     @fetch_value
     async def get_roi_region(self):
+        """Get the current region of interest in world / physical space.
+
+        Returns [lower_bounds, upper_bounds] in the form:
+
+          [{ 'x': x0, 'y': y0, 'z': z0 }, { 'x': x1, 'y': y1, 'z': z1 }]
+
+        :return: roi_region
+        :rtype:  List[Dict[str, float]]
+        """
         bounds = await self.viewer_rpc.itk_viewer.getCroppedImageWorldBounds()
         x0, x1, y0, y1, z0, z1 = bounds
         return [{ 'x': x0, 'y': y0, 'z': z0 }, { 'x': x1, 'y': y1, 'z': z1 }]
 
     @fetch_value
     async def get_roi_slice(self, scale=-1):
+        """Get the current region of interest as Python slice objects for the
+        current resolution of the primary image. The result is in the order:
+
+          [z_slice, y_slice, x_slice]
+
+        Not that for standard C-order NumPy arrays, this result can be used to
+        directly extract the region of interest from the array. For example,
+
+          roi_array = image.data[roi_slice]
+
+        :param scale: scale of the primary image to get the slices for the
+        current roi. -1, the default, uses the current scale.
+        :type  scale: int
+
+        :return: roi_slice
+        :rtype:  List[slice]
+        """
         idxs = await self.viewer_rpc.itk_viewer.getCroppedIndexBounds(scale)
         x0, x1 = idxs['x']
         y0, y1 = idxs['y']
