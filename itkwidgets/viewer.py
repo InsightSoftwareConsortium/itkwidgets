@@ -1,5 +1,6 @@
 import asyncio
 import functools
+import numpy as np
 from imjoy_rpc import api
 from inspect import isawaitable
 from typing import List, Union, Tuple
@@ -201,6 +202,13 @@ class Viewer:
         return await self.viewer_rpc.itk_viewer.getBackgroundColor()
 
     @fetch_value
+    def set_cropping_planes(self, cropping_planes):
+        self.viewer_rpc.itk_viewer.setCroppingPlanes(cropping_planes)
+    @fetch_value
+    async def get_cropping_planes(self):
+        return await self.viewer_rpc.itk_viewer.getCroppingPlanes()
+
+    @fetch_value
     def set_image(self, image: Image, name: str = 'Image'):
         render_type = _detect_render_type(image, 'image')
         if render_type is RenderType.IMAGE:
@@ -305,6 +313,23 @@ class Viewer:
         return await self.viewer_rpc.itk_viewer.getImageVolumeScatteringBlend()
 
     @fetch_value
+    async def get_current_scale(self):
+        return await self.viewer_rpc.itk_viewer.getLoadedScale()
+
+    @fetch_value
+    async def get_roi_region(self):
+        bounds = await self.viewer_rpc.itk_viewer.getCroppedImageWorldBounds()
+        x0, x1, y0, y1, z0, z1 = bounds
+        return [{ 'x': x0, 'y': y0, 'z': z0 }, { 'x': x1, 'y': y1, 'z': z1 }]
+
+    @fetch_value
+    async def get_roi_slice(self, scale=-1):
+        idxs = await self.viewer_rpc.itk_viewer.getCroppedIndexBounds(scale)
+        x0, x1 = idxs['x']
+        y0, y1 = idxs['y']
+        z0, z1 = idxs['z']
+        return np.index_exp[z0:z1, y0:y1, x0:x1]
+
     def compare_images(self, fixed_image: Union[str, Image], moving_image: Union[str, Image], method: str = None, image_mix: float = None, checkerboard: bool = None, pattern: Union[Tuple[int, int], Tuple[int, int, int]] = None, swap_image_order: bool = None):
         # image args may be image name or image object
         fixed_name = 'Fixed'
