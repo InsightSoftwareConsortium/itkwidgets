@@ -523,6 +523,10 @@ class Viewer:
         return await self.viewer_rpc.itk_viewer.getLayerVisibility(name)
 
     @fetch_value
+    def get_loaded_image_names(self):
+        return list(self.stores.keys())
+
+    @fetch_value
     def add_point_set(self, pointSet: PointSet):
         pointSet = _get_viewer_point_set(pointSet)
         self.viewer_rpc.itk_viewer.addPointSet(pointSet)
