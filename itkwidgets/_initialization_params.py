@@ -73,7 +73,7 @@ def parse_input_data(init_data_kwargs):
     return inputs
 
 
-def build_init_data(input_data):
+def build_init_data(input_data, stores):
     result= None
     for input_type in DATA_OPTIONS:
         data = input_data.pop(input_type, None)
@@ -83,12 +83,15 @@ def build_init_data(input_data):
         if render_type is RenderType.IMAGE:
             if input_type == 'label_image':
                 result = _get_viewer_image(data, label=True)
+                stores['LabelImage'] = result
                 render_type = RenderType.LABELIMAGE
             elif input_type == 'fixed_image':
                 result = _get_viewer_image(data)
+                stores['Fixed'] = result
                 render_type = RenderType.FIXEDIMAGE
             else:
                 result = _get_viewer_image(data, label=False)
+                stores['Image'] = result
         elif render_type is RenderType.POINT_SET:
             result = _get_viewer_point_set(data)
         if result is None:

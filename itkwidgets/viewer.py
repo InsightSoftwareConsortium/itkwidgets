@@ -5,6 +5,7 @@ from imjoy_rpc import api
 from inspect import isawaitable
 from typing import List, Union, Tuple
 from IPython.display import display, HTML
+from ngff_zarr import from_ngff_zarr, to_ngff_image, NgffImage
 import uuid
 
 from ._type_aliases import Gaussians, Style, Image, PointSet
@@ -136,9 +137,10 @@ class Viewer:
         self, ui_collapsed=True, rotate=False, ui="pydata-sphinx", **add_data_kwargs
     ):
         """Create a viewer."""
+        self.stores = {}
         self.name = self.__str__()
         input_data = parse_input_data(add_data_kwargs)
-        data = build_init_data(input_data)
+        data = build_init_data(input_data, self.stores)
         if compare := input_data.get('compare'):
             data['compare'] = compare
         if ENVIRONMENT is not Env.HYPHA:
@@ -213,6 +215,7 @@ class Viewer:
         render_type = _detect_render_type(image, 'image')
         if render_type is RenderType.IMAGE:
             image = _get_viewer_image(image, label=False)
+            self.stores[name] = image
             if ENVIRONMENT is Env.HYPHA:
                 self.image = image
                 svc_name = f'{self.workspace}/itkwidgets-server:data-set'
@@ -225,8 +228,28 @@ class Viewer:
             image = _get_viewer_point_set(image)
             self.viewer_rpc.itk_viewer.setPointSets(image)
     @fetch_value
-    async def get_image(self):
-        return await self.viewer_rpc.itk_viewer.getImage()
+    async def get_image(self, name: str = 'Image') -> NgffImage:
+        """Get the full, highest resolution image.
+
+        :param name: Name of the loaded image data to use. 'Image', the
+        default, selects the first loaded image.
+        :type name:  str
+
+        :return: image
+        :rtype:  NgffImage
+        """
+        if store := self.stores.get(name):
+            multiscales = from_ngff_zarr(store)
+            loaded_image = multiscales.images[0]
+            roi_data = loaded_image.data
+            return to_ngff_image(
+                roi_data,
+                dims=loaded_image.dims,
+                scale=loaded_image.scale,
+                name=name,
+                axes_units=loaded_image.axes_units
+            )
+        raise ValueError(f'No image data found for {name}.')
 
     @fetch_value
     def set_image_blend_mode(self, mode: str):
@@ -324,6 +347,36 @@ class Viewer:
         return await self.viewer_rpc.itk_viewer.getLoadedScale()
 
     @fetch_value
+    async def get_roi_image(self, scale: int = -1, name: str = 'Image') -> NgffImage:
+        """Get the image for the current ROI.
+
+        :param scale: scale of the primary image to get the slices for the
+        current roi. -1, the default, uses the current scale.
+        :type scale: int
+        :param name: Name of the loaded image data to use. 'Image', the
+        default, selects the first loaded image.
+        :type name:  str
+
+        :return: roi_image
+        :rtype:  NgffImage
+        """
+        roi_slices = await self.get_roi_slice(scale)
+        roi_region = await self.get_roi_region()
+        if store := self.stores.get(name):
+            multiscales = from_ngff_zarr(store)
+            loaded_image = multiscales.images[scale]
+            roi_data = loaded_image.data[roi_slices]
+            return to_ngff_image(
+                roi_data,
+                dims=loaded_image.dims,
+                scale=loaded_image.scale,
+                translation=roi_region[0],
+                name=name,
+                axes_units=loaded_image.axes_units
+            )
+        raise ValueError(f'No image data found for {name}.')
+
+    @fetch_value
     async def get_roi_region(self):
         """Get the current region of interest in world / physical space.
 
@@ -339,7 +392,7 @@ class Viewer:
         return [{ 'x': x0, 'y': y0, 'z': z0 }, { 'x': x1, 'y': y1, 'z': z1 }]
 
     @fetch_value
-    async def get_roi_slice(self, scale=-1):
+    async def get_roi_slice(self, scale: int = -1):
         """Get the current region of interest as Python slice objects for the
         current resolution of the primary image. The result is in the order:
 
@@ -395,6 +448,7 @@ class Viewer:
         render_type = _detect_render_type(label_image, 'image')
         if render_type is RenderType.IMAGE:
             label_image = _get_viewer_image(label_image, label=True)
+            self.stores['LabelImage'] = label_image
             if ENVIRONMENT is Env.HYPHA:
                 self.label_image = label_image
                 svc_name = f"{self.workspace}/itkwidgets-server:data-set"
@@ -407,8 +461,24 @@ class Viewer:
             label_image = _get_viewer_point_set(label_image)
             self.viewer_rpc.itk_viewer.setPointSets(label_image)
     @fetch_value
-    async def get_label_image(self):
-        return await self.viewer_rpc.itk_viewer.getLabelImage()
+    async def get_label_image(self) -> NgffImage:
+        """Get the full, highest resolution label image.
+
+        :return: label_image
+        :rtype:  NgffImage
+        """
+        if store := self.stores.get('LabelImage'):
+            multiscales = from_ngff_zarr(store)
+            loaded_image = multiscales.images[0]
+            roi_data = loaded_image.data
+            return to_ngff_image(
+                roi_data,
+                dims=loaded_image.dims,
+                scale=loaded_image.scale,
+                name='LabelImage',
+                axes_units=loaded_image.axes_units
+            )
+        raise ValueError(f'No label image data found.')
 
     @fetch_value
     def set_label_image_blend(self, blend: float):
@@ -451,6 +521,10 @@ class Viewer:
     @fetch_value
     async def get_layer_visibility(self, name: str):
         return await self.viewer_rpc.itk_viewer.getLayerVisibility(name)
+
+    @fetch_value
+    def get_loaded_image_names(self):
+        return list(self.stores.keys())
 
     @fetch_value
     def add_point_set(self, pointSet: PointSet):
