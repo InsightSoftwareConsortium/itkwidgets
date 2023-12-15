@@ -181,8 +181,9 @@ class CellWatcher(object):
             else:
                 self.kernel._publish_status("idle")
 
-        self.current_request = None
-        if self.all_getters_resolved:
+        if not self.results:
+            self.current_request = None
+        if self.all_getters_resolved and not self._events.empty():
             # Continue processing the remaining queued tasks
             self.create_task(self.execute_next_request)
 
@@ -190,18 +191,25 @@ class CellWatcher(object):
         # Update the namespace variables with the results from the getters
         # FIXME: This is a temporary "fix" and does not handle updating output
         keys = [k for k in self.shell.user_ns.keys()]
-        for key in keys:
-            value = self.shell.user_ns[key]
-            if asyncio.isfuture(value) and (isinstance(value, FuturePromise) or isinstance(value, asyncio.Task)):
-                # Getters/setters return futures
-                # They should all be resolved now, so use the result
-                self.shell.user_ns[key] = value.result()
-        self.results.clear()
+        try:
+            for key in keys:
+                value = self.shell.user_ns[key]
+                if asyncio.isfuture(value) and (isinstance(value, FuturePromise) or isinstance(value, asyncio.Task)):
+                    # Getters/setters return futures
+                    # They should all be resolved now, so use the result
+                    self.shell.user_ns[key] = value.result()
+            self.results.clear()
+        except Exception as e:
+            self.results.clear()
+            self.abort_all = True
+            self.create_task(self._execute_next_request)
+            raise e
 
     def _callback(self, *args, **kwargs):
         # After each getter/setter resolves check if they've all resolved
         if self.all_getters_resolved:
             self.update_namespace()
+            self.current_request = None
             self.create_task(self.execute_next_request)
 
     def post_run_cell(self, response):
