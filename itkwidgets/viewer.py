@@ -8,7 +8,12 @@ from inspect import isawaitable
 from typing import List, Union, Tuple
 from IPython.display import display, HTML
 from IPython.lib import backgroundjobs as bg
-from ngff_zarr import from_ngff_zarr, to_ngff_image, NgffImage
+from ngff_zarr import (
+    from_ngff_zarr,
+    to_ngff_image,
+    Multiscales,
+    NgffImage
+)
 import uuid
 
 from ._method_types import deferred_methods
@@ -431,6 +436,30 @@ class Viewer:
                 translation=roi_region[0],
                 name=name,
                 axes_units=loaded_image.axes_units
+            )
+        raise ValueError(f'No image data found for {name}.')
+
+    @fetch_value
+    async def get_roi_multiscale(self, name: str = 'Image') -> Multiscales:
+        """Build and return a new Multiscales NgffImage for the ROI.
+
+        :param name: Name of the loaded image data to use. 'Image', the
+        default, selects the first loaded image.
+        :type name:  str
+
+        :return: roi_multiscales
+        :rtype:  Multiscales NgffImage
+        """
+        if store := self.stores.get(name):
+            multiscales = from_ngff_zarr(store)
+            scales = range(len(multiscales.images))
+            images = [await self.get_roi_image(s) for s in scales]
+            return Multiscales(
+                images=images,
+                metadata=multiscales.metadata,
+                scale_factors=multiscales.scale_factors,
+                method=multiscales.method,
+                chunks=multiscales.chunks
             )
         raise ValueError(f'No image data found for {name}.')
 
