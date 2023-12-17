@@ -68,8 +68,8 @@ class CellWatcher(object):
         self.shell = get_ipython()
         self.kernel = self.shell.kernel
         self.shell_stream = getattr(self.kernel, "shell_stream", None)
-        self.execute_request_handler = self.kernel.shell_handlers["execute_request"]
         # Keep a reference to the ipykernel execute_request function
+        self.execute_request_handler = self.kernel.shell_handlers["execute_request"]
         self.current_request = None
         self.waiting_on_viewer = False
         self.results = {}
@@ -204,24 +204,7 @@ class CellWatcher(object):
             self.update_namespace()
             self.create_task(self.execute_next_request)
 
-    def find_view_object_names(self):
-        from .viewer import Viewer
-        # Used to determine that all references to Viewer
-        # objects are ready before a cell is run
-        objs = self.viewers.viewer_objects
-        user_vars = [k for k in self.shell.user_ns.keys() if not k.startswith('_')]
-        for var in user_vars:
-            # Identify which variable the view object has been assigned to
-            value = self.shell.user_ns[var]
-            if isinstance(value, Viewer) and value.__str__() in objs:
-                idx = objs.index(value.__str__())
-                self.viewers.set_name(objs[idx], var)
-
     def post_run_cell(self, response):
-        # If a cell has been run and there are viewers with no variable
-        # associated with them check the user namespace to see if they have
-        # been added
+        # Abort remaining cells on error in execution
         if response.error_in_exec is not None:
             self.abort_all = True
-        if self.viewers.not_named:
-            self.find_view_object_names()
