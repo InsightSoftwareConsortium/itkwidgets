@@ -19,41 +19,18 @@ class Viewers(object):
     @property
     def not_created(self):
         # Return a list of names of viewers that have not been created yet
-        names = []
-        for key, val in self.data.items():
-            name = val['name']
-            if not val['status']:
-                name = name if name is not None else key
-                names.append(name)
-        return names
+        return [k for k in self.data.keys() if not self.viewer_ready(k)]
 
-    @property
-    def not_named(self):
-        # Return a list of names of viewers that have not been named yet
-        return any([k for k, v in self.data.items() if v['name'] is None])
-
-    @property
-    def viewer_objects(self):
-        # Return a list of created viewers
-        return list(self.data.keys())
-
-    def add_viewer(self, view):
-        self.data[view] = {'name': None, 'status': False}
-
-    def set_name(self, view, name):
-        if view not in self.data.keys():
-            self.add_viewer(view)
-        self.data[view]['name'] = name
+    def add_viewer(self, view: str) -> None:
+        self.data[view] = {"ready": False}
 
     def update_viewer_status(self, view, status):
         if view not in self.data.keys():
             self.add_viewer(view)
-        self.data[view]['status'] = status
+        self.data[view]["ready"] = status
 
-    def viewer_ready(self, view):
-        if viewer := self.data.get(view):
-            return viewer['status']
-        return False
+    def viewer_ready(self, view: str) -> bool:
+        return self.data.get(view, {}).get("ready", False)
 
 
 class CellWatcher(object):
