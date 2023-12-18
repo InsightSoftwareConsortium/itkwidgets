@@ -1,6 +1,7 @@
 import asyncio
 import sys
 from inspect import isawaitable, iscoroutinefunction
+from typing import Dict, List
 from IPython import get_ipython
 from queue import Queue
 from imjoy_rpc.utils import FuturePromise
@@ -9,27 +10,64 @@ background_tasks = set()
 
 
 class Viewers(object):
+    """This class is designed to track each instance of the Viewer class that
+    is instantiated as well as whether or not that instance is available for
+    updates or requests.
+    """
     def __init__(self):
         self._data = {}
 
     @property
-    def data(self):
+    def data(self) -> Dict[str, Dict[str, bool]]:
+        """Get the underlying data dict containg all viewer data
+
+        :return: The data object that contains all created Viewer information.
+        :rtype:  Dict[str, Dict[str, bool]]
+        """
         return self._data
 
     @property
-    def not_created(self):
-        # Return a list of names of viewers that have not been created yet
+    def not_created(self) -> List[str]:
+        """Return a list of all unavailable viewers
+
+        :return: A list of names of viewers that have not yet been created.
+        :rtype:  List[str]
+        """
         return [k for k in self.data.keys() if not self.viewer_ready(k)]
 
     def add_viewer(self, view: str) -> None:
+        """Add a new Viewer object to track.
+
+        :param view: The unique string identifier for the Viewer object
+        :type view:  str
+        """
         self.data[view] = {"ready": False}
 
-    def update_viewer_status(self, view, status):
+    def update_viewer_status(self, view: str, status: bool) -> None:
+        """Update a Viewer's 'ready' status.
+
+        :param view: The unique string identifier for the Viewer object
+        :type view:  str
+        :param status: Boolean value indicating whether or not the viewer is
+        available for requests or updates. This should be false when the plugin
+        API is not yet available or new data is not yet rendered.
+        :type status:  bool
+        """
         if view not in self.data.keys():
             self.add_viewer(view)
         self.data[view]["ready"] = status
 
     def viewer_ready(self, view: str) -> bool:
+        """Request the 'ready' status of a viewer.
+
+        :param view: The unique string identifier for the Viewer object
+        :type view:  str
+
+        :return: Boolean value indicating whether or not the viewer is
+        available for requests or updates. This will be false when the plugin
+        API is not yet available or new data is not yet rendered.
+        :rtype:  bool
+        """
         return self.data.get(view, {}).get("ready", False)
 
 
