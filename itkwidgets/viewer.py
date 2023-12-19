@@ -429,6 +429,7 @@ class Viewer:
             multiscales = from_ngff_zarr(store)
             loaded_image = multiscales.images[scale]
             roi_data = loaded_image.data[roi_slices]
+            roi_data = roi_data.rechunk(loaded_image.data.chunksize)
             return to_ngff_image(
                 roi_data,
                 dims=loaded_image.dims,
