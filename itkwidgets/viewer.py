@@ -423,6 +423,8 @@ class Viewer:
         :return: roi_image
         :rtype:  NgffImage
         """
+        if scale == -1:
+            scale = await self.get_current_scale()
         roi_slices = await self.get_roi_slice(scale)
         roi_region = await self.get_roi_region()
         if store := self.stores.get(name):
@@ -498,6 +500,8 @@ class Viewer:
         :return: roi_slice
         :rtype:  List[slice]
         """
+        if scale == -1:
+            scale = await self.get_current_scale()
         idxs = await self.viewer_rpc.itk_viewer.getCroppedIndexBounds(scale)
         x0, x1 = idxs['x']
         y0, y1 = idxs['y']
