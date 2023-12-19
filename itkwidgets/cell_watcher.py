@@ -294,16 +294,19 @@ class CellWatcher(object):
         """Update the namespace variables with the results from the getters"""
         # FIXME: This is a temporary "fix" and does not handle updating output
         keys = [k for k in self.shell.user_ns.keys()]
-        for key in keys:
-            value = self.shell.user_ns[key]
-            if asyncio.isfuture(value) and (
-                isinstance(value, FuturePromise) or isinstance(value, asyncio.Task)
-            ):
-                # Functions that need to return values from asynchronous
-                # network requests return futures. They should all be resolved
-                # now, so use the result.
-                self.shell.user_ns[key] = value.result()
-        self.results.clear()
+        try:
+            for key in keys:
+                value = self.shell.user_ns[key]
+                if asyncio.isfuture(value) and (isinstance(value, FuturePromise) or isinstance(value, asyncio.Task)):
+                    # Getters/setters return futures
+                    # They should all be resolved now, so use the result
+                    self.shell.user_ns[key] = value.result()
+            self.results.clear()
+        except Exception as e:
+            self.results.clear()
+            self.abort_all = True
+            self.create_task(self._execute_next_request)
+            raise e
 
     def _callback(self, *args, **kwargs) -> None:
         """After each future resolves check to see if they are all resolved. If
