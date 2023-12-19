@@ -27,3 +27,10 @@ docs/jupyterlite/_output/
 
 # autodoc2 generated
 docs/apidocs
+
+examples/integrations/itk/roi.zarr/
+examples/integrations/itk/roi_gradient.nrrd
+examples/integrations/itk/roi_image.nrrd
+
+examples/integrations/itkwasm/roi.zarr/
+examples/integrations/itkwasm/roi_image.nrrd
