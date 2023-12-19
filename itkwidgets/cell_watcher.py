@@ -23,7 +23,9 @@ class Viewers(object):
     def data(self) -> Dict[str, Dict[str, bool]]:
         """Get the underlying data dict containg all viewer data
 
-        :return: The data object that contains all created Viewer information.
+        :return: A dict of key, value pairs mapping the unique Viewer name to a
+        dictionary containing a 'ready' key and a boolean value reflecting the
+        ready state of the Viewer.
         :rtype:  Dict[str, Dict[str, bool]]
         """
         return self._data
