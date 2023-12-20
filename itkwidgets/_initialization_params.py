@@ -15,6 +15,8 @@ def init_params_dict(itk_viewer):
         'blend_mode': itk_viewer.setImageBlendMode,
         'cmap': itk_viewer.setImageColorMap,
         'color_range': itk_viewer.setImageColorRange,
+        'vmin': itk_viewer.setImageColorRangeMin,
+        'vmax': itk_viewer.setImageColorRangeMax,
         'color_bounds': itk_viewer.setImageColorRangeBounds,
         'component_visible': itk_viewer.setImageComponentVisibility,
         'gradient_opacity': itk_viewer.setImageGradientOpacity,
