@@ -335,6 +335,27 @@ class Viewer:
     async def get_image_color_range(self):
         return await self.viewer_rpc.itk_viewer.getImageColorRange()
 
+    @property
+    @fetch_value
+    async def vmin(self):
+        range = await self.get_image_color_range()
+        return range[0]
+    @vmin.setter
+    @fetch_value
+    async def vmin(self, vmin: float):
+        self.queue_request('setImageColorRangeMin', vmin)
+
+    @property
+    @fetch_value
+    async def vmax(self):
+        range = await self.get_image_color_range()
+        return range[1]
+    @vmax.setter
+    @fetch_value
+    async def vmax(self, vmax: float):
+        self.queue_request('setImageColorRangeMax', vmax)
+
+
     @fetch_value
     def set_image_color_range_bounds(self, range: List[float]):
         self.queue_request('setImageColorRangeBounds', range)
@@ -743,6 +764,12 @@ def view(data=None, **kwargs):
 
     :param color_range: The [min, max] range of the data values mapped to colors for the given image component identified by name.
     :type  color_range: list, default: The [min, max] range of the data values
+
+    :param vmin: Data values below vmin take the bottom color of the color map.
+    :type  vmin: float
+
+    :param vmax: Data values above vmax take the top color of the color map.
+    :type  vmax: float
 
     :param color_bounds: The [min, max] range of the data values for color maps that provide a bounds for user inputs.
     :type  color_bounds: list, default: The [min, max] range of the data values
