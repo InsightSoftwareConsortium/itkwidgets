@@ -8,12 +8,7 @@ from inspect import isawaitable
 from typing import List, Union, Tuple
 from IPython.display import display, HTML
 from IPython.lib import backgroundjobs as bg
-from ngff_zarr import (
-    from_ngff_zarr,
-    to_ngff_image,
-    Multiscales,
-    NgffImage
-)
+from ngff_zarr import from_ngff_zarr, to_ngff_image, Multiscales, NgffImage
 import uuid
 
 from ._method_types import deferred_methods
@@ -49,8 +44,14 @@ class ViewerRPC:
     """Viewer remote procedure interface."""
 
     def __init__(
-        self, ui_collapsed=True, rotate=False, ui="pydata-sphinx", init_data=None, parent=None, **add_data_kwargs
-    ):
+        self,
+        ui_collapsed: bool = True,
+        rotate: bool = False,
+        ui: str = "pydata-sphinx",
+        init_data: dict = None,
+        parent: str = None,
+        **add_data_kwargs,
+    ) -> None:
         global _codecs_registered, _cell_watcher
         """Create a viewer."""
         # Register codecs if they haven't been already
@@ -71,10 +72,10 @@ class ViewerRPC:
                 self.viewer_event = threading.Event()
                 self.data_event = threading.Event()
 
-    async def setup(self):
+    async def setup(self) -> None:
         pass
 
-    async def run(self, ctx):
+    async def run(self, ctx: dict) -> None:
         """ImJoy plugin setup function."""
         global _viewer_count, _cell_watcher
         ui = self._init_viewer_kwargs.get("ui", None)
@@ -112,21 +113,32 @@ class ViewerRPC:
             await self.create_screenshot()
             # Set up an event listener so that the embedded
             # screenshot is updated when the user requests
-            itk_viewer.registerEventListener(
-                'screenshotTaken', self.update_screenshot
-            )
+            itk_viewer.registerEventListener('screenshotTaken', self.update_screenshot)
 
-    def set_default_ui_values(self, itk_viewer):
+    def set_default_ui_values(self, itk_viewer: dict) -> None:
+        """Set any UI values passed in on initialization.
+
+        :param itk_viewer: The ImJoy plugin API to use
+        :type itk_viewer:  dict
+        """
         settings = init_params_dict(itk_viewer)
         for key, value in self._init_viewer_kwargs.items():
             if key in settings.keys():
                 settings[key](value)
 
-    async def create_screenshot(self):
+    async def create_screenshot(self) -> None:
+        """Grab a screenshot of the current Viewer and embed it in the
+        notebook cell.
+        """
         base64_image = await self.itk_viewer.captureImage()
         self.update_screenshot(base64_image)
 
-    def update_screenshot(self, base64_image):
+    def update_screenshot(self, base64_image: str) -> None:
+        """Embed an image in the current notebook cell.
+
+        :param base64_image: An encoded image to be embedded
+        :type base64_image:  bstring
+        """
         html = HTML(
             f'''
                 <img id="screenshot_{self.wid}" src={base64_image}>
@@ -141,11 +153,18 @@ class ViewerRPC:
         self.img.display(html)
 
     def update_viewer_status(self):
+        """Update the CellWatcher class to indicate that the Viewer is ready"""
         global _cell_watcher
         if not _cell_watcher.viewer_ready(self.parent):
             _cell_watcher.update_viewer_status(self.parent, True)
 
-    def set_event(self, event_data):
+    def set_event(self, event_data: str) -> None:
+        """Set the event in the background thread to indicate that the plugin
+        API is available so that queued setter requests are processed.
+
+        :param event_data: The name of the image that has been rendered
+        :type event_data:  string
+        """
         if not self.data_event.is_set():
             # Once the data has been set the deferred queue requests can be run
             asyncio.get_running_loop().call_soon_threadsafe(self.data_event.set)
