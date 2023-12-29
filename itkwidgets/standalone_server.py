@@ -67,7 +67,7 @@ def standalone_viewer(url):
 
 def input_dict(viewer_options):
     user_input = read_files(viewer_options)
-    data = build_init_data(user_input)
+    data = build_init_data(user_input, {})
     ui = user_input.get("ui", "reference")
     data["config"] = build_config(ui)
 
