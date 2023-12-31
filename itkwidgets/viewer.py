@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import functools
 import queue
@@ -5,14 +7,14 @@ import threading
 import numpy as np
 from imjoy_rpc import api
 from inspect import isawaitable
-from typing import List, Union, Tuple
+from typing import Callable, Coroutine, Dict, List, Union, Tuple
 from IPython.display import display, HTML
 from IPython.lib import backgroundjobs as bg
 from ngff_zarr import from_ngff_zarr, to_ngff_image, Multiscales, NgffImage
 import uuid
 
 from ._method_types import deferred_methods
-from ._type_aliases import Gaussians, Style, Image, PointSet
+from ._type_aliases import Gaussians, Style, Image, PointSet, CroppingPlanes
 from ._initialization_params import (
     init_params_dict,
     build_config,
@@ -176,8 +178,12 @@ class Viewer:
     """Pythonic Viewer class."""
 
     def __init__(
-        self, ui_collapsed=True, rotate=False, ui="pydata-sphinx", **add_data_kwargs
-    ):
+        self,
+        ui_collapsed: bool = True,
+        rotate: bool = False,
+        ui: bool = "pydata-sphinx",
+        **add_data_kwargs,
+    ) -> None:
         """Create a viewer."""
         self.stores = {}
         self.name = self.__str__()
@@ -197,29 +203,55 @@ class Viewer:
             self.server = add_data_kwargs.get('server', None)
             self.workspace = self.server.config.workspace
 
-    def _setup_queueing(self):
+    def _setup_queueing(self) -> None:
+        """Create a background thread and two queues of requests: one will hold
+        requests that can be run as soon as the plugin API is available, the
+        deferred queue will hold requests that need the data to be rendered
+        before they are applied. Background requests will not return any
+        results.
+        """
         self.bg_jobs = bg.BackgroundJobManager()
         self.queue = queue.Queue()
         self.deferred_queue = queue.Queue()
         self.bg_thread = self.bg_jobs.new(self.queue_worker)
 
     @property
-    def loop(self):
+    def loop(self) -> asyncio.BaseEventLoop:
+        """Return the running event loop in the current OS thread.
+
+        :return: Current running event loop
+        :rtype:  asyncio.BaseEventLoop
+        """
         return asyncio.get_running_loop()
 
     @property
-    def has_viewer(self):
+    def has_viewer(self) -> bool:
+        """Whether or not the plugin API is available to call.
+
+        :return: Availability of API
+        :rtype:  bool
+        """
         if hasattr(self, "viewer_rpc"):
             return hasattr(self.viewer_rpc, "itk_viewer")
-        return self.itk_viewer
+        return self.itk_viewer is not None
 
     @property
-    def itk_viewer(self):
+    def itk_viewer(self) -> dict | None:
+        """Return the plugin API if it is available.
+
+        :return: The plugin API if available, else None
+        :rtype:  dict | None
+        """
         if hasattr(self, "viewer_rpc"):
             return self.viewer_rpc.itk_viewer
         return self._itk_viewer
 
-    async def run_queued_requests(self):
+    async def run_queued_requests(self) -> None:
+        """Once the plugin API is available and the viewer_event is set, run
+        all requests queued for the background thread that do not require the
+        data to be available.
+        Once the data has been rendered process any deferred requests.
+        """
         def _run_queued_requests(queue):
             method_name, args, kwargs = queue.get()
             fn = getattr(self.itk_viewer, method_name)
@@ -234,19 +266,36 @@ class Viewer:
         while self.deferred_queue.qsize():
             _run_queued_requests(self.deferred_queue)
 
-    def queue_worker(self):
+    def queue_worker(self) -> None:
+        """Create a new event loop in the background thread and run until all
+        queued tasks are complete.
+        """
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         task = loop.create_task(self.run_queued_requests())
         loop.run_until_complete(task)
 
-    def call_getter(self, future):
+    def call_getter(self, future: asyncio.Future) -> None:
+        """Create a future for requests that expect a response and set the
+        callback to update the CellWatcher once resolved.
+
+        :param future: A future for the awaitable request that we are waiting
+        to resolve.
+        :type future:  asyncio.Future
+        """
         global _cell_watcher
         name = uuid.uuid4()
         _cell_watcher.results[name] = future
         future.add_done_callback(functools.partial(_cell_watcher._callback, name))
 
-    def queue_request(self, method, *args, **kwargs):
+    def queue_request(self, method: Callable, *args, **kwargs) -> None:
+        """Determine if a request should be run immeditately, queued to run
+        once the plugin API is avaialable, or queued to run once the data has
+        been rendered.
+
+        :param method:  Function to either call or queue
+        :type method:   Callable
+        """
         if (
             ENVIRONMENT is Env.JUPYTERLITE or ENVIRONMENT is Env.HYPHA
         ) or self.has_viewer:
@@ -257,7 +306,16 @@ class Viewer:
         else:
             self.queue.put((method, args, kwargs))
 
-    def fetch_value(func):
+    def fetch_value(func: Callable) -> Callable:
+        """Decorator function that wraps the decorated function and returns the
+        wrapper. In this case we decorate our API wrapper functions in order to
+        determine if it needs to be managed by the CellWatcher class.
+
+        :param func: Plugin API wrapper
+        :type func:  Callable
+        :return: wrapper function
+        :rtype:  Callable
+        """
         @functools.wraps(func)
         def _fetch_value(self, *args, **kwargs):
             result = func(self, *args, **kwargs)
@@ -269,39 +327,102 @@ class Viewer:
         return _fetch_value
 
     @fetch_value
-    def set_annotations_enabled(self, enabled: bool):
+    def set_annotations_enabled(self, enabled: bool) -> None:
+        """Set whether or not the annotations should be displayed. Queue the
+        function to be run in the background thread once the plugin API is
+        available.
+
+        :param enabled: Should annotations be enabled
+        :type enabled:  bool
+        """
         self.queue_request('setAnnotationsEnabled', enabled)
     @fetch_value
-    async def get_annotations_enabled(self):
+    async def get_annotations_enabled(self) -> asyncio.Future | bool:
+        """Determine if annotations are enabled.
+
+        :return: The future for the coroutine, to be updated with the
+        annotations visibility status.
+        :rtype:  asyncio.Future | bool
+        """
         return await self.viewer_rpc.itk_viewer.getAnnotationsEnabled()
 
     @fetch_value
-    def set_axes_enabled(self, enabled: bool):
+    def set_axes_enabled(self, enabled: bool) -> None:
+        """Set whether or not the axes should be displayed. Queue the function
+        to be run in the background thread once the plugin API is available.
+
+        :param enabled: If axes should be enabled
+        :type enabled:  bool
+        """
         self.queue_request('setAxesEnabled', enabled)
     @fetch_value
-    async def get_axes_enabled(self):
+    async def get_axes_enabled(self) -> asyncio.Future | bool:
+        """Determine if the axes are enabled.
+
+        :return: The future for the coroutine, to be updated with the axes
+        visibility status.
+        :rtype:  asyncio.Future | bool
+        """
         return await self.viewer_rpc.itk_viewer.getAxesEnabled()
 
     @fetch_value
-    def set_background_color(self, bgColor: List[float]):
+    def set_background_color(self, bgColor: List[float]) -> None:
+        """Set the background color for the viewer. Queue the function to be
+        run in the background thread once the plugin API is available.
+
+        :param bgColor: A list of floats [r, g, b, a]
+        :type bgColor:  List[float]
+        """
         self.queue_request('setBackgroundColor', bgColor)
     @fetch_value
-    async def get_background_color(self):
+    async def get_background_color(self) -> asyncio.Future | List[float]:
+        """Get the current background color.
+
+        :return: The future for the coroutine, to be updated with a list of
+        floats representing the current color [r, g, b, a].
+        :rtype:  asyncio.Future | List[float]
+        """
         return await self.viewer_rpc.itk_viewer.getBackgroundColor()
 
     @fetch_value
-    def set_cropping_planes(self, cropping_planes):
+    def set_cropping_planes(self, cropping_planes: CroppingPlanes) -> None:
+        """Set the origins and normals for the current cropping planes. Queue
+        the function to be run in the background thread once the plugin API is
+        available.
+
+        :param cropping_planes: A list of 6 dicts representing the 6 cropping
+        planes. Each dict should contain an 'origin' key with the origin with a
+        list of three floats and a 'normal' key with a list of three ints.
+        :type cropping_planes:  CroppingPlanes
+        """
         self.queue_request('setCroppingPlanes', cropping_planes)
     @fetch_value
-    async def get_cropping_planes(self):
+    async def get_cropping_planes(self) -> asyncio.Future | CroppingPlanes:
+        """Get the origins and normals for the current cropping planes.
+
+        :return: The future for the coroutine, to be updated with a list of 6
+        dicts representing the 6 cropping planes. Each dict should contain an
+        'origin' key with the origin with a list of three floats and a 'normal'
+        key with a list of three ints.
+        :rtype:  asyncio.Future | CroppingPlanes
+        """
         return await self.viewer_rpc.itk_viewer.getCroppingPlanes()
 
     @fetch_value
-    def set_image(self, image: Image, name: str = 'Image'):
+    def set_image(self, image: Image, name: str = 'Image') -> None:
+        """Set the image to be rendered. Queue the function to be run in the
+        background thread once the plugin API is available.
+
+        :param image: Image data to render
+        :type image:  Image
+        :param name: Image name, defaults to 'Image'
+        :type name:  str, optional
+        """
         global _cell_watcher
         render_type = _detect_render_type(image, 'image')
         if render_type is RenderType.IMAGE:
             image = _get_viewer_image(image, label=False)
+            # Keep a reference to stores that we create
             self.stores[name] = image
             if ENVIRONMENT is Env.HYPHA:
                 self.image = image
@@ -310,6 +431,7 @@ class Viewer:
                 svc.set_label_or_image('image')
             else:
                 self.queue_request('setImage', image, name)
+                # Make sure future getters are deferred until render
                 _cell_watcher and _cell_watcher.update_viewer_status(self.name, False)
         elif render_type is RenderType.POINT_SET:
             image = _get_viewer_point_set(image)
@@ -339,118 +461,313 @@ class Viewer:
         raise ValueError(f'No image data found for {name}.')
 
     @fetch_value
-    def set_image_blend_mode(self, mode: str):
+    def set_image_blend_mode(self, mode: str) -> None:
+        """Set the volume rendering blend mode. Queue the function to be run in
+        the background thread once the plugin API is available.
+
+        :param mode: Volume blend mode. Supported modes: 'Composite',
+        'Maximum', 'Minimum', 'Average'. default: 'Composite'.
+        :type mode:  str
+        """
         self.queue_request('setImageBlendMode', mode)
     @fetch_value
-    async def get_image_blend_mode(self):
+    async def get_image_blend_mode(self) -> asyncio.Future | str:
+        """Get the current volume rendering blend mode.
+
+        :return: The future for the coroutine, to be updated with the current
+        blend mode.
+        :rtype:  asyncio.Future | str
+        """
         return await self.viewer_rpc.itk_viewer.getImageBlendMode()
 
     @fetch_value
-    def set_image_color_map(self, colorMap: str):
+    def set_image_color_map(self, colorMap: str) -> None:
+        """Set the color map for the current component/channel. Queue the
+        function to be run in the background thread once the plugin API is
+        available.
+
+        :param colorMap: Color map for the current image. default: 'Grayscale'
+        :type colorMap:  str
+        """
         self.queue_request('setImageColorMap', colorMap)
     @fetch_value
-    async def get_image_color_map(self):
+    async def get_image_color_map(self) -> asyncio.Future | str:
+        """Get the color map for the current component/channel.
+
+        :return: The future for the coroutine, to be updated with the current
+        color map.
+        :rtype:  asyncio.Future | str
+        """
         return await self.viewer_rpc.itk_viewer.getImageColorMap()
 
     @fetch_value
-    def set_image_color_range(self, range: List[float]):
+    def set_image_color_range(self, range: List[float]) -> None:
+        """The range of the data values mapped to colors for the given image.
+        Queue the function to be run in the background thread once the plugin
+        API is available.
+
+        :param range: The [min, max] range of the data values
+        :type range:  List[float]
+        """
         self.queue_request('setImageColorRange', range)
     @fetch_value
-    async def get_image_color_range(self):
+    async def get_image_color_range(self) -> asyncio.Future | List[float]:
+        """Get the range of the data values mapped to colors for the given
+        image.
+
+        :return: The future for the coroutine, to be updated with the
+        [min, max] range of the data values.
+        :rtype:  asyncio.Future | List[float]
+        """
         return await self.viewer_rpc.itk_viewer.getImageColorRange()
 
     @property
     @fetch_value
-    async def vmin(self):
+    async def vmin(self) -> asyncio.Future | float:
+        """Get the minimum data value mapped to colors for the current image.
+
+        :return: The future for the coroutine, to be updated with the minimum
+        value mapped to the color map.
+        :rtype:  asyncio.Future | float
+        """
         range = await self.get_image_color_range()
         return range[0]
     @vmin.setter
     @fetch_value
-    async def vmin(self, vmin: float):
+    async def vmin(self, vmin: float) -> None:
+        """Set the minimum data value mapped to colors for the current image.
+        Queue the function to be run in the background thread once the plugin
+        API is available.
+
+        :param vmin: The minimum value mapped to the color map.
+        :type vmin:  float
+        """
         self.queue_request('setImageColorRangeMin', vmin)
 
     @property
     @fetch_value
-    async def vmax(self):
+    async def vmax(self) -> asyncio.Future | float:
+        """Get the maximum data value mapped to colors for the current image.
+
+        :return: The future for the coroutine, to be updated with the maximum
+        value mapped to the color map.
+        :rtype:  asyncio.Future | float
+        """
         range = await self.get_image_color_range()
         return range[1]
     @vmax.setter
     @fetch_value
-    async def vmax(self, vmax: float):
+    async def vmax(self, vmax: float) -> None:
+        """Set the maximum data value mapped to colors for the current image.
+        Queue the function to be run in the background thread once the plugin
+        API is available.
+
+        :param vmax: The maximum value mapped to the color map.
+        :type vmax:  float
+        """
         self.queue_request('setImageColorRangeMax', vmax)
 
 
     @fetch_value
-    def set_image_color_range_bounds(self, range: List[float]):
+    def set_image_color_range_bounds(self, range: List[float]) -> None:
+        """Set the range of the data values for color maps. Queue the function
+        to be run in the background thread once the plugin API is available.
+
+        :param range: The [min, max] range of the data values.
+        :type range:  List[float]
+        """
         self.queue_request('setImageColorRangeBounds', range)
     @fetch_value
-    async def get_image_color_range_bounds(self):
+    async def get_image_color_range_bounds(self) -> asyncio.Future | List[float]:
+        """Get the range of the data values for color maps.
+
+        :return: The future for the coroutine, to be updated with the
+        [min, max] range of the data values.
+        :rtype:  asyncio.Future | List[float]
+        """
         return await self.viewer_rpc.itk_viewer.getImageColorRangeBounds()
 
     @fetch_value
-    def set_image_component_visibility(self, visibility: bool, component: int):
+    def set_image_component_visibility(self, visibility: bool, component: int) -> None:
+        """Set the given image intensity component index's visibility. Queue
+        the function to be run in the background thread once the plugin API is
+        available.
+
+        :param visibility: Whether or not the component should be visible.
+        :type visibility:  bool
+        :param component: The component to set the visibility for.
+        :type component:  int
+        """
         self.queue_request('setImageComponentVisibility', visibility, component)
     @fetch_value
-    async def get_image_component_visibility(self, component: int):
+    async def get_image_component_visibility(
+        self, component: int
+    ) -> asyncio.Future | int:
+        """Get the given image intensity component index's visibility.
+
+        :param component: The component to set the visibility for.
+        :type component:  int
+        :return: The future for the coroutine, to be updated with the
+        component's visibility.
+        :rtype:  asyncio.Future | int
+        """
         return await self.viewer_rpc.itk_viewer.getImageComponentVisibility(component)
 
     @fetch_value
-    def set_image_gradient_opacity(self, opacity: float):
+    def set_image_gradient_opacity(self, opacity: float) -> None:
+        """Set the gradient opacity for composite volume rendering. Queue
+        the function to be run in the background thread once the plugin API is
+        available.
+
+        :param opacity: Gradient opacity in the range (0.0, 1.0]. default: 0.5
+        :type opacity:  float
+        """
         self.queue_request('setImageGradientOpacity', opacity)
     @fetch_value
-    async def get_image_gradient_opacity(self):
+    async def get_image_gradient_opacity(self) -> asyncio.Future | float:
+        """Get the gradient opacity for composite volume rendering.
+
+        :return: The future for the coroutine, to be updated with the gradient
+        opacity.
+        :rtype:  asyncio.Future | float
+        """
         return await self.viewer_rpc.itk_viewer.getImageGradientOpacity()
 
     @fetch_value
-    def set_image_gradient_opacity_scale(self, min: float):
+    def set_image_gradient_opacity_scale(self, min: float) -> None:
+        """Set the gradient opacity scale for composite volume rendering. Queue
+        the function to be run in the background thread once the plugin API is
+        available.
+
+        :param min: Gradient opacity scale in the range (0.0, 1.0] default: 0.5
+        :type min:  float
+        """
         self.queue_request('setImageGradientOpacityScale', min)
     @fetch_value
-    async def get_image_gradient_opacity_scale(self):
+    async def get_image_gradient_opacity_scale(self) -> asyncio.Future | float:
+        """Get the gradient opacity scale for composite volume rendering.
+
+        :return: The future for the coroutine, to be updated with the current
+        gradient opacity scale.
+        :rtype:  asyncio.Future | float
+        """
         return await self.viewer_rpc.itk_viewer.getImageGradientOpacityScale()
 
     @fetch_value
-    def set_image_interpolation_enabled(self, enabled: bool):
+    def set_image_interpolation_enabled(self, enabled: bool) -> None:
+        """Set whether to use linear as opposed to nearest neighbor
+        interpolation for image slices. Queue the function to be run in the
+        background thread once the plugin API is available.
+
+        :param enabled: Use linear interpolation. default: True
+        :type enabled:  bool
+        """
         self.queue_request('setImageInterpolationEnabled', enabled)
     @fetch_value
-    async def get_image_interpolation_enabled(self):
+    async def get_image_interpolation_enabled(self) -> asyncio.Future | bool:
+        """Get whether to use linear as opposed to nearest neighbor
+        interpolation for image slices.
+
+        :return: The future for the coroutine, to be updated with whether
+        linear interpolation is used.
+        :rtype:  asyncio.Future | bool
+        """
         return await self.viewer_rpc.itk_viewer.getImageInterpolationEnabled()
 
     @fetch_value
-    def set_image_piecewise_function_gaussians(self, gaussians: Gaussians):
+    def set_image_piecewise_function_gaussians(self, gaussians: Gaussians) -> None:
+        """Set the volume rendering opacity transfer function Gaussian
+        parameters. For each image component, multiple Gaussians can be
+        specified. Queue the function to be run in the background thread once
+        the plugin API is available.
+
+        :param gaussians: Opacity transfer function Gaussian
+        parameters. Default Gaussian parameters:
+        {'position': 0.5, 'height': 1, 'width': 0.5, 'xBias': 0.51, 'yBias': 0.4}
+        :type gaussians:  Gaussians
+        """
         self.queue_request('setImagePiecewiseFunctionGaussians', gaussians)
     @fetch_value
-    async def get_image_piecewise_function_gaussians(self):
+    async def get_image_piecewise_function_gaussians(
+        self,
+    ) -> asyncio.Future | Gaussians:
+        """Get the volume rendering opacity transfer function Gaussian
+        parameters.
+
+        :return: The future for the coroutine, to be updated with the opacity
+        transfer function Gaussian parameters.
+        :rtype:  asyncio.Future | Gaussians
+        """
         return await self.viewer_rpc.itk_viewer.getImagePiecewiseFunctionGaussians()
 
     @fetch_value
-    def set_image_shadow_enabled(self, enabled: bool):
+    def set_image_shadow_enabled(self, enabled: bool) -> None:
+        """Set whether to used gradient-based shadows in the volume rendering.
+        Queue the function to be run in the background thread once the plugin
+        API is available.
+
+        :param enabled: Apply shadows. default: True
+        :type enabled:  bool
+        """
         self.queue_request('setImageShadowEnabled', enabled)
     @fetch_value
-    async def get_image_shadow_enabled(self):
+    async def get_image_shadow_enabled(self) -> asyncio.Future | bool:
+        """Get whether gradient-based shadows are used in the volume rendering.
+
+        :return: The future for the coroutine, to be updated with whether
+        gradient-based shadows are used.
+        :rtype:  asyncio.Future | bool
+        """
         return await self.viewer_rpc.itk_viewer.getImageShadowEnabled()
 
     @fetch_value
-    def set_image_volume_sample_distance(self, distance: float):
+    def set_image_volume_sample_distance(self, distance: float) -> None:
+        """Set the sampling distance for volume rendering, normalized from
+        0.0 to 1.0. Lower values result in a higher quality rendering. High
+        values improve the framerate. Queue the function to be run in the
+        background thread once the plugin API is available.
+
+        :param distance: Sampling distance for volume rendering. default: 0.2
+        :type distance:  float
+        """
         self.queue_request('setImageVolumeSampleDistance', distance)
     @fetch_value
-    async def get_image_volume_sample_distance(self):
+    async def get_image_volume_sample_distance(self) -> asyncio.Future | float:
+        """Get the normalized sampling distance for volume rendering.
+
+        :return: The future for the coroutine, to be updated with the
+        normalized sampling distance.
+        :rtype:  asyncio.Future | float
+        """
         return await self.viewer_rpc.itk_viewer.getImageVolumeSampleDistance()
 
     @fetch_value
-    def set_image_volume_scattering_blend(self, scattering_blend: float):
+    def set_image_volume_scattering_blend(self, scattering_blend: float) -> None:
+        """Set the volumetric scattering blend. Queue the function to be run in
+        the background thread once the plugin API is available.
+
+        :param scattering_blend: Volumetric scattering blend in the range [0, 1]
+        :type scattering_blend:  float
+        """
         self.queue_request('setImageVolumeScatteringBlend', scattering_blend)
     @fetch_value
-    async def get_image_volume_scattering_blend(self):
+    async def get_image_volume_scattering_blend(self) -> asyncio.Future | float:
+        """Get the volumetric scattering blend.
+
+        :return: The future for the coroutine, to be updated with the current
+        volumetric scattering blend.
+        :rtype:  asyncio.Future | float
+        """
         return await self.viewer_rpc.itk_viewer.getImageVolumeScatteringBlend()
 
     @fetch_value
-    async def get_current_scale(self):
+    async def get_current_scale(self) -> asyncio.Future | int:
         """Get the current resolution scale of the primary image.
 
         0 is the highest resolution. Values increase for lower resolutions.
 
         :return: scale
-        :rtype:  int
+        :rtype:  asyncio.Future | int
         """
         return await self.viewer_rpc.itk_viewer.getLoadedScale()
 
@@ -494,6 +811,7 @@ class Viewer:
         :param name: Name of the loaded image data to use. 'Image', the
         default, selects the first loaded image.
         :type name:  str
+                CellWatcher().update_viewer_status(self.name, False)
 
         :return: roi_multiscales
         :rtype:  Multiscales NgffImage
@@ -512,7 +830,7 @@ class Viewer:
         raise ValueError(f'No image data found for {name}.')
 
     @fetch_value
-    async def get_roi_region(self):
+    async def get_roi_region(self) -> asyncio.Future | List[Dict[str, float]]:
         """Get the current region of interest in world / physical space.
 
         Returns [lower_bounds, upper_bounds] in the form:
@@ -520,7 +838,7 @@ class Viewer:
           [{ 'x': x0, 'y': y0, 'z': z0 }, { 'x': x1, 'y': y1, 'z': z1 }]
 
         :return: roi_region
-        :rtype:  List[Dict[str, float]]
+        :rtype:  asyncio.Future | List[Dict[str, float]]
         """
         bounds = await self.viewer_rpc.itk_viewer.getCroppedImageWorldBounds()
         x0, x1, y0, y1, z0, z1 = bounds
@@ -554,7 +872,55 @@ class Viewer:
         return np.index_exp[int(z0):int(z1+1), int(y0):int(y1+1), int(x0):int(x1+1)]
 
     @fetch_value
-    def compare_images(self, fixed_image: Union[str, Image], moving_image: Union[str, Image], method: str = None, image_mix: float = None, checkerboard: bool = None, pattern: Union[Tuple[int, int], Tuple[int, int, int]] = None, swap_image_order: bool = None):
+    def compare_images(
+        self,
+        fixed_image: Union[str, Image],
+        moving_image: Union[str, Image],
+        method: str = None,
+        image_mix: float = None,
+        checkerboard: bool = None,
+        pattern: Union[Tuple[int, int], Tuple[int, int, int]] = None,
+        swap_image_order: bool = None,
+    ) -> None:
+        """Fuse 2 images with a checkerboard filter or as a 2 component image.
+        The moving image is re-sampled to the fixed image space. Set a keyword
+        argument to None to use defaults based on method. Queue the function to
+        be run in the background thread once the plugin API is available.
+
+        :param fixed_image: Static image the moving image is re-sampled to. For
+        non-checkerboard methods ('blend', 'green-magenta', etc.), the fixed
+        image is on the first component.
+        :type  fixed_image: array_like, itk.Image, or vtk.vtkImageData
+        :param moving_image: Image is re-sampled to the fixed_image. For
+        non-checkerboard methods ('blend', 'green-magenta', etc.), the moving
+        image is on the second component.
+        :type  moving_image: array_like, itk.Image, or vtk.vtkImageData
+        :param method: The checkerboard method picks pixels from the fixed and
+        moving image to create a checkerboard pattern. Setting the method to
+        checkerboard turns on the checkerboard flag. The non-checkerboard
+        methods ('blend', 'green-magenta', etc.) put the fixed image on
+        component 0, moving image on component 1. The 'green-magenta' and
+        'red-cyan' change the color maps so matching images are grayish white.
+        The 'cyan-magenta' color maps produce a purple if the images match.
+        :type  method: string, default: None, possible values: 'green-magenta',
+        'cyan-red', 'cyan-magenta', 'blend', 'checkerboard', 'disabled'
+        :param image_mix: Changes the percent contribution the fixed vs moving
+        image makes to the render by modifying the opacity transfer function.
+        Value of 1 means max opacity for moving image, 0 for fixed image. If
+        value is None and the method is not checkerboard, the image_mix is set
+        to 0.5.  If the method is "checkerboard", the image_mix is set to 0.
+        :type  image_mix: float, default: None
+        :param checkerboard: Forces the checkerboard mixing of fixed and moving
+        images for the cyan-magenta and blend methods. The rendered image has 2
+        components, each component reverses which image is sampled for each
+        checkerboard box.
+        :type  checkerboard: bool, default: None
+        :param pattern: The number of checkerboard boxes for each dimension.
+        :type  pattern: tuple, default: None
+        :param swap_image_order: Reverses which image is sampled for each
+        checkerboard box.  This simply toggles image_mix between 0 and 1.
+        :type  swap_image_order: bool, default: None
+        """
         global _cell_watcher
         # image args may be image name or image object
         fixed_name = 'Fixed'
@@ -583,7 +949,13 @@ class Viewer:
         _cell_watcher and _cell_watcher.update_viewer_status(self.name, False)
 
     @fetch_value
-    def set_label_image(self, label_image: Image):
+    def set_label_image(self, label_image: Image) -> None:
+        """Set the label image to be rendered. Queue the function to be run in
+        the background thread once the plugin API is available.
+
+        :param label_image: The label map to visualize
+        :type label_image:  Image
+        """
         global _cell_watcher
         render_type = _detect_render_type(label_image, 'image')
         if render_type is RenderType.IMAGE:
@@ -621,114 +993,312 @@ class Viewer:
         raise ValueError(f'No label image data found.')
 
     @fetch_value
-    def set_label_image_blend(self, blend: float):
+    def set_label_image_blend(self, blend: float) -> None:
+        """Set the label map blend with intensity image. Queue the function to
+        be run in the background thread once the plugin API is available.
+
+        :param blend: Blend with intensity image, from 0.0 to 1.0. default: 0.5
+        :type blend:  float
+        """
         self.queue_request('setLabelImageBlend', blend)
     @fetch_value
-    async def get_label_image_blend(self):
+    async def get_label_image_blend(self) -> asyncio.Future | float:
+        """Get the label map blend with intensity image.
+
+        :return: The future for the coroutine, to be updated with the blend
+        with the intensity image.
+        :rtype: asyncio.Future | float
+        """
         return await self.viewer_rpc.itk_viewer.getLabelImageBlend()
 
     @fetch_value
-    def set_label_image_label_names(self, names: List[str]):
+    def set_label_image_label_names(self, names: List[str]) -> None:
+        """Set the string names associated with the integer label values. Queue
+        the function to be run in the background thread once the plugin API is
+        available.
+
+        :param names: A list of names for each label map.
+        :type names:  List[str]
+        """
         self.queue_request('setLabelImageLabelNames', names)
     @fetch_value
-    async def get_label_image_label_names(self):
+    async def get_label_image_label_names(self) -> asyncio.Future | List[str]:
+        """Get the string names associated with the integer label values.
+
+        :return: The future for the coroutine, to be updated with the list of
+        names for each label map.
+        :rtype:  asyncio.Future | List[str]
+        """
         return await self.viewer_rpc.itk_viewer.getLabelImageLabelNames()
 
     @fetch_value
-    def set_label_image_lookup_table(self, lookupTable: str):
+    def set_label_image_lookup_table(self, lookupTable: str) -> None:
+        """Set the lookup table for the label map. Queue the function to be run
+        in the background thread once the plugin API is available.
+
+        :param lookupTable: Label map lookup table. default: 'glasbey'
+        :type lookupTable:  str
+        """
         self.queue_request('setLabelImageLookupTable', lookupTable)
     @fetch_value
-    async def get_label_image_lookup_table(self):
+    async def get_label_image_lookup_table(self) -> asyncio.Future | str:
+        """Get the lookup table for the label map.
+
+        :return: The future for the coroutine, to be updated with the current
+        label map lookup table.
+        :rtype:  asyncio.Future | str
+        """
         return await self.viewer_rpc.itk_viewer.getLabelImageLookupTable()
 
     @fetch_value
-    def set_label_image_weights(self, weights: float):
+    def set_label_image_weights(self, weights: float) -> None:
+        """Set the rendering weight assigned to current label. Queue the
+        function to be run in the background thread once the plugin API is
+        available.
+
+        :param weights: Assign the current label rendering weight between
+        [0.0, 1.0].
+        :type weights:  float
+        """
         self.queue_request('setLabelImageWeights', weights)
     @fetch_value
-    async def get_label_image_weights(self):
+    async def get_label_image_weights(self) -> asyncio.Future | float:
+        """Get the rendering weight assigned to current label.
+
+        :return: The future for the coroutine, to be updated with the current
+        label rendering weight.
+        :rtype:  asyncio.Future | float
+        """
         return await self.viewer_rpc.itk_viewer.getLabelImageWeights()
 
     @fetch_value
-    def select_layer(self, name: str):
+    def select_layer(self, name: str) -> None:
+        """Set the layer identified by `name` as the current layer. Queue the
+        function to be run in the background thread once the plugin API is
+        available.
+
+        :param name: The name of thelayer to select.
+        :type name:  str
+        """
         self.queue_request('selectLayer', name)
     @fetch_value
-    async def get_layer_names(self):
+    async def get_layer_names(self) -> asyncio.Future | List[str]:
+        """Get the list of all layer names.
+
+        :return: The future for the coroutine, to be updated with the list of
+        layer names.
+        :rtype:  asyncio.Future | List[str]
+        """
         return await self.viewer_rpc.itk_viewer.getLayerNames()
 
     @fetch_value
-    def set_layer_visibility(self, visible: bool, name: str):
+    def set_layer_visibility(self, visible: bool, name: str) -> None:
+        """Set whether the layer is visible. Queue the function to be run in
+        the background thread once the plugin API is available.
+
+        :param visible: Layer visibility. default: True
+        :type visible:  bool
+        :param name: The name of the layer.
+        :type name:  str
+        """
         self.queue_request('setLayerVisibility', visible, name)
     @fetch_value
-    async def get_layer_visibility(self, name: str):
+    async def get_layer_visibility(self, name: str) -> asyncio.Future | bool:
+        """Get whether the layer is visible.
+
+        :param name: The name of the layer to fetch the visibility for.
+        :type name:  str
+        :return: The future for the coroutine, to be updated with the layer
+        visibility.
+        :rtype:  asyncio.Future | bool
+        """
         return await self.viewer_rpc.itk_viewer.getLayerVisibility(name)
 
     @fetch_value
-    def get_loaded_image_names(self):
+    def get_loaded_image_names(self) -> List[str]:
+        """Get the list of loaded image names.
+
+        :return: List of loaded images.
+        :rtype:  List[str]
+        """
         return list(self.stores.keys())
 
     @fetch_value
-    def add_point_set(self, pointSet: PointSet):
+    def add_point_set(self, pointSet: PointSet) -> None:
+        """Add a point set to the visualization. Queue the function to be run
+        in the background thread once the plugin API is available.
+
+        :param pointSet: An array of points to visualize.
+        :type pointSet:  PointSet
+        """
         pointSet = _get_viewer_point_set(pointSet)
         self.queue_request('addPointSet', pointSet)
     @fetch_value
-    def set_point_set(self, pointSet: PointSet):
+    def set_point_set(self, pointSet: PointSet) -> None:
+        """Set the point set to the visualization. Queue the function to be run
+        in the background thread once the plugin API is available.
+
+        :param pointSet: An array of points to visualize.
+        :type pointSet:  PointSet
+        """
         pointSet = _get_viewer_point_set(pointSet)
         self.queue_request('setPointSets', pointSet)
 
     @fetch_value
-    def set_rendering_view_container_style(self, containerStyle: Style):
+    def set_rendering_view_container_style(self, containerStyle: Style) -> None:
+        """Set the CSS style for the rendering view `div`'s. Queue the function
+        to be run in the background thread once the plugin API is available.
+
+        :param containerStyle: A dict of string keys and sting values
+        representing the desired CSS styling.
+        :type containerStyle:  Style
+        """
         self.queue_request('setRenderingViewContainerStyle', containerStyle)
     @fetch_value
-    async def get_rendering_view_container_style(self):
+    async def get_rendering_view_container_style(self) -> Style:
+        """Get the CSS style for the rendering view `div`'s.
+
+        :return: The future for the coroutine, to be updated with a dict of
+        string keys and sting values representing the desired CSS styling.
+        :rtype:  Style
+        """
         return await self.viewer_rpc.itk_viewer.getRenderingViewStyle()
 
     @fetch_value
-    def set_rotate(self, enabled: bool):
+    def set_rotate(self, enabled: bool) -> None:
+        """Set whether the camera should continuously rotate around the scene
+        in volume rendering mode. Queue the function to be run in the
+        background thread once the plugin API is available.
+
+        :param enabled: Rotate the camera. default: False
+        :type enabled:  bool
+        """
         self.queue_request('setRotateEnabled', enabled)
     @fetch_value
-    async def get_rotate(self):
+    async def get_rotate(self) -> bool:
+        """Get whether the camera is rotating.
+
+        :return: The future for the coroutine, to be updated with the boolean
+        status.
+        :rtype:  bool
+        """
         return await self.viewer_rpc.itk_viewer.getRotateEnabled()
 
     @fetch_value
-    def set_ui_collapsed(self, collapsed: bool):
+    def set_ui_collapsed(self, collapsed: bool) -> None:
+        """Collapse the native widget user interface. Queue the function to be
+        run in the background thread once the plugin API is available.
+
+        :param collapsed: If the UI interface should be collapsed. default: True
+        :type collapsed:  bool
+        """
         self.queue_request('setUICollapsed', collapsed)
     @fetch_value
-    async def get_ui_collapsed(self):
+    async def get_ui_collapsed(self) -> bool:
+        """Get the collapsed status of the UI interface.
+
+        :return: The future for the coroutine, to be updated with the collapsed
+        state of the UI interface.
+        :rtype:  bool
+        """
         return await self.viewer_rpc.itk_viewer.getUICollapsed()
 
     @fetch_value
-    def set_units(self, units: str):
+    def set_units(self, units: str) -> None:
+        """Set the units to display in the scale bar. Queue the function to be
+        run in the background thread once the plugin API is available.
+
+        :param units: Units to use.
+        :type units:  str
+        """
         self.queue_request('setUnits', units)
     @fetch_value
-    async def get_units(self):
+    async def get_units(self) -> str:
+        """Get the units to display in the scale bar.
+
+        :return: The future for the coroutine, to be updated with the units
+        used in the scale bar.
+        :rtype:  str
+        """
         return await self.viewer_rpc.itk_viewer.getUnits()
 
     @fetch_value
-    def set_view_mode(self, mode: str):
+    def set_view_mode(self, mode: str) -> None:
+        """Set the viewing mode. Queue the function to be run in the background
+        thread once the plugin API is available.
+
+        :param mode: View mode. One of the following: 'XPlane', 'YPlane',
+        'ZPlane', or 'Volume'. default: 'Volume'
+        :type mode:  str
+        """
         self.queue_request('setViewMode', mode)
     @fetch_value
-    async def get_view_mode(self):
+    async def get_view_mode(self) -> str:
+        """Get the current view mode.
+
+        :return: The future for the coroutine, to be updated with the view mode.
+        :rtype:  str
+        """
         return await self.viewer_rpc.itk_viewer.getViewMode()
 
     @fetch_value
-    def set_x_slice(self, position: float):
+    def set_x_slice(self, position: float) -> None:
+        """Set the position in world space of the X slicing plane. Queue the
+        function to be run in the background thread once the plugin API is
+        available.
+
+        :param position: Position in world space.
+        :type position:  float
+        """
         self.queue_request('setXSlice', position)
     @fetch_value
-    async def get_x_slice(self):
+    async def get_x_slice(self) -> float:
+        """Get the position in world space of the X slicing plane.
+
+        :return: The future for the coroutine, to be updated with the position
+        in world space.
+        :rtype:  float
+        """
         return await self.viewer_rpc.itk_viewer.getXSlice()
 
     @fetch_value
-    def set_y_slice(self, position: float):
+    def set_y_slice(self, position: float) -> None:
+        """Set the position in world space of the Y slicing plane. Queue the
+        function to be run in the background thread once the plugin API is
+        available.
+
+        :param position: Position in world space.
+        :type position:  float
+        """
         self.queue_request('setYSlice', position)
     @fetch_value
-    async def get_y_slice(self):
+    async def get_y_slice(self) -> float:
+        """Get the position in world space of the Y slicing plane.
+
+        :return: The future for the coroutine, to be updated with the position
+        in world space.
+        :rtype:  float
+        """
         return await self.viewer_rpc.itk_viewer.getYSlice()
 
     @fetch_value
-    def set_z_slice(self, position: float):
+    def set_z_slice(self, position: float) -> None:
+        """Set the position in world space of the Z slicing plane. Queue the
+        function to be run in the background thread once the plugin API is
+        available.
+
+        :param position: Position in world space.
+        :type position:  float
+        """
         self.queue_request('setZSlice', position)
     @fetch_value
-    async def get_z_slice(self):
+    async def get_z_slice(self) -> float:
+        """Get the position in world space of the Z slicing plane.
+
+        :return: The future for the coroutine, to be updated with the position
+        in world space.
+        :rtype:  float
+        """
         return await self.viewer_rpc.itk_viewer.getZSlice()
 
 
@@ -866,7 +1436,17 @@ def view(data=None, **kwargs):
 
     return viewer
 
-def compare_images(fixed_image: Union[str, Image], moving_image: Union[str, Image], method: str = None, image_mix: float = None, checkerboard: bool = None, pattern: Union[Tuple[int, int], Tuple[int, int, int]] = None, swap_image_order: bool = None, **kwargs):
+
+def compare_images(
+    fixed_image: Union[str, Image],
+    moving_image: Union[str, Image],
+    method: str = None,
+    image_mix: float = None,
+    checkerboard: bool = None,
+    pattern: Union[Tuple[int, int], Tuple[int, int, int]] = None,
+    swap_image_order: bool = None,
+    **kwargs,
+):
     """Fuse 2 images with a checkerboard filter or as a 2 component image.
 
     The moving image is re-sampled to the fixed image space. Set a keyword argument to None to use defaults based on method.

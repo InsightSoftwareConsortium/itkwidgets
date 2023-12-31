@@ -16,6 +16,8 @@ Style = Dict[str, str]
 
 Image = Union[np.ndarray, itkwasm.Image, zarr.Group]
 PointSet = Union[np.ndarray, itkwasm.PointSet, zarr.Group]
+CroppingPlanes = List[Dict[str, List[Union[float, int]]]]
+
 if HAVE_ITK:
     import itk
     Image = Union[Image, itk.Image]
