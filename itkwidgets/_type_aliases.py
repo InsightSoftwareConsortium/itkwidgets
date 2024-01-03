@@ -7,7 +7,7 @@ from .integrations.itk import HAVE_ITK
 from .integrations.pytorch import HAVE_TORCH
 from .integrations.vtk import HAVE_VTK
 from .integrations.xarray import HAVE_XARRAY
-from typing import Dict, List, Union
+from typing import Dict, List, Literal, Union
 
 Gaussian_Curve = Dict[str, float]
 Gaussians = Dict[str, List[Gaussian_Curve]]
@@ -16,7 +16,7 @@ Style = Dict[str, str]
 
 Image = Union[np.ndarray, itkwasm.Image, zarr.Group]
 PointSet = Union[np.ndarray, itkwasm.PointSet, zarr.Group]
-CroppingPlanes = List[Dict[str, List[Union[float, int]]]]
+CroppingPlanes = {Literal['origin']: List[float], Literal['normal']: List[int]}
 
 if HAVE_ITK:
     import itk
