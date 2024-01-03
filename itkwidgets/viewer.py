@@ -7,7 +7,7 @@ import threading
 import numpy as np
 from imjoy_rpc import api
 from inspect import isawaitable
-from typing import Callable, Coroutine, Dict, List, Union, Tuple
+from typing import Callable, Dict, List, Union, Tuple
 from IPython.display import display, HTML
 from IPython.lib import backgroundjobs as bg
 from ngff_zarr import from_ngff_zarr, to_ngff_image, Multiscales, NgffImage
