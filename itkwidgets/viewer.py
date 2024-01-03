@@ -366,14 +366,14 @@ class Viewer:
         return await self.viewer_rpc.itk_viewer.getAxesEnabled()
 
     @fetch_value
-    def set_background_color(self, bgColor: List[float]) -> None:
+    def set_background_color(self, bg_color: List[float]) -> None:
         """Set the background color for the viewer. Queue the function to be
         run in the background thread once the plugin API is available.
 
-        :param bgColor: A list of floats [r, g, b, a]
-        :type bgColor:  List[float]
+        :param bg_color: A list of floats [r, g, b, a]
+        :type bg_color:  List[float]
         """
-        self.queue_request('setBackgroundColor', bgColor)
+        self.queue_request('setBackgroundColor', bg_color)
     @fetch_value
     async def get_background_color(self) -> asyncio.Future | List[float]:
         """Get the current background color.
@@ -481,15 +481,15 @@ class Viewer:
         return await self.viewer_rpc.itk_viewer.getImageBlendMode()
 
     @fetch_value
-    def set_image_color_map(self, colorMap: str) -> None:
+    def set_image_color_map(self, color_map: str) -> None:
         """Set the color map for the current component/channel. Queue the
         function to be run in the background thread once the plugin API is
         available.
 
-        :param colorMap: Color map for the current image. default: 'Grayscale'
-        :type colorMap:  str
+        :param color_map: Color map for the current image. default: 'Grayscale'
+        :type color_map:  str
         """
-        self.queue_request('setImageColorMap', colorMap)
+        self.queue_request('setImageColorMap', color_map)
     @fetch_value
     async def get_image_color_map(self) -> asyncio.Future | str:
         """Get the color map for the current component/channel.
@@ -1032,14 +1032,14 @@ class Viewer:
         return await self.viewer_rpc.itk_viewer.getLabelImageLabelNames()
 
     @fetch_value
-    def set_label_image_lookup_table(self, lookupTable: str) -> None:
+    def set_label_image_lookup_table(self, lookup_table: str) -> None:
         """Set the lookup table for the label map. Queue the function to be run
         in the background thread once the plugin API is available.
 
-        :param lookupTable: Label map lookup table. default: 'glasbey'
-        :type lookupTable:  str
+        :param lookup_table: Label map lookup table. default: 'glasbey'
+        :type lookup_table:  str
         """
-        self.queue_request('setLabelImageLookupTable', lookupTable)
+        self.queue_request('setLabelImageLookupTable', lookup_table)
     @fetch_value
     async def get_label_image_lookup_table(self) -> asyncio.Future | str:
         """Get the lookup table for the label map.
@@ -1124,36 +1124,36 @@ class Viewer:
         return list(self.stores.keys())
 
     @fetch_value
-    def add_point_set(self, pointSet: PointSet) -> None:
+    def add_point_set(self, point_set: PointSet) -> None:
         """Add a point set to the visualization. Queue the function to be run
         in the background thread once the plugin API is available.
 
-        :param pointSet: An array of points to visualize.
-        :type pointSet:  PointSet
+        :param point_set: An array of points to visualize.
+        :type point_set:  PointSet
         """
-        pointSet = _get_viewer_point_set(pointSet)
-        self.queue_request('addPointSet', pointSet)
+        point_set = _get_viewer_point_set(point_set)
+        self.queue_request('addPointSet', point_set)
     @fetch_value
-    def set_point_set(self, pointSet: PointSet) -> None:
+    def set_point_set(self, point_set: PointSet) -> None:
         """Set the point set to the visualization. Queue the function to be run
         in the background thread once the plugin API is available.
 
-        :param pointSet: An array of points to visualize.
-        :type pointSet:  PointSet
+        :param point_set: An array of points to visualize.
+        :type point_set:  PointSet
         """
-        pointSet = _get_viewer_point_set(pointSet)
-        self.queue_request('setPointSets', pointSet)
+        point_set = _get_viewer_point_set(point_set)
+        self.queue_request('setPointSets', point_set)
 
     @fetch_value
-    def set_rendering_view_container_style(self, containerStyle: Style) -> None:
+    def set_rendering_view_container_style(self, container_style: Style) -> None:
         """Set the CSS style for the rendering view `div`'s. Queue the function
         to be run in the background thread once the plugin API is available.
 
-        :param containerStyle: A dict of string keys and sting values
+        :param container_style: A dict of string keys and sting values
         representing the desired CSS styling.
-        :type containerStyle:  Style
+        :type container_style:  Style
         """
-        self.queue_request('setRenderingViewContainerStyle', containerStyle)
+        self.queue_request('setRenderingViewContainerStyle', container_style)
     @fetch_value
     async def get_rendering_view_container_style(self) -> Style:
         """Get the CSS style for the rendering view `div`'s.
