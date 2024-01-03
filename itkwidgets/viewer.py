@@ -480,6 +480,28 @@ class Viewer:
         """
         return await self.viewer_rpc.itk_viewer.getImageBlendMode()
 
+    @property
+    @fetch_value
+    async def color_map(self) -> asyncio.Future | str:
+        """Get the color map for the current component/channel.
+
+        :return: The future for the coroutine, to be updated with the current
+        color map.
+        :rtype:  asyncio.Future | str
+        """
+        return await self.viewer_rpc.itk_viewer.getImageColorMap()
+    @color_map.setter
+    @fetch_value
+    async def color_map(self, color_map: str) -> None:
+        """Set the color map for the current component/channel. Queue the
+        function to be run in the background thread once the plugin API is
+        available.
+
+        :param color_map: Color map for the current image. default: 'Grayscale'
+        :type color_map:  str
+        """
+        self.queue_request('setImageColorMap', color_map)
+
     @fetch_value
     def set_image_color_map(self, color_map: str) -> None:
         """Set the color map for the current component/channel. Queue the
@@ -499,6 +521,28 @@ class Viewer:
         :rtype:  asyncio.Future | str
         """
         return await self.viewer_rpc.itk_viewer.getImageColorMap()
+
+    @property
+    @fetch_value
+    async def color_range(self) -> asyncio.Future | List[float]:
+        """Get the range of the data values mapped to colors for the given
+        image.
+
+        :return: _description_
+        :rtype:  asyncio.Future | List[float]
+        """
+        return await self.viewer_rpc.itk_viewer.getImageColorRange()
+    @color_range.setter
+    @fetch_value
+    async def color_range(self, range: List[float]) -> None:
+        """The range of the data values mapped to colors for the given image.
+        Queue the function to be run in the background thread once the plugin
+        API is available.
+
+        :param range: The [min, max] range of the data values
+        :type range:  List[float]
+        """
+        self.queue_request('setImageColorRange', range)
 
     @fetch_value
     def set_image_color_range(self, range: List[float]) -> None:
@@ -567,6 +611,26 @@ class Viewer:
         """
         self.queue_request('setImageColorRangeMax', vmax)
 
+    @property
+    @fetch_value
+    async def color_bounds(self) -> asyncio.Future | List[float]:
+        """Get the range of the data values for color maps.
+
+        :return: The future for the coroutine, to be updated with the
+        [min, max] range of the data values.
+        :rtype:  asyncio.Future | List[float]
+        """
+        return await self.viewer_rpc.itk_viewer.getImageColorRangeBounds()
+    @color_bounds.setter
+    @fetch_value
+    async def color_bounds(self, range: List[float]) -> None:
+        """Set the range of the data values for color maps. Queue the function
+        to be run in the background thread once the plugin API is available.
+
+        :param range: The [min, max] range of the data values.
+        :type range:  List[float]
+        """
+        self.queue_request('setImageColorRangeBounds', range)
 
     @fetch_value
     def set_image_color_range_bounds(self, range: List[float]) -> None:
@@ -613,6 +677,28 @@ class Viewer:
         """
         return await self.viewer_rpc.itk_viewer.getImageComponentVisibility(component)
 
+    @property
+    @fetch_value
+    async def gradient_opacity(self) -> asyncio.Future | float:
+        """Get the gradient opacity for composite volume rendering.
+
+        :return: The future for the coroutine, to be updated with the gradient
+        opacity.
+        :rtype:  asyncio.Future | float
+        """
+        return await self.viewer_rpc.itk_viewer.getImageGradientOpacity()
+    @gradient_opacity.setter
+    @fetch_value
+    async def gradient_opacity(self, opacity: float) -> None:
+        """Set the gradient opacity for composite volume rendering. Queue
+        the function to be run in the background thread once the plugin API is
+        available.
+
+        :param opacity: Gradient opacity in the range (0.0, 1.0]. default: 0.5
+        :type opacity:  float
+        """
+        self.queue_request('setImageGradientOpacity', opacity)
+
     @fetch_value
     def set_image_gradient_opacity(self, opacity: float) -> None:
         """Set the gradient opacity for composite volume rendering. Queue
@@ -632,6 +718,28 @@ class Viewer:
         :rtype:  asyncio.Future | float
         """
         return await self.viewer_rpc.itk_viewer.getImageGradientOpacity()
+
+    @property
+    @fetch_value
+    async def gradient_opacity_scale(self) -> asyncio.Future | float:
+        """Get the gradient opacity scale for composite volume rendering.
+
+        :return: The future for the coroutine, to be updated with the current
+        gradient opacity scale.
+        :rtype:  asyncio.Future | float
+        """
+        return await self.viewer_rpc.itk_viewer.getImageGradientOpacityScale()
+    @gradient_opacity_scale.setter
+    @fetch_value
+    async def gradient_opacity_scale(self, min: float) -> None:
+        """Set the gradient opacity scale for composite volume rendering. Queue
+        the function to be run in the background thread once the plugin API is
+        available.
+
+        :param min: Gradient opacity scale in the range (0.0, 1.0] default: 0.5
+        :type min:  float
+        """
+        self.queue_request('setImageGradientOpacityScale', min)
 
     @fetch_value
     def set_image_gradient_opacity_scale(self, min: float) -> None:
