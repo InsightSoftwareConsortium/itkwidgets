@@ -1,7 +1,5 @@
 # Development
 
-Note: [Node.js](https://nodejs.org/en/download/) is required for development.
-
 Setup your system for development:
 
 ```bash
