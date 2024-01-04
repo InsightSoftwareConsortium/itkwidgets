@@ -12,4 +12,4 @@ pytest --nbmake examples/*.ipynb
 
 If Python code is changed, restart the kernel to see the changes.
 
-**Warning**: This project is under active development. Its API and behavior may change at any time. We mean it.
+**Warning**: This project is under active development. Its API and behavior may change at any time. We mean it 🙃.
