@@ -319,7 +319,8 @@ class Viewer:
         @functools.wraps(func)
         def _fetch_value(self, *args, **kwargs):
             result = func(self, *args, **kwargs)
-            if isawaitable(result):
+            global _cell_watcher
+            if isawaitable(result) and _cell_watcher:
                 future = asyncio.ensure_future(result)
                 self.call_getter(future)
                 return future
