@@ -1,11 +1,11 @@
 {
     "PipliteAddon": {
         "piplite_urls": [
-            "https://files.pythonhosted.org/packages/4c/ee/56f970ca26375176d3e4885f58471a12d5a6794bcefe8ad0ccb8d7158ca3/itkwasm-1.0b82-py3-none-any.whl",
-            "https://files.pythonhosted.org/packages/6c/55/c3fc7e2b9671d15f0c0becdcb9fad6c330172988744ad6eaa17b71bace88/imjoy_rpc-0.5.16-py3-none-any.whl",
+            "https://files.pythonhosted.org/packages/0e/9b/2987677aa4dfadd8ad2636f2e90c3b1e527cddb8b0789fa6151f47f832fa/itkwasm-1.0b145-py3-none-any.whl",
+            "https://files.pythonhosted.org/packages/80/48/1232756c08ecdc3305fecfec40ef13ac7ea2dd94a6203806595a696cc110/imjoy_rpc-0.5.46-py3-none-any.whl"
             "https://files.pythonhosted.org/packages/69/d9/5a6c8af2f4b4f49a809ae316ae4c12937d7dfda4e5b2f9e4167df5f15c0e/imjoy_utils-0.1.2-py3-none-any.whl",
-            "https://files.pythonhosted.org/packages/c9/dc/3504845528418aff0b71f4b622bb0e8e12adec2d8f2c1ba21d695b9ac6e6/itkwidgets-1.0a24-py3-none-any.whl",
-            "https://files.pythonhosted.org/packages/d0/8a/458d5f8b90786be8013b5bfe85aa3ff8d49ee41380d0fdeafaa5f20c95fa/ngff_zarr-0.2.0-py3-none-any.whl"
+            "https://files.pythonhosted.org/packages/ba/9f/ec8509396a847a34dfba58e7cf5e96750242eda8f7f45cdfe5c04013f204/itkwidgets-1.0a46-py3-none-any.whl",
+            "https://files.pythonhosted.org/packages/b4/ba/2f2cec7283edd5666f9ac912eacc03ab62df3ae3c83b3718db5cd040dd7a/ngff_zarr-0.6.0-py3-none-any.whl"
         ]
     }
 }

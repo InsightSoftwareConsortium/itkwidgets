@@ -22,7 +22,6 @@ from ._initialization_params import (
     build_init_data,
     defer_for_data_render,
 )
-from .cell_watcher import CellWatcher
 from .imjoy import register_itkwasm_imjoy_codecs
 from .integrations import _detect_render_type, _get_viewer_image, _get_viewer_point_set
 from .integrations.environment import ENVIRONMENT, Env
@@ -38,7 +37,8 @@ __all__ = [
 _viewer_count = 1
 _codecs_registered = False
 _cell_watcher = None
-if ENVIRONMENT is not Env.HYPHA:
+if not ENVIRONMENT in (Env.HYPHA, Env.JUPYTERLITE):
+    from .cell_watcher import CellWatcher
     _cell_watcher = CellWatcher() # Instantiate the singleton class right away
 
 
@@ -319,7 +319,8 @@ class Viewer:
         @functools.wraps(func)
         def _fetch_value(self, *args, **kwargs):
             result = func(self, *args, **kwargs)
-            if isawaitable(result):
+            global _cell_watcher
+            if isawaitable(result) and _cell_watcher:
                 future = asyncio.ensure_future(result)
                 self.call_getter(future)
                 return future

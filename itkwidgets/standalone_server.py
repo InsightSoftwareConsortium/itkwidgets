@@ -28,7 +28,10 @@ from itkwidgets.viewer import view
 from ngff_zarr import detect_cli_io_backend, cli_input_to_ngff_image, ConversionBackend
 from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlparse
-from urllib3 import PoolManager, exceptions
+from .integrations.environment import ENVIRONMENT, Env
+# not available in pyodide by default
+if ENVIRONMENT is not Env.JUPYTERLITE:
+    from urllib3 import PoolManager, exceptions
 
 logging.getLogger("urllib3").setLevel(logging.ERROR)
 logging.getLogger("websocket-client").setLevel(logging.ERROR)
