@@ -26,3 +26,7 @@ bg_color = viewer.get_background_color()
 ```python
 print(bg_color)
 ```
+
+This has [not yet been applied in
+JupyterLite](https://github.com/InsightSoftwareConsortium/itkwidgets/issues/730)
+so getters are not yet well-behaved in JupyterLite.
