@@ -1,6 +1,8 @@
+import importlib_metadata
+
 HAVE_TORCH = False
 try:
-    import torch
+    importlib_metadata.metadata("torch")
     HAVE_TORCH = True
-except ImportError:
+except importlib_metadata.PackageNotFoundError:
     pass
