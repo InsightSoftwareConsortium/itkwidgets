@@ -6,6 +6,7 @@ from ngff_zarr import to_multiscales, to_ngff_zarr, to_ngff_image, itk_image_to_
 import dask
 from .itk import HAVE_ITK
 from .pytorch import HAVE_TORCH
+from .monai import HAVE_MONAI
 from .vtk import HAVE_VTK, vtk_image_to_ngff_image, vtk_polydata_to_vtkjs
 from .xarray import HAVE_XARRAY, HAVE_MULTISCALE_SPATIAL_IMAGE, xarray_data_array_to_numpy, xarray_data_set_to_numpy
 from ..render_types import RenderType
@@ -101,6 +102,15 @@ def _get_viewer_image(image, label=False):
         multiscales = to_multiscales(ngff_image, method=method)
         to_ngff_zarr(store, multiscales, chunk_store=chunk_store)
         return store
+
+    if HAVE_MONAI:
+        from monai.data import MetaTensor, metatensor_to_itk_image
+        if isinstance(image, MetaTensor):
+            itk_image = metatensor_to_itk_image(image)
+            ngff_image = itk_image_to_ngff_image(itk_image)
+            multiscales = to_multiscales(ngff_image, method=method)
+            to_ngff_zarr(store, multiscales, chunk_store=chunk_store)
+            return store
 
     if HAVE_TORCH:
         import torch
