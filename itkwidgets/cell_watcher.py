@@ -197,6 +197,10 @@ class CellWatcher(object):
         message as defined by the Jupyter message specification
         :type parent:  dict
         """
+        if self._events.empty() and self.abort_all:
+            # We've processed all pending cells, reset the abort flag
+            self.abort_all = False
+
         self._events.put((stream, ident, parent))
         if self._events.qsize() == 1 and self.ready_to_run_next_cell():
             # We've added a new task to an empty queue.
@@ -303,6 +307,7 @@ class CellWatcher(object):
                     self.shell.user_ns[key] = value.result()
             self.results.clear()
         except Exception as e:
+            self.shell.user_ns[key] = e
             self.results.clear()
             self.abort_all = True
             self.create_task(self._execute_next_request)
