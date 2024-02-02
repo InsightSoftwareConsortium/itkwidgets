@@ -1,15 +1,17 @@
+import importlib_metadata
+
 HAVE_XARRAY = False
 try:
-    import xarray
+    importlib_metadata.metadata("xarray")
     HAVE_XARRAY = True
-except ImportError:
+except importlib_metadata.PackageNotFoundError:
     pass
 
 HAVE_MULTISCALE_SPATIAL_IMAGE = False
 try:
-    import multiscale_spatial_image
+    importlib_metadata.metadata("multiscale-spatial-image")
     HAVE_MULTISCALE_SPATIAL_IMAGE = True
-except ImportError:
+except importlib_metadata.PackageNotFoundError:
     pass
 
 def xarray_data_array_to_numpy(data_array):

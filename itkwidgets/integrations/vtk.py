@@ -1,15 +1,17 @@
+import importlib_metadata
+
 HAVE_VTK = False
 try:
-    import vtk
+    importlib_metadata.metadata("vtk")
     HAVE_VTK = True
-    from vtk.util.numpy_support import vtk_to_numpy
-except ImportError:
+except importlib_metadata.PackageNotFoundError:
     pass
 
-from ngff_zarr import ngff_image, to_ngff_image
+from ngff_zarr import to_ngff_image
 
 
 def vtk_image_to_ngff_image(image):
+    from vtk.util.numpy_support import vtk_to_numpy
     array = vtk_to_numpy(image.GetPointData().GetScalars())
     dimensions = list(image.GetDimensions())
     array.shape = dimensions[::-1]
@@ -25,5 +27,6 @@ def vtk_image_to_ngff_image(image):
     return ngff_image
 
 def vtk_polydata_to_vtkjs(point_set):
+    from vtk.util.numpy_support import vtk_to_numpy
     array = vtk_to_numpy(point_set.GetPoints().GetData())
     return array

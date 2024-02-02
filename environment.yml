@@ -12,7 +12,7 @@ dependencies:
     - imjoy-elfinder
     - imjoy-jupyter-extension
     - imjoy-jupyterlab-extension
-    - monai-weekly[nibabel, matplotlib, tqdm]
+    - monai[nibabel, matplotlib, tqdm]
     - imageio
     - pyvista
     - dask[diagnostics]
