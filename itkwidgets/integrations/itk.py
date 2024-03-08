@@ -4,7 +4,7 @@ from packaging import version
 import importlib_metadata
 HAVE_ITK = False
 try:
-    itk_version = importlib_metadata.version('itk')
+    itk_version = importlib_metadata.version('itk-core')
     if version.parse(itk_version) < version.parse('5.3.0'):
         raise RuntimeError('itk 5.3 or newer is required. `pip install itk>=5.3.0`')
     HAVE_ITK = True
