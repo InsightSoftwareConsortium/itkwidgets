@@ -23,7 +23,7 @@ In the Pyodide notebook,
 
 ```python
 import piplite
-await piplite.install("itkwidgets==1.0a24")
+await piplite.install("itkwidgets==1.0a49")
 ```
 
 See also the [Sphinx / ReadTheDocs
@@ -72,7 +72,7 @@ also open them in Binder: [![Open in Binder](https://mybinder.org/badge_logo.svg
 To enable quick inspection of your 3D data in the browser or in your terminal you can install the command-line tool.
 
 ```bash
-pip install 'itkwidgets[cli]>=1.0a35'
+pip install 'itkwidgets[cli]>=1.0a49'
 playwright install --with-deps chromium
 ```
 Previewing data in the terminal requires support for the iterm2 inline image protocol. Examples of terminals with this support include [wezterm](https://wezfurlong.org/wezterm/), [VSCode's Terminal](https://code.visualstudio.com/updates/v1_80#_image-support) (with VSCode >= v1.80), and [iTerm2](https://iterm2.com/index.html).
