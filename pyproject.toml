@@ -61,13 +61,13 @@ Source = "https://github.com/InsightSoftwareConsortium/itkwidgets"
 
 [project.optional-dependencies]
 all = [
-    "imjoy-jupyterlab-extension ==0.1.13",
+    "imjoy-jupyterlab-extension",
     "imjoy-elfinder[jupyter]",
-    "imjoy-jupyter-extension ==0.3.0",
+    "imjoy-jupyter-extension",
     "aiohttp <4.0"
 ]
 lab = [
-    "imjoy-jupyterlab-extension ==0.1.13",
+    "imjoy-jupyterlab-extension",
     "imjoy-elfinder[jupyter]",
     "aiohttp <4.0"
 ]
