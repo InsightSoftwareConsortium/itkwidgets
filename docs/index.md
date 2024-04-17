@@ -18,6 +18,9 @@ Try it with JupyterLite!
 ![Hello3DWorld](./images/Hello3DWorld.gif)
 </a>
 
+[![DOI](https://zenodo.org/badge/121581663.svg)](https://zenodo.org/doi/10.5281/zenodo.3603358)
+
+
 ```{toctree}
 :maxdepth: 4
 :caption: 📖 Learn
