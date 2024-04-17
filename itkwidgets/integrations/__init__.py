@@ -10,6 +10,7 @@ from .monai import HAVE_MONAI
 from .vtk import HAVE_VTK, vtk_image_to_ngff_image, vtk_polydata_to_vtkjs
 from .xarray import HAVE_XARRAY, HAVE_MULTISCALE_SPATIAL_IMAGE, xarray_data_array_to_numpy, xarray_data_set_to_numpy
 from ..render_types import RenderType
+from .environment import ENVIRONMENT, Env
 
 def _spatial_image_scale_factors(spatial_image, min_length):
     sizes = dict(spatial_image.sizes)
@@ -44,10 +45,17 @@ def _get_viewer_image(image, label=False):
         return image.store
 
     min_length = 64
-    if label:
-        method = Methods.DASK_IMAGE_NEAREST
+    # ITKWASM methods are currently only async in pyodide
+    if ENVIRONMENT is Env.JUPYTERLITE:
+        if label:
+            method = Methods.DASK_IMAGE_NEAREST
+        else:
+            method = Methods.DASK_IMAGE_GAUSSIAN
     else:
-        method = Methods.DASK_IMAGE_GAUSSIAN
+        if label:
+            method = Methods.ITKWASM_LABEL_IMAGE
+        else:
+            method = Methods.ITKWASM_GAUSSIAN
 
     store, chunk_store = _make_multiscale_store()
 
