@@ -64,7 +64,6 @@ Source = "https://github.com/InsightSoftwareConsortium/itkwidgets"
 all = [
     "imjoy-jupyterlab-extension",
     "imjoy-elfinder[jupyter]",
-    "imjoy-jupyter-extension",
     "aiohttp <4.0"
 ]
 lab = [
@@ -82,7 +81,7 @@ cli = [
 ]
 
 notebook = [
-    "imjoy-jupyter-extension >=0.3.0",
+    "imjoy-jupyterlab-extension",
     "imjoy-elfinder[jupyter]"
 ]
 test = [

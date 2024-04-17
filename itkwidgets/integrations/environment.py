@@ -38,22 +38,16 @@ ENVIRONMENT = find_env()
 
 if ENVIRONMENT is not Env.JUPYTERLITE and ENVIRONMENT is not Env.HYPHA:
     if ENVIRONMENT is not Env.COLAB:
-        if ENVIRONMENT is Env.JUPYTER_NOTEBOOK and sys.version_info.minor > 7:
+        try:
+            import_module("imjoy-jupyterlab-extension")
+        except ModuleNotFoundError:
             try:
-                import imjoy_jupyter_extension
-            except:
-                raise RuntimeError('imjoy-jupyter-extension is required. `pip install itkwidgets[notebook]` and refresh page.')
-        else:
-            try:
-                import_module("imjoy-jupyterlab-extension")
+                import_module("imjoy_jupyterlab_extension")
             except ModuleNotFoundError:
-                try:
-                    import_module("imjoy_jupyterlab_extension")
-                except ModuleNotFoundError:
-                    if ENVIRONMENT is Env.JUPYTERLITE:
-                        raise RuntimeError('imjoy-jupyterlab-extension is required. Install the package and refresh page.')
-                    elif sys.version_info.minor > 7:
-                        raise RuntimeError('imjoy-jupyterlab-extension is required. `pip install itkwidgets[lab]` and refresh page.')
+                if ENVIRONMENT is Env.JUPYTERLITE:
+                    raise RuntimeError('imjoy-jupyterlab-extension is required. Install the package and refresh page.')
+                elif sys.version_info.minor > 7:
+                    raise RuntimeError('imjoy-jupyterlab-extension is required. `pip install itkwidgets[lab]` and refresh page.')
 
     try:
         import imjoy_elfinder
