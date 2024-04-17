@@ -2,6 +2,8 @@
 
 [![Documentation Status](https://readthedocs.org/projects/itkwidgets/badge/?version=latest)](https://itkwidgets.readthedocs.io/en/latest/?badge=latest)
 [![Notebook tests](https://github.com/InsightSoftwareConsortium/itkwidgets/actions/workflows/notebook-test.yml/badge.svg)](https://github.com/InsightSoftwareConsortium/itkwidgets/actions/workflows/notebook-test.yml)
+[![DOI](https://zenodo.org/badge/121581663.svg)](https://zenodo.org/doi/10.5281/zenodo.3603358)
+
 
 ITKWidgets is an elegant Python interface for visualization on the web platform to interactively generate insights into multidimensional images, point sets, and geometry.
 
