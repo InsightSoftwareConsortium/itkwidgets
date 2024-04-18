@@ -6,8 +6,7 @@ import sys
 
 
 class Env(Enum):
-    JUPYTER_NOTEBOOK = 'notebook'
-    JUPYTERLAB = 'lab'
+    JUPYTER = 'jupyter'
     JUPYTERLITE = 'lite'
     SAGEMAKER = 'sagemaker'
     HYPHA = 'hypha'
@@ -24,9 +23,7 @@ def find_env():
             parent_header = get_ipython().parent_header
             username = parent_header['header']['username']
             if username == '':
-                return Env.JUPYTERLAB
-            elif username == 'username':
-                return Env.JUPYTER_NOTEBOOK
+                return Env.JUPYTER
             else:
                 return Env.SAGEMAKER
         except:
@@ -39,15 +36,21 @@ ENVIRONMENT = find_env()
 
 if ENVIRONMENT is not Env.JUPYTERLITE and ENVIRONMENT is not Env.HYPHA:
     if ENVIRONMENT is not Env.COLAB:
-        if ENVIRONMENT is Env.JUPYTER_NOTEBOOK:
-            notebook_version = importlib_metadata.version('notebook')
-            if version.parse(notebook_version) < version.parse('7'):
-                raise RuntimeError('itkwidgets 1.0a51 and newer requires Jupyter notebook>=7.')
-        elif ENVIRONMENT is Env.JUPYTERLAB:
-            lab_version = importlib_metadata.version('jupyterlab')
-            if version.parse(lab_version) < version.parse('4'):
-                raise RuntimeError('itkwidgets 1.0a51 and newer requires jupyterlab>=4.')
-
+        if ENVIRONMENT is Env.JUPYTER:
+            try:
+                notebook_version = importlib_metadata.version('notebook')
+                if version.parse(notebook_version) < version.parse('7'):
+                    raise RuntimeError('itkwidgets 1.0a51 and newer requires Jupyter notebook>=7.')
+            except importlib_metadata.PackageNotFoundError:
+                # notebook may not be available
+                pass
+            try:
+                lab_version = importlib_metadata.version('jupyterlab')
+                if version.parse(lab_version) < version.parse('4'):
+                    raise RuntimeError('itkwidgets 1.0a51 and newer requires jupyterlab>=4.')
+            except importlib_metadata.PackageNotFoundError:
+                # jupyterlab may not be available
+                pass
         try:
             import_module("imjoy-jupyterlab-extension")
         except ModuleNotFoundError:
