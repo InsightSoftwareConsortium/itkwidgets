@@ -82,7 +82,8 @@ cli = [
 
 notebook = [
     "imjoy-jupyterlab-extension",
-    "imjoy-elfinder[jupyter]"
+    "imjoy-elfinder[jupyter]",
+    "notebook >= 7"
 ]
 test = [
     "pytest >=2.7.3",
