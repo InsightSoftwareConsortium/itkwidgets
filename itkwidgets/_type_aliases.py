@@ -7,10 +7,9 @@ from .integrations.itk import HAVE_ITK
 from .integrations.pytorch import HAVE_TORCH
 from .integrations.vtk import HAVE_VTK
 from .integrations.xarray import HAVE_XARRAY
-from typing import Dict, List, Literal, Union
+from typing import Dict, List, Literal, Union, Sequence
 
-Gaussian_Curve = Dict[str, float]
-Gaussians = Dict[str, List[Gaussian_Curve]]
+Points2d = Sequence[Sequence[float]]
 
 Style = Dict[str, str]
 

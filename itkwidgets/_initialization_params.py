@@ -22,7 +22,7 @@ def init_params_dict(itk_viewer):
         'gradient_opacity': itk_viewer.setImageGradientOpacity,
         'gradient_opacity_scale': itk_viewer.setImageGradientOpacityScale,
         'interpolation': itk_viewer.setImageInterpolationEnabled,
-        'gaussians': itk_viewer.setImagePiecewiseFunctionGaussians,
+        'transfer_function': itk_viewer.setImagePiecewiseFunctionPoints,
         'shadow_enabled': itk_viewer.setImageShadowEnabled,
         'sample_distance': itk_viewer.setImageVolumeSampleDistance,
         'label_blend': itk_viewer.setLabelImageBlend,
