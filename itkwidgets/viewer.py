@@ -14,7 +14,7 @@ from ngff_zarr import from_ngff_zarr, to_ngff_image, Multiscales, NgffImage
 import uuid
 
 from ._method_types import deferred_methods
-from ._type_aliases import Gaussians, Style, Image, PointSet, CroppingPlanes
+from ._type_aliases import Style, Image, PointSet, CroppingPlanes, Points2d
 from ._initialization_params import (
     init_params_dict,
     build_config,
@@ -784,30 +784,26 @@ class Viewer:
         return await self.viewer_rpc.itk_viewer.getImageInterpolationEnabled()
 
     @fetch_value
-    def set_image_piecewise_function_gaussians(self, gaussians: Gaussians) -> None:
-        """Set the volume rendering opacity transfer function Gaussian
-        parameters. For each image component, multiple Gaussians can be
-        specified. Queue the function to be run in the background thread once
+    def set_image_piecewise_function_points(self, points: Points2d) -> None:
+        """Set the volume rendering opacity transfer function points. 
+        Queue the function to be run in the background thread once
         the plugin API is available.
 
-        :param gaussians: Opacity transfer function Gaussian
-        parameters. Default Gaussian parameters:
-        {'position': 0.5, 'height': 1, 'width': 0.5, 'xBias': 0.51, 'yBias': 0.4}
-        :type gaussians:  Gaussians
+        :param points: Opacity piecewise transfer function points. Example args: [[.2, .1], [.8, .9]]
+        :type points2d:  Points2d
         """
-        self.queue_request('setImagePiecewiseFunctionGaussians', gaussians)
+        self.queue_request('setImagePiecewiseFunctionPoints', points)
     @fetch_value
-    async def get_image_piecewise_function_gaussians(
+    async def get_image_piecewise_function_points(
         self,
-    ) -> asyncio.Future | Gaussians:
-        """Get the volume rendering opacity transfer function Gaussian
-        parameters.
+    ) -> asyncio.Future | Points2d:
+        """Get the volume rendering opacity transfer function points.
 
         :return: The future for the coroutine, to be updated with the opacity
-        transfer function Gaussian parameters.
-        :rtype:  asyncio.Future | Gaussians
+        transfer function points.
+        :rtype:  asyncio.Future | Points2d
         """
-        return await self.viewer_rpc.itk_viewer.getImagePiecewiseFunctionGaussians()
+        return await self.viewer_rpc.itk_viewer.getImagePiecewiseFunctionPoints()
 
     @fetch_value
     def set_image_shadow_enabled(self, enabled: bool) -> None:
@@ -1500,8 +1496,8 @@ def view(data=None, **kwargs):
     :param gradient_opacity_scale: Gradient opacity scale for composite volume rendering, in the range (0.0, 1.0]. default: 0.5
     :type  gradient_opacity_scale: float
 
-    :param gaussians: Volume rendering opacity transfer function Gaussian parameters. For each image component, multiple Gaussians can be specified. Default Gaussian parameters: {'position': 0.5, 'height': 1, 'width': 0.5, 'xBias': 0.51, 'yBias': 0.4}
-    :type  gaussians: dict
+    :param piecewise_function_points: Volume rendering opacity transfer function parameters. Example points arg: [[.2, .1], [.8, .9]]
+    :type  piecewise_function_points: list
 
     :param blend_mode: Volume rendering blend mode. Supported modes: 'Composite', 'Maximum', 'Minimum', 'Average'. default: 'Composite'
     :type  blend_mode: string
