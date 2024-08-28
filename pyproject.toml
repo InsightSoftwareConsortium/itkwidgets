@@ -36,12 +36,12 @@ keywords = [
 
 requires-python = ">=3.8"
 dependencies = [
-    "itkwasm >= 1.0b.78",
+    "itkwasm >= 1.0b.178",
     "imjoy-rpc >= 0.5.42",
     "imjoy-utils >= 0.1.2",
     "importlib_metadata",
-    "ngff-zarr >= 0.8.2; sys_platform != \"emscripten\"",
-    "ngff-zarr[dask-image] >= 0.8.2; sys_platform == \"emscripten\"",
+    "ngff-zarr >= 0.8.7; sys_platform != \"emscripten\"",
+    "ngff-zarr[dask-image] >= 0.8.7; sys_platform == \"emscripten\"",
     "numcodecs",
     "zarr",
 ]
