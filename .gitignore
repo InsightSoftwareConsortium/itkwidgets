@@ -34,3 +34,6 @@ examples/integrations/itk/roi_image.nrrd
 
 examples/integrations/itkwasm/roi.zarr/
 examples/integrations/itkwasm/roi_image.nrrd
+# pixi environments
+.pixi
+*.egg-info

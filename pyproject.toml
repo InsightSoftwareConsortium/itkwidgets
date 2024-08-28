@@ -88,8 +88,30 @@ notebook = [
 test = [
     "pytest >=2.7.3",
     "nbmake",
+    "pip",
 ]
 doc = ["sphinx"]
 
 [project.scripts]
 itkwidgets = "itkwidgets.standalone_server:cli_entrypoint"
+
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[tool.pixi.pypi-dependencies]
+itkwidgets = { path = ".", editable = true }
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+all = { features = ["all"], solve-group = "default" }
+cli = { features = ["cli"], solve-group = "default" }
+doc = { features = ["doc"], solve-group = "default" }
+lab = { features = ["lab"], solve-group = "default" }
+notebook = { features = ["notebook"], solve-group = "default" }
+test = { features = ["test", "all", "cli", "lab", "notebook"], solve-group = "default" }
+
+[tool.pixi.tasks]
+
+[tool.pixi.feature.test.tasks]
+start = "jupyter lab examples"
