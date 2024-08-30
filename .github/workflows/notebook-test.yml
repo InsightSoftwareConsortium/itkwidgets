@@ -28,10 +28,16 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install -e ".[test,all]"
-          python3 -m pip install pyimagej
+          python3 -m pip install pyimagej urllib3
           python3 -c "import imagej; ij = imagej.init('2.5.0'); print(ij.getVersion())"
           python3 -m pip install "itk>=5.3.0"
 
       - name: Test notebooks
+        if: ${{ matrix.python-version != '3.8' }}
         run: |
           pytest --nbmake --nbmake-timeout=3000 examples/EnvironmentCheck.ipynb examples/Hello3DWorld.ipynb examples/NumPyArrayPointSet.ipynb examples/integrations/**/*.ipynb
+
+      - name: Test notebooks
+        if: ${{ matrix.python-version == '3.8' }}
+        run: |
+          pytest --nbmake --nbmake-timeout=3000 examples/Hello3DWorld.ipynb examples/NumPyArrayPointSet.ipynb examples/integrations/**/*.ipynb
