@@ -10,7 +10,7 @@ powered by [itk-wasm](https://wasm.itk.org) and [ImJoy](https://imjoy.io/).
 *Welcome to The Future* 🔬🚀🛸!
 ```
 
-<a href="./_static/retro/notebooks/?path=Hello3DWorld.ipynb">
+<a href="./_static/retro/notebooks/?path=Hello3DWorld.ipynb&v=1.0a24">
 Try it with JupyterLite!
 
 ![Jupyterlite](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)
