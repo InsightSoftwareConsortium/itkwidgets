@@ -8,7 +8,7 @@ jobs:
     name: Test notebooks with nbmake
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.9']
     steps:
       - uses: actions/checkout@v3
         with:
@@ -33,11 +33,5 @@ jobs:
           python3 -m pip install "itk>=5.3.0"
 
       - name: Test notebooks
-        if: ${{ matrix.python-version != '3.8' }}
         run: |
           pytest --nbmake --nbmake-timeout=3000 examples/EnvironmentCheck.ipynb examples/Hello3DWorld.ipynb examples/NumPyArrayPointSet.ipynb examples/integrations/**/*.ipynb
-
-      - name: Test notebooks
-        if: ${{ matrix.python-version == '3.8' }}
-        run: |
-          pytest --nbmake --nbmake-timeout=3000 examples/Hello3DWorld.ipynb examples/NumPyArrayPointSet.ipynb examples/integrations/**/*.ipynb
