@@ -43,7 +43,7 @@ dependencies = [
     "ngff-zarr >= 0.8.7; sys_platform != \"emscripten\"",
     "ngff-zarr[dask-image] >= 0.8.7; sys_platform == \"emscripten\"",
     "numcodecs",
-    "zarr",
+    "zarr < 3",
 ]
 
 [tool.hatch.version]
