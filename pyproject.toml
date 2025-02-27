@@ -37,7 +37,8 @@ keywords = [
 requires-python = ">=3.8"
 dependencies = [
     "itkwasm >= 1.0b.178",
-    "imjoy-rpc >= 0.5.42",
+    "imjoy-elfinder",
+    "imjoy-rpc >= 0.5.59",
     "imjoy-utils >= 0.1.2",
     "importlib_metadata",
     "ngff-zarr >= 0.8.7; sys_platform != \"emscripten\"",
