@@ -7,6 +7,7 @@ import dask
 from .itk import HAVE_ITK
 from .pytorch import HAVE_TORCH
 from .monai import HAVE_MONAI
+from .simpleitk import HAVE_SIMPLEITK, simpleitk_image_to_ngff_image
 from .vtk import HAVE_VTK, vtk_image_to_ngff_image, vtk_polydata_to_vtkjs
 from .xarray import HAVE_XARRAY, HAVE_MULTISCALE_SPATIAL_IMAGE, xarray_data_array_to_numpy, xarray_data_set_to_numpy
 from ..render_types import RenderType
@@ -95,6 +96,14 @@ def _get_viewer_image(image, label=False):
         import vtk
         if isinstance(image, vtk.vtkImageData):
             ngff_image = vtk_image_to_ngff_image(image)
+            multiscales = to_multiscales(ngff_image, method=method)
+            to_ngff_zarr(store, multiscales, chunk_store=chunk_store)
+            return store
+
+    if HAVE_SIMPLEITK:
+        import SimpleITK as sitk
+        if isinstance(image, sitk.Image):
+            ngff_image = simpleitk_image_to_ngff_image(image)
             multiscales = to_multiscales(ngff_image, method=method)
             to_ngff_zarr(store, multiscales, chunk_store=chunk_store)
             return store
@@ -228,6 +237,10 @@ def _detect_render_type(data, input_type) -> RenderType:
             return RenderType.IMAGE
         elif isinstance(data, vtk.vtkPolyData):
             return RenderType.POINT_SET
+    if HAVE_SIMPLEITK:
+        import SimpleITK as sitk
+        if isinstance(data, sitk.Image):
+            return RenderType.IMAGE
     if isinstance(data, dask.array.core.Array):
         if data.ndim ==2 and data.shape[1] < 4:
             return RenderType.POINT_SET
