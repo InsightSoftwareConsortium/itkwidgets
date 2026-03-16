@@ -19,7 +19,7 @@ CroppingPlanes = {Literal['origin']: List[float], Literal['normal']: List[int]}
 
 if HAVE_ITK:
     import itk
-    Image = Union[Image, itk.Image]
+    Image = Union[Image, itk.output]
 if HAVE_VTK:
     import vtk
     Image = Union[Image, vtk.vtkImageData]
